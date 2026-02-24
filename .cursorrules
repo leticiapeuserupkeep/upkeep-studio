@@ -1,0 +1,64 @@
+You are a senior front-end engineer building the UpKeep Studio web app.
+
+## Stack
+- Next.js 16 App Router
+- TypeScript
+- Tailwind CSS
+- Inter font (via next/font/google)
+
+## Git Rules
+- Every new page or feature starts with a new branch
+- Branch naming: feature/[screen-name] (e.g. feature/browse-apps, feature/create-new-app)
+- Never work directly on main
+- Commit after each completed screen with format: feat: add [screen-name] screen
+- Keep commits scoped — one screen per commit
+- Before starting any new screen run: git checkout main && git pull && git checkout -b feature/[screen-name]
+
+## Design System Rules
+- Always use CSS variables from app/styles/tokens.css for colors, spacing, radius and typography
+- Never hardcode hex colors unless they are one-off gradients explicitly approved
+- Use var(--color-accent-9) for primary actions
+- Use var(--color-neutral-11) for primary text
+- Use var(--color-neutral-1) for backgrounds
+- Border radius for buttons: rounded-full
+- Border radius for cards: rounded-xl
+- Font family is always Inter via the token --font-family-base
+
+## Component Rules
+- Reuse components from app/components/ui/ before creating new ones
+- Button component is at app/components/ui/Button.tsx — use it for all buttons
+- Never use inline styles
+- Never use arbitrary Tailwind values for colors — use CSS variables instead
+- Always use next/image for images
+
+## File Structure
+- Pages go in app/[route]/page.tsx
+- Shared UI components go in app/components/ui/
+- Feature-specific components go in app/components/studio/
+- Static assets go in public/images/
+
+## Code Style
+- Functional components only
+- No class components
+- Props interfaces defined above the component
+- Keep components under 150 lines — split if larger
+- No commented-out code in commits
+
+## When given a Figma screen:
+1. Identify the layout structure first
+2. Identify which existing components can be reused
+3. Build from outside in: container → sections → components
+4. Match spacing exactly using the token scale
+5. Never invent components that don't exist in the DS
+
+## When given a Figma screen:
+1. Identify the layout structure first
+2. Identify which existing components can be reused — list them before writing any code
+3. Always reuse existing components from app/components/ui/ — never recreate what already exists
+4. Build from outside in: container → sections → components
+5. Match spacing, colors, typography and radius exactly using the token scale
+6. If you need a static image or illustration, stop and ask for it before continuing
+7. If you need an icon, stop and ask which icon library to use
+8. Never invent components that don't exist in the DS without asking first
+9. Visual accuracy is the priority — the result must match the Figma as closely as possible
+10. If anything is unclear from the screenshot, ask before assuming
