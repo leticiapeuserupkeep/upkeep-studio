@@ -3,7 +3,7 @@
 import { type ButtonHTMLAttributes, forwardRef } from 'react'
 import { Slot } from '@radix-ui/react-slot'
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive' | 'gradient'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -21,6 +21,10 @@ const variantStyles: Record<ButtonVariant, string> = {
     'text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-3)] hover:text-[var(--color-neutral-11)]',
   danger:
     'border border-[var(--color-error-border)] text-[var(--color-error)] hover:bg-[var(--color-error-light)]',
+  destructive:
+    'border border-[var(--color-error-border)] text-[var(--color-error)] hover:bg-[var(--color-error-light)]',
+  gradient:
+    'bg-gradient-to-r from-[#7C3AED] to-[#4F7EF5] text-white font-semibold hover:opacity-90 shadow-[var(--shadow-md)]',
 }
 
 const sizeStyles: Record<ButtonSize, string> = {

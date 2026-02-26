@@ -75,6 +75,10 @@ body {
   animation: fade-in var(--duration-normal) var(--ease-default) forwards;
 }
 
+.fade-animate {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
 /* ── Collapsible (Radix) ── */
 @keyframes collapsible-down {
   from { height: 0; opacity: 0; }
