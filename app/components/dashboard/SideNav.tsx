@@ -16,6 +16,7 @@ import {
   Gem, Wand2, Download, Hammer,
   Bell, ChevronUp,
   LayoutGrid, CircleHelp, MessageCircle, Settings,
+  Radio, Router, AlertTriangle, Timer,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -72,6 +73,16 @@ const sections: NavSection[] = [
       { label: 'Checklists', icon: FileText },
       { label: 'Files', icon: FileText },
       { label: 'Import & Export', icon: Wrench },
+    ],
+  },
+  {
+    title: 'EDGE',
+    items: [
+      { label: 'Sensors', icon: Radio, href: '/edge/sensors' },
+      { label: 'Gateways', icon: Router, href: '/edge/gateways' },
+      { label: 'Alerts', icon: AlertTriangle, href: '/edge/alerts' },
+      { label: 'Runtime', icon: Timer, href: '/edge/runtime' },
+      { label: 'Settings', icon: Settings, href: '/edge/settings' },
     ],
   },
   {

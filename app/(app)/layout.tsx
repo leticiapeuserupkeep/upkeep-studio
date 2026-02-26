@@ -12,6 +12,11 @@ import type { Role } from '@/app/lib/models'
 function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/studio/browse')) return 'Studio'
   if (pathname.startsWith('/studio')) return 'Studio'
+  if (pathname.startsWith('/edge/runtime')) return 'Runtime'
+  if (pathname.startsWith('/edge/sensors')) return 'Sensors'
+  if (pathname.startsWith('/edge/gateways')) return 'Gateways'
+  if (pathname.startsWith('/edge/alerts')) return 'Alerts'
+  if (pathname.startsWith('/edge/settings')) return 'Settings'
   return 'Dashboard'
 }
 
@@ -24,6 +29,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const title = getPageTitle(pathname)
   const isStudioBrowse = pathname.startsWith('/studio/browse')
+  const isEdge = pathname.startsWith('/edge/')
+  const isRuntimeDetail = /^\/edge\/runtime\/[^/]+/.test(pathname)
 
   return (
     <div className="flex min-h-screen bg-[var(--surface-secondary)]">
@@ -40,6 +47,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           onTimeRangeChange={setTimeRange}
           onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
           sites={sites}
+          minimal={isEdge}
+          backHref={isRuntimeDetail ? '/edge/runtime' : undefined}
           actions={
             isStudioBrowse ? (
               <Button variant="primary" size="md" asChild>

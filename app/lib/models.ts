@@ -134,3 +134,52 @@ export interface FocusItem {
   priorityReason: string
   cta: { label: string; href: string }
 }
+
+/* ── Edge: Runtime ── */
+
+export type SensorStatus = 'connected' | 'disconnected' | 'warning'
+
+export interface DailyRuntime {
+  date: string
+  hours: number
+  cycles: number
+}
+
+export interface MeterInfo {
+  currentReading: number
+  unit: string
+  lastResetDate: string
+  totalCycles: number
+  avgCyclesPerDay: number
+  nextServiceAt: number
+}
+
+export interface RuntimeWorkOrder {
+  id: string
+  title: string
+  status: WOStatus
+  createdAt: string
+  urgency: UrgencyLevel
+}
+
+export interface RuntimeSensor {
+  id: string
+  name: string
+  assetId: string
+  assetName: string
+  locationName: string
+  gatewayId: string
+  gatewayName: string
+  type: string
+  status: SensorStatus
+  totalHours: number
+  previousPeriodHours: number
+  avgDailyHours: number
+  peakDay: { date: string; hours: number }
+  uptimePercent: number
+  dailyRuntime: DailyRuntime[]
+  meter: MeterInfo
+  workOrders: RuntimeWorkOrder[]
+  lastReading: string
+  insights: string[]
+}

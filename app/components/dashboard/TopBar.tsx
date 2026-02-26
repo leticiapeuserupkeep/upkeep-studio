@@ -1,7 +1,8 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { Search, ChevronDown, PanelLeft } from 'lucide-react'
+import Link from 'next/link'
+import { Search, ChevronDown, PanelLeft, ChevronLeft } from 'lucide-react'
 import * as Separator from '@radix-ui/react-separator'
 import type { Role } from '@/app/lib/models'
 
@@ -16,6 +17,8 @@ interface TopBarProps {
   onToggleSidebar: () => void
   sites: string[]
   actions?: ReactNode
+  minimal?: boolean
+  backHref?: string
 }
 
 const roles: Role[] = ['technician', 'supervisor', 'manager']
@@ -30,7 +33,7 @@ const roleLabels: Record<Role, string> = {
 export function TopBar({
   title, role, site, timeRange,
   onRoleChange, onSiteChange, onTimeRangeChange, onToggleSidebar,
-  sites, actions,
+  sites, actions, minimal = false, backHref,
 }: TopBarProps) {
   return (
     <>
@@ -43,40 +46,22 @@ export function TopBar({
           <PanelLeft size={20} className="text-[color:var(--color-neutral-7)]" />
         </button>
 
+        {backHref && (
+          <Link
+            href={backHref}
+            className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] transition-colors"
+            aria-label="Go back"
+          >
+            <ChevronLeft size={20} className="text-[var(--color-neutral-7)]" />
+          </Link>
+        )}
+
         <h1 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)] whitespace-nowrap">
           {title}
         </h1>
 
-        <div className="flex items-center gap-[var(--space-xs)] flex-1 max-w-[260px] ml-[var(--space-md)] px-2.5 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-secondary)]">
-          <Search size={14} className="text-[var(--color-neutral-7)] shrink-0" />
-          <input
-            type="text"
-            placeholder="Search WOs, assets, parts..."
-            className="flex-1 text-[length:var(--font-size-sm)] bg-transparent outline-none text-[var(--color-neutral-11)] placeholder:text-[var(--color-neutral-7)]"
-            aria-label="Global search"
-          />
-        </div>
-
-        <div className="flex-1" />
-
-        <div className="flex items-center gap-[var(--space-sm)]">
-          <SelectDropdown
-            label={roleLabels[role]}
-            options={roles.map((r) => ({ value: r, label: roleLabels[r] }))}
-            value={role}
-            onChange={(v) => onRoleChange(v as Role)}
-          />
-
-          {role !== 'technician' && (
-            <SelectDropdown
-              label={site}
-              options={sites.map((s) => ({ value: s, label: s }))}
-              value={site}
-              onChange={onSiteChange}
-            />
-          )}
-
-          <div className="flex items-center rounded-[var(--radius-lg)] border border-[var(--border-default)] overflow-hidden">
+        {!minimal && (
+          <div className="flex items-center rounded-[var(--radius-lg)] border border-[var(--border-default)] overflow-hidden ml-[var(--space-sm)]">
             {timeRanges.map((tr) => (
               <button
                 key={tr}
@@ -91,7 +76,41 @@ export function TopBar({
               </button>
             ))}
           </div>
-        </div>
+        )}
+
+        {!minimal && (
+          <div className="flex items-center gap-[var(--space-xs)] flex-1 max-w-[260px] ml-[var(--space-md)] px-2.5 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-secondary)]">
+            <Search size={14} className="text-[var(--color-neutral-7)] shrink-0" />
+            <input
+              type="text"
+              placeholder="Search WOs, assets, parts..."
+              className="flex-1 text-[length:var(--font-size-sm)] bg-transparent outline-none text-[var(--color-neutral-11)] placeholder:text-[var(--color-neutral-7)]"
+              aria-label="Global search"
+            />
+          </div>
+        )}
+
+        <div className="flex-1" />
+
+        {!minimal && (
+          <div className="flex items-center gap-[var(--space-sm)]">
+            <SelectDropdown
+              label={roleLabels[role]}
+              options={roles.map((r) => ({ value: r, label: roleLabels[r] }))}
+              value={role}
+              onChange={(v) => onRoleChange(v as Role)}
+            />
+
+            {role !== 'technician' && (
+              <SelectDropdown
+                label={site}
+                options={sites.map((s) => ({ value: s, label: s }))}
+                value={site}
+                onChange={onSiteChange}
+              />
+            )}
+          </div>
+        )}
 
         {actions && <div className="flex items-center gap-[var(--space-sm)]">{actions}</div>}
       </header>
