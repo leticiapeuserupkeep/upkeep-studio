@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import {
   Timer, TrendingUp, TrendingDown, Clock, Activity,
-  Zap, Search, ChevronDown,
+  Zap, Search, ChevronDown, Calendar, XCircle, ArrowUpDown, Radio,
 } from 'lucide-react'
 import { KPI } from '@/app/components/ui/KPI'
 import { Chip } from '@/app/components/ui/Chip'
@@ -26,6 +26,9 @@ export default function RuntimePage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [sortBy, setSortBy] = useState<SortBy>('hours_desc')
   const [searchQuery, setSearchQuery] = useState('')
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [dateFrom, setDateFrom] = useState('2026-01-28')
+  const [dateTo, setDateTo] = useState('2026-02-26')
 
   const filtered = useMemo(() => {
     let list = [...runtimeSensors]
@@ -80,26 +83,23 @@ export default function RuntimePage() {
   const warningCount = runtimeSensors.filter((s) => s.status === 'warning').length
   const disconnectedCount = runtimeSensors.filter((s) => s.status === 'disconnected').length
   const mostActiveSensor = [...runtimeSensors].sort((a, b) => b.totalHours - a.totalHours)[0]
+  const avgDowntime = Math.round((100 - avgUptime) * 10) / 10
 
   return (
     <div className="flex flex-col gap-[var(--space-xl)] p-[var(--space-xl)]">
-      {/* Period selector */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-[var(--space-xs)]">
-          {(Object.entries(periodLabels) as [PeriodFilter, string][]).map(([key, label]) => (
-            <Chip key={key} active={period === key} onClick={() => setPeriod(key)}>
-              {label}
-            </Chip>
-          ))}
-        </div>
-      </div>
-
       {/* KPI Row */}
       <div className="grid grid-cols-4 gap-[var(--space-md)]">
         <KPI
-          label="Total Fleet Hours"
+          label="Total Runtime"
           value={`${Math.round(totalFleetHours).toLocaleString()}`}
           subtitle={`${fleetDelta >= 0 ? '+' : ''}${fleetDelta}% vs prev period`}
+          subtitleIcon={
+            fleetDelta < 0
+              ? <TrendingDown size={12} className="text-[var(--color-error)]" />
+              : fleetDelta > 0
+                ? <TrendingUp size={12} className="text-[var(--color-success)]" />
+                : undefined
+          }
           icon={<Timer size={18} className="text-[var(--color-accent-9)]" />}
           accent
         />
@@ -107,18 +107,20 @@ export default function RuntimePage() {
           label="Avg Uptime"
           value={`${avgUptime}%`}
           subtitle={`${connectedCount} connected sensors`}
+          subtitleIcon={<Radio size={12} className="text-[var(--color-success)]" />}
           icon={<Activity size={18} className="text-[var(--color-success)]" />}
         />
         <KPI
-          label="Most Active"
-          value={mostActiveSensor?.name.split(' |')[0] || '-'}
-          subtitle={`${mostActiveSensor?.totalHours.toFixed(1)} hrs this period`}
-          icon={<Zap size={18} className="text-[var(--color-warning)]" />}
+          label="Avg Downtime"
+          value={`${avgDowntime}%`}
+          subtitle={`${disconnectedCount} sensor${disconnectedCount !== 1 ? 's' : ''} offline`}
+          subtitleIcon={<Radio size={12} className="text-[var(--color-neutral-6)]" />}
+          icon={<XCircle size={18} className="text-[var(--color-error)]" />}
         />
         <KPI
           label="Needs Attention"
           value={`${warningCount + disconnectedCount}`}
-          subtitle={`${warningCount} warning, ${disconnectedCount} offline`}
+          subtitle={`${warningCount} overloaded, ${disconnectedCount} disconnected`}
           icon={
             warningCount + disconnectedCount > 0 ? (
               <TrendingDown size={18} className="text-[var(--color-error)]" />
@@ -139,7 +141,7 @@ export default function RuntimePage() {
             Connected ({connectedCount})
           </Chip>
           <Chip active={statusFilter === 'warning'} onClick={() => setStatusFilter('warning')}>
-            Warning ({warningCount})
+            Overloaded ({warningCount})
           </Chip>
           <Chip active={statusFilter === 'disconnected'} onClick={() => setStatusFilter('disconnected')}>
             Disconnected ({disconnectedCount})
@@ -158,11 +160,58 @@ export default function RuntimePage() {
             />
           </div>
 
+          {/* Date range picker */}
           <div className="relative">
+            <button
+              onClick={() => setShowDatePicker((v) => !v)}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors"
+            >
+              <Calendar size={14} className="text-[var(--color-neutral-7)]" />
+              {new Date(dateFrom + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              {' – '}
+              {new Date(dateTo + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              <ChevronDown size={14} className="text-[var(--color-neutral-7)]" />
+            </button>
+
+            {showDatePicker && (
+              <>
+                <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setShowDatePicker(false)} />
+                <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] w-[260px] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] p-[var(--space-sm)]">
+                  <span className="block px-[var(--space-sm)] text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.04em] text-[var(--color-neutral-8)] mb-[var(--space-xs)]">
+                    Date Range
+                  </span>
+                  <div className="flex items-center gap-[var(--space-xs)] px-[var(--space-sm)]">
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="flex-1 px-2 py-1.5 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none"
+                    />
+                    <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)]">to</span>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="flex-1 px-2 py-1.5 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setShowDatePicker(false)}
+                    className="w-[calc(100%-var(--space-md))] mx-[var(--space-sm)] mt-[var(--space-sm)] px-3 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-accent-9)] text-white text-[length:var(--font-size-sm)] font-medium cursor-pointer hover:opacity-90 transition-opacity"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="relative">
+            <ArrowUpDown size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-neutral-7)] pointer-events-none" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortBy)}
-              className="appearance-none pl-2.5 pr-7 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] cursor-pointer outline-none"
+              className="appearance-none pl-8 pr-7 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] cursor-pointer outline-none"
             >
               <option value="hours_desc">Most Hours</option>
               <option value="hours_asc">Least Hours</option>

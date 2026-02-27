@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { Clock, TrendingUp, TrendingDown, Minus, MapPin, Wifi, WifiOff, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/app/components/ui/Badge'
-import { Sparkline } from '@/app/components/ui/Sparkline'
 import type { RuntimeSensor } from '@/app/lib/models'
 
 interface RuntimeCardProps {
@@ -22,8 +21,8 @@ function formatHours(h: number): string {
 
 const statusConfig = {
   connected: { label: 'Connected', severity: 'success' as const, icon: Wifi },
-  disconnected: { label: 'Disconnected', severity: 'danger' as const, icon: WifiOff },
-  warning: { label: 'Warning', severity: 'warning' as const, icon: AlertTriangle },
+  disconnected: { label: 'Disconnected', severity: 'neutral' as const, icon: WifiOff },
+  warning: { label: 'Overloaded', severity: 'danger' as const, icon: AlertTriangle },
 }
 
 export function RuntimeCard({ sensor }: RuntimeCardProps) {
@@ -32,7 +31,6 @@ export function RuntimeCard({ sensor }: RuntimeCardProps) {
   const isDown = delta < 0
   const statusInfo = statusConfig[sensor.status]
   const StatusIcon = statusInfo.icon
-  const sparkData = sensor.dailyRuntime.map((d) => d.hours)
 
   const sparkColor =
     sensor.status === 'disconnected'
@@ -90,7 +88,7 @@ export function RuntimeCard({ sensor }: RuntimeCardProps) {
             </div>
           </div>
 
-          <Sparkline data={sparkData} width={100} height={36} color={sparkColor} />
+          <UptimeRing percent={sensor.uptimePercent} color={sparkColor} />
         </div>
       </div>
 
@@ -106,5 +104,42 @@ export function RuntimeCard({ sensor }: RuntimeCardProps) {
         </div>
       </div>
     </Link>
+  )
+}
+
+function UptimeRing({ percent, color }: { percent: number; color: string }) {
+  const size = 56
+  const stroke = 5
+  const radius = (size - stroke) / 2
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (percent / 100) * circumference
+
+  return (
+    <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="var(--color-neutral-3)"
+          strokeWidth={stroke}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+        />
+      </svg>
+      <span className="absolute text-[length:var(--font-size-xs)] font-bold text-[var(--color-neutral-11)]">
+        {Math.round(percent)}%
+      </span>
+    </div>
   )
 }

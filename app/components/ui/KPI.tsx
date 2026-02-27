@@ -4,12 +4,13 @@ interface KPIProps {
   label: string
   value: string | number
   subtitle?: string
+  subtitleIcon?: ReactNode
   icon?: ReactNode
   accent?: boolean
   className?: string
 }
 
-export function KPI({ label, value, subtitle, icon, accent = false, className = '' }: KPIProps) {
+export function KPI({ label, value, subtitle, subtitleIcon, icon, accent = false, className = '' }: KPIProps) {
   return (
     <div
       className={`flex items-start gap-3 rounded-[var(--radius-xl)] border border-[var(--border-default)] p-[var(--space-md)] ${
@@ -31,7 +32,8 @@ export function KPI({ label, value, subtitle, icon, accent = false, className = 
           {value}
         </span>
         {subtitle && (
-          <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] mt-0.5">
+          <span className="flex items-center gap-1 text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] mt-0.5">
+            {subtitleIcon}
             {subtitle}
           </span>
         )}

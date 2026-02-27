@@ -18,8 +18,8 @@ import type { RuntimeSensor, DailyRuntime } from '@/app/lib/models'
 
 const statusConfig = {
   connected: { label: 'Connected', severity: 'success' as const, icon: Wifi },
-  disconnected: { label: 'Disconnected', severity: 'danger' as const, icon: WifiOff },
-  warning: { label: 'Warning', severity: 'warning' as const, icon: AlertTriangle },
+  disconnected: { label: 'Disconnected', severity: 'neutral' as const, icon: WifiOff },
+  warning: { label: 'Overloaded', severity: 'danger' as const, icon: AlertTriangle },
 }
 
 const urgencyColors = {
@@ -244,7 +244,7 @@ export default function RuntimeDetailPage() {
                 </div>
                 <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)]">Downtime Hours</span>
               </div>
-              <span className="text-[length:var(--font-size-2xl)] font-bold text-[var(--color-neutral-12)] leading-none">
+              <span className="text-[length:var(--font-size-2xl)] font-bold text-[#0044cc] leading-none">
                 {downtimeHours} h
               </span>
               <DeltaLabel delta={downtimeDelta} invert />
@@ -267,9 +267,9 @@ export default function RuntimeDetailPage() {
             {/* Peak + Minimum stacked */}
             <div className="flex flex-col gap-[var(--space-sm)]">
               <div className="flex items-center gap-[var(--space-sm)] flex-1 rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-[var(--space-md)] py-[var(--space-sm)]">
-                <TrendingUp size={16} className="text-[var(--color-accent-9)] shrink-0" />
+                <TrendingUp size={16} className="text-[var(--color-error)] shrink-0" />
                 <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] font-medium">Peak day</span>
-                <span className="text-[length:var(--font-size-base)] font-bold text-[var(--color-neutral-12)] ml-auto">{sensor.peakDay.hours} h</span>
+                <span className="text-[length:var(--font-size-base)] font-bold text-[var(--color-error)] ml-auto">{sensor.peakDay.hours} h</span>
               </div>
               <div className="flex items-center gap-[var(--space-sm)] flex-1 rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-[var(--space-md)] py-[var(--space-sm)]">
                 <Minus size={16} className="text-[var(--color-neutral-7)] shrink-0" />
@@ -405,7 +405,7 @@ function MeterCard({ sensor, chartData }: { sensor: RuntimeSensor; chartData: Da
         </div>
 
         {/* Name + current value */}
-        <div className="flex items-end justify-between mb-[var(--space-lg)]">
+        <div className="flex items-end justify-between pt-[15px] pb-[20px] mt-[20px] mb-[20px]">
           <h3 className="text-[length:var(--font-size-lg)] font-bold text-[var(--color-neutral-12)]">
             {meterName}
           </h3>
@@ -458,7 +458,7 @@ function MeterLineChart({ data }: { data: DailyRuntime[] }) {
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ')
 
   return (
-    <div className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] overflow-hidden">
+    <div className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] px-[var(--space-md)] py-[29px]">
       <svg viewBox={`0 0 ${w} ${h + 28}`} width="100%" className="block">
         {/* Grid lines + Y labels */}
         {yTicks.map((tick) => {

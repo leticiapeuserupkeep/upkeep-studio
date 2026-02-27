@@ -78,11 +78,11 @@ const sections: NavSection[] = [
   {
     title: 'EDGE',
     items: [
-      { label: 'Sensors', icon: Radio, href: '/edge/sensors' },
-      { label: 'Gateways', icon: Router, href: '/edge/gateways' },
-      { label: 'Alerts', icon: AlertTriangle, href: '/edge/alerts' },
+      { label: 'Sensors', icon: Radio },
+      { label: 'Gateways', icon: Router },
+      { label: 'Alerts', icon: AlertTriangle },
       { label: 'Runtime', icon: Timer, href: '/edge/runtime' },
-      { label: 'Settings', icon: Settings, href: '/edge/settings' },
+      { label: 'Settings', icon: Settings },
     ],
   },
   {
