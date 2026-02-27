@@ -5,6 +5,7 @@ import { Sparkles, ArrowRight } from 'lucide-react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { Card, CardHeader, CardTitle } from '@/app/components/ui/Card'
 import { Badge } from '@/app/components/ui/Badge'
+import { UrgencyBadge } from '@/app/components/ui/UrgencyBadge'
 import { Button } from '@/app/components/ui/Button'
 import { Chip } from '@/app/components/ui/Chip'
 import type { FocusItem } from '@/app/lib/models'
@@ -22,13 +23,6 @@ const filterMap: Record<FilterType, FocusItem['type'] | null> = {
   Assets: 'asset_risk',
   Compliance: 'compliance',
   Anomalies: 'anomaly',
-}
-
-const urgencySeverity = {
-  critical: 'danger' as const,
-  high: 'warning' as const,
-  medium: 'info' as const,
-  low: 'neutral' as const,
 }
 
 const categoryIcons: Record<FocusItem['type'], string> = {
@@ -57,7 +51,7 @@ export function FocusToday({ items }: FocusTodayProps) {
         <CardTitle>Focus Today</CardTitle>
       </CardHeader>
 
-      <div className="flex items-center gap-1.5 px-[var(--space-lg)] pb-[var(--space-sm)]">
+      <div className="flex items-center gap-1.5 px-[var(--widget-padding)] pb-[var(--space-sm)]">
         {filters.map((f) => (
           <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
             {f}
@@ -65,7 +59,7 @@ export function FocusToday({ items }: FocusTodayProps) {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto max-h-[480px] px-[var(--space-lg)] pb-[var(--space-lg)]">
+      <div className="flex-1 overflow-y-auto max-h-[480px] px-[var(--widget-padding)] pb-[var(--widget-padding)]">
         <div className="flex flex-col gap-1">
           {filtered.map((item, idx) => (
             <FocusRow key={item.id} item={item} rank={idx + 1} />
@@ -86,9 +80,7 @@ function FocusRow({ item, rank }: { item: FocusItem; rank: number }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-[length:var(--font-size-base)]">{categoryIcons[item.type]}</span>
-          <Badge severity={urgencySeverity[item.urgency]} dot>
-            {item.urgency}
-          </Badge>
+          <UrgencyBadge urgency={item.urgency} />
           <Tooltip.Provider delayDuration={200}>
             <Tooltip.Root>
               <Tooltip.Trigger asChild>

@@ -35,7 +35,7 @@ export function WeatherScheduling({ forecast }: WeatherSchedulingProps) {
         <CardTitle>Weather-Aware Scheduling</CardTitle>
       </CardHeader>
 
-      <div className="px-[var(--space-lg)] pb-[var(--space-lg)]">
+      <div className="px-[var(--widget-padding)] pb-[var(--widget-padding)]">
         <div className="flex gap-2 mb-4">
           {forecast.map((day) => {
             const Icon = weatherIcons[day.condition]

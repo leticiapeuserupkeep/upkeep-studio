@@ -1,82 +1,94 @@
-import { AlertTriangle, ArrowRight } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Sparkles } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/Card'
 import { Badge } from '@/app/components/ui/Badge'
 import { Button } from '@/app/components/ui/Button'
 import { Progress } from '@/app/components/ui/Progress'
-import type { Asset } from '@/app/lib/models'
+import { ProgressRing } from '@/app/components/ui/ProgressRing'
+import type { FailureResult } from '@/app/lib/models'
 
 interface PredictedFailuresProps {
-  assets: Array<Asset & { riskLabel: string }>
+  assets: FailureResult[]
+}
+
+function riskColor(probability: number) {
+  if (probability > 0.7) return { severity: 'danger' as const, progress: 'danger' as const, ring: 'var(--color-error)' }
+  if (probability > 0.5) return { severity: 'warning' as const, progress: 'warning' as const, ring: 'var(--color-warning)' }
+  return { severity: 'info' as const, progress: 'accent' as const, ring: 'var(--color-accent-9)' }
 }
 
 export function PredictedFailures({ assets }: PredictedFailuresProps) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Predicted Failures (7–14 days)</CardTitle>
-        <CardDescription>{assets.length} assets at risk</CardDescription>
+      <CardHeader
+        action={
+          <Badge severity="info" dot>
+            <Sparkles size={12} /> AI Predicted
+          </Badge>
+        }
+      >
+        <CardTitle>Predicted Failures</CardTitle>
+        <CardDescription>{assets.length} assets at risk (7–14 day window)</CardDescription>
       </CardHeader>
 
-      <div className="px-[var(--space-lg)] pb-[var(--space-lg)] flex flex-col gap-3">
-        {assets.map((asset) => (
-          <div
-            key={asset.id}
-            className="rounded-[var(--radius-lg)] border border-[var(--border-default)] p-3 hover:shadow-[var(--shadow-sm)] transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle
-                    size={14}
-                    className={
-                      asset.failureProbability > 0.7
-                        ? 'text-[var(--color-error)]'
-                        : asset.failureProbability > 0.5
-                        ? 'text-[var(--color-warning)]'
-                        : 'text-[var(--color-neutral-7)]'
-                    }
-                  />
-                  <span className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-11)]">
-                    {asset.name}
+      <div className="px-[var(--widget-padding)] pb-[var(--widget-padding)] flex flex-col gap-3">
+        {assets.map((asset) => {
+          const colors = riskColor(asset.failureProbability)
+          return (
+            <div
+              key={asset.id}
+              className="rounded-[var(--radius-lg)] border border-[var(--border-default)] p-3 hover:shadow-[var(--shadow-sm)] transition-shadow"
+            >
+              <div className="flex items-start gap-3 mb-2">
+                <ProgressRing
+                  value={asset.healthScore}
+                  size={38}
+                  strokeWidth={3}
+                  fillColor={colors.ring}
+                  label={`Health: ${asset.healthScore}%`}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-11)]">
+                      {asset.name}
+                    </span>
+                    <Badge severity={colors.severity}>{asset.riskLabel}</Badge>
+                  </div>
+                  <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] mt-0.5 block">
+                    {asset.siteName} · {asset.category}
                   </span>
-                  <Badge severity={asset.failureProbability > 0.7 ? 'danger' : asset.failureProbability > 0.5 ? 'warning' : 'info'}>
-                    {asset.riskLabel}
-                  </Badge>
                 </div>
-                <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] mt-0.5 block">
-                  {asset.siteName} • {asset.category}
+                <span className="text-[length:var(--font-size-xl)] font-bold text-[var(--color-neutral-12)] tabular-nums shrink-0">
+                  {Math.round(asset.failureProbability * 100)}%
                 </span>
               </div>
-              <span className="text-[length:var(--font-size-xl)] font-bold text-[var(--color-neutral-12)] tabular-nums">
-                {Math.round(asset.failureProbability * 100)}%
-              </span>
-            </div>
 
-            <Progress
-              value={asset.failureProbability * 100}
-              color={asset.failureProbability > 0.7 ? 'danger' : asset.failureProbability > 0.5 ? 'warning' : 'accent'}
-              size="sm"
-              className="mb-2"
-            />
+              <Progress
+                value={asset.failureProbability * 100}
+                color={colors.progress}
+                size="sm"
+                className="mb-2"
+              />
 
-            <div className="flex flex-wrap gap-1 mb-2">
-              {asset.failureDrivers.map((d, i) => (
-                <span key={i} className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] bg-[var(--color-neutral-3)] px-2 py-0.5 rounded-full">
-                  {d}
-                </span>
-              ))}
-            </div>
+              <div className="flex flex-wrap gap-1 mb-2">
+                {asset.failureDrivers.map((d, i) => (
+                  <span key={i} className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] bg-[var(--color-neutral-3)] px-2 py-0.5 rounded-full">
+                    {d}
+                  </span>
+                ))}
+              </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-[length:var(--font-size-xs)] text-[var(--color-accent-9)] font-medium">
-                {asset.recommendedAction}
-              </span>
-              <Button variant="ghost" size="sm">
-                Action <ArrowRight size={12} />
-              </Button>
+              <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-9)] leading-[var(--line-height-relaxed)] mb-2">
+                {asset.explanation}
+              </p>
+
+              <div className="flex items-center justify-end">
+                <Button variant="ghost" size="sm">
+                  Action <ArrowRight size={12} />
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </Card>
   )

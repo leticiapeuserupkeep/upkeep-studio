@@ -123,6 +123,44 @@
   --duration-normal: 200ms;
   --duration-slow: 300ms;
   --ease-default: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ── Dashboard Layout ── */
+  --dashboard-padding-x: var(--space-2xl);
+  --dashboard-padding-y: var(--space-xl);
+  --dashboard-grid-gap: var(--space-xl);
+  --dashboard-kpi-gap: var(--space-lg);
+
+  /* ── Widget ── */
+  --widget-bg: var(--surface-primary);
+  --widget-border: var(--color-neutral-3);
+  --widget-radius: var(--radius-2xl);
+  --widget-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+  --widget-padding: var(--space-xl);
+  --widget-header-padding-y: var(--space-lg);
+  --widget-gap: var(--space-xl);
+
+  /* ── Widget: Drag States ── */
+  --widget-drag-shadow: var(--shadow-xl);
+  --widget-drag-placeholder-opacity: 0.35;
+  --widget-drag-overlay-opacity: 0.92;
+  --widget-drag-rotation: 1.5deg;
+  --widget-drag-scale: 1.02;
+  --widget-drag-handle-size: 24px;
+  --widget-drag-handle-bg: var(--surface-primary);
+  --widget-drag-handle-border: var(--border-default);
+  --widget-drag-handle-color: var(--color-neutral-7);
+  --widget-drag-handle-color-hover: var(--color-neutral-9);
+
+  /* ── Widget: Drop Target ── */
+  --drop-target-bg: var(--color-accent-1);
+  --drop-target-border: var(--color-accent-4);
+  --drop-target-border-active: var(--color-accent-6);
+
+  /* ── Widget: Empty / Manage ── */
+  --widget-empty-bg: var(--surface-sunken);
+  --widget-empty-border: var(--border-subtle);
+  --widget-empty-icon-color: var(--color-neutral-6);
+  --widget-empty-text-color: var(--color-neutral-7);
 }
 
 /* ── Dark theme ── */
@@ -160,4 +198,21 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+
+  /* ── Dashboard (dark overrides) ── */
+  --widget-bg: var(--surface-primary);
+  --widget-border: var(--border-default);
+  --widget-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --widget-drag-shadow: 0 20px 25px rgba(0, 0, 0, 0.5);
+  --widget-drag-handle-bg: var(--color-neutral-3);
+  --widget-drag-handle-border: var(--color-neutral-5);
+  --widget-drag-handle-color: var(--color-neutral-8);
+  --widget-drag-handle-color-hover: var(--color-neutral-10);
+  --drop-target-bg: var(--color-accent-1);
+  --drop-target-border: var(--color-accent-3);
+  --drop-target-border-active: var(--color-accent-9);
+  --widget-empty-bg: var(--surface-sunken);
+  --widget-empty-border: var(--color-neutral-4);
+  --widget-empty-icon-color: var(--color-neutral-7);
+  --widget-empty-text-color: var(--color-neutral-8);
 }

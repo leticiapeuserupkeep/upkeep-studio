@@ -1,6 +1,7 @@
 import type {
   WorkOrder, Asset, Part, Technician, ActivityEvent, StudioApp,
   BudgetLine, ComplianceItem, WeatherDay, SensorReading, ShiftHandoff,
+  Site,
 } from './models'
 
 export const workOrders: WorkOrder[] = [
@@ -108,4 +109,11 @@ export const shiftHandoff: ShiftHandoff = {
   ],
 }
 
-export const sites = ['All Sites', 'Main Campus', 'Plant North', 'Plant South', 'Warehouse East']
+export const siteObjects: Site[] = [
+  { id: 'main-campus',    name: 'Main Campus',    region: 'East' },
+  { id: 'plant-north',    name: 'Plant North',    region: 'East' },
+  { id: 'plant-south',    name: 'Plant South',    region: 'West' },
+  { id: 'warehouse-east', name: 'Warehouse East', region: 'East' },
+]
+
+export const sites = ['All Sites', ...siteObjects.map((s) => s.name)]

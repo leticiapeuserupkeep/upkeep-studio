@@ -37,15 +37,15 @@ export function TeamPulse({ technicians, activity }: TeamPulseProps) {
         <CardDescription>{technicians.length} technicians on shift</CardDescription>
       </CardHeader>
 
-      <div className="px-[var(--space-lg)] pb-[var(--space-md)]">
-        <div className="flex flex-col gap-1.5">
+      <div className="px-[var(--widget-padding)] pb-[var(--space-md)]">
+        <div className="flex flex-col gap-2">
           {technicians.map((tech) => (
             <TechCard key={tech.id} tech={tech} />
           ))}
         </div>
       </div>
 
-      <div className="border-t border-[var(--border-subtle)] px-[var(--space-lg)] py-[var(--space-sm)]">
+      <div className="border-t border-[var(--border-subtle)] px-[var(--widget-padding)] py-[var(--space-sm)]">
         <p className="text-[length:var(--font-size-xs)] font-semibold text-[var(--color-neutral-8)] uppercase tracking-wider mb-2">
           Recent Activity
         </p>

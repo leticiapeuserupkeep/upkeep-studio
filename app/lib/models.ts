@@ -135,6 +135,50 @@ export interface FocusItem {
   cta: { label: string; href: string }
 }
 
+/* ── Site ── */
+
+export interface Site {
+  id: string
+  name: string
+  region?: string
+}
+
+/* ── Dashboard KPIs ── */
+
+export interface DashboardKPIs {
+  openWOs: number
+  overdueWOs: number
+  inProgressWOs: number
+  completedToday: number
+  totalTechnicians: number
+  availableTechnicians: number
+}
+
+/* ── AI Stub Results ── */
+
+export interface AnomalyResult extends SensorReading {
+  severity: 'warning' | 'critical'
+  deviationPercent: number
+  explanation: string
+}
+
+export interface StockoutResult extends Part {
+  daysUntilStockout: number
+  urgencyLabel: string
+  explanation: string
+}
+
+export interface FailureResult extends Asset {
+  riskLabel: string
+  explanation: string
+}
+
+export interface CostResult extends BudgetLine {
+  percentUsed: number
+  overrun: boolean
+  explanation: string
+}
+
 /* ── Edge: Runtime ── */
 
 export type SensorStatus = 'connected' | 'disconnected' | 'warning'

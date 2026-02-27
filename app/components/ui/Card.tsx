@@ -7,7 +7,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export function Card({ children, className = '', ...props }: CardProps) {
   return (
     <div
-      className={`rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-xs)] ${className}`}
+      className={`rounded-[var(--widget-radius)] border border-[var(--widget-border)] bg-[var(--widget-bg)] shadow-[var(--widget-shadow)] ${className}`}
       {...props}
     >
       {children}
@@ -23,10 +23,10 @@ interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
 export function CardHeader({ children, action, className = '', ...props }: CardHeaderProps) {
   return (
     <div
-      className={`flex items-center justify-between px-[var(--space-lg)] py-[var(--space-md)] ${className}`}
+      className={`flex items-center justify-between px-[var(--widget-padding)] py-[var(--widget-header-padding-y)] ${className}`}
       {...props}
     >
-      <div className="flex flex-col gap-0.5">{children}</div>
+      <div className="flex flex-col gap-1">{children}</div>
       {action && <div className="flex items-center gap-2">{action}</div>}
     </div>
   )
@@ -34,7 +34,7 @@ export function CardHeader({ children, action, className = '', ...props }: CardH
 
 export function CardTitle({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <h3 className={`text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-11)] ${className}`}>
+    <h3 className={`text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)] ${className}`}>
       {children}
     </h3>
   )
@@ -48,7 +48,7 @@ export function CardDescription({ children }: { children: ReactNode }) {
 
 export function CardBody({ children, className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`px-[var(--space-lg)] pb-[var(--space-lg)] ${className}`} {...props}>
+    <div className={`px-[var(--widget-padding)] pb-[var(--widget-padding)] ${className}`} {...props}>
       {children}
     </div>
   )
@@ -57,7 +57,7 @@ export function CardBody({ children, className = '', ...props }: HTMLAttributes<
 export function CardFooter({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`flex items-center gap-2 px-[var(--space-lg)] py-[var(--space-sm)] border-t border-[var(--border-subtle)] ${className}`}
+      className={`flex items-center gap-2 px-[var(--widget-padding)] py-[var(--space-sm)] border-t border-[var(--border-subtle)] ${className}`}
     >
       {children}
     </div>

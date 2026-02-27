@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { SideNav } from '@/app/components/dashboard/SideNav'
 import { TopBar } from '@/app/components/dashboard/TopBar'
 import { Button } from '@/app/components/ui/Button'
+import { DashboardProvider } from '@/app/lib/dashboard/dashboard-context'
 import { sites } from '@/app/lib/mock-data'
 import type { Role } from '@/app/lib/models'
 
@@ -57,7 +58,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             ) : undefined
           }
         />
-        {children}
+        <DashboardProvider role={role} site={site}>
+          {children}
+        </DashboardProvider>
       </div>
     </div>
   )

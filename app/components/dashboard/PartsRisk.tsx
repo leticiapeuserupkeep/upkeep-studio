@@ -3,17 +3,11 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/app/components/u
 import { Badge } from '@/app/components/ui/Badge'
 import { Button } from '@/app/components/ui/Button'
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/app/components/ui/Table'
-import type { Part } from '@/app/lib/models'
+import type { StockoutResult } from '@/app/lib/models'
+import { urgencyToSeverity } from '@/app/components/ui/UrgencyBadge'
 
 interface PartsRiskProps {
-  parts: Array<Part & { daysUntilStockout: number; urgencyLabel: string }>
-}
-
-const riskSeverity = {
-  critical: 'danger' as const,
-  high: 'warning' as const,
-  medium: 'info' as const,
-  low: 'neutral' as const,
+  parts: StockoutResult[]
 }
 
 export function PartsRisk({ parts }: PartsRiskProps) {
@@ -30,7 +24,7 @@ export function PartsRisk({ parts }: PartsRiskProps) {
         <CardDescription>{parts.filter((p) => p.riskLevel === 'critical' || p.riskLevel === 'high').length} parts need attention</CardDescription>
       </CardHeader>
 
-      <div className="px-[var(--space-lg)] pb-[var(--space-lg)]">
+      <div className="px-[var(--widget-padding)] pb-[var(--widget-padding)]">
         <Table>
           <TableHeader>
             <tr>
@@ -60,7 +54,7 @@ export function PartsRisk({ parts }: PartsRiskProps) {
                     <span className="tabular-nums">{part.daysUntilStockout}d</span>
                   </TableCell>
                   <TableCell>
-                    <Badge severity={riskSeverity[part.riskLevel]}>{part.urgencyLabel}</Badge>
+                    <Badge severity={urgencyToSeverity[part.riskLevel]}>{part.urgencyLabel}</Badge>
                   </TableCell>
                   <TableCell>
                     {bestVendor && (

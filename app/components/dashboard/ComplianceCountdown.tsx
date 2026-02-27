@@ -8,13 +8,6 @@ interface ComplianceCountdownProps {
   items: ComplianceItem[]
 }
 
-const urgencySeverity = {
-  critical: 'danger' as const,
-  high: 'warning' as const,
-  medium: 'info' as const,
-  low: 'neutral' as const,
-}
-
 const typeLabels: Record<ComplianceItem['type'], string> = {
   pm: 'PM',
   inspection: 'Inspection',
@@ -33,7 +26,7 @@ export function ComplianceCountdown({ items }: ComplianceCountdownProps) {
         <CardDescription>Upcoming PMs, inspections & certifications</CardDescription>
       </CardHeader>
 
-      <div className="px-[var(--space-lg)] pb-[var(--space-lg)] flex flex-col gap-1">
+      <div className="px-[var(--widget-padding)] pb-[var(--widget-padding)] flex flex-col gap-1">
         {items.map((item) => (
           <div
             key={item.id}

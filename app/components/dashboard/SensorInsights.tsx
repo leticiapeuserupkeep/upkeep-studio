@@ -2,10 +2,14 @@ import { Activity } from 'lucide-react'
 import { Card, CardHeader, CardTitle } from '@/app/components/ui/Card'
 import { Badge } from '@/app/components/ui/Badge'
 import { Sparkline } from '@/app/components/ui/Sparkline'
-import type { SensorReading } from '@/app/lib/models'
+import type { AnomalyResult, SensorReading } from '@/app/lib/models'
 
 interface SensorInsightsProps {
-  readings: Array<SensorReading & { severity?: 'warning' | 'critical' }>
+  readings: Array<SensorReading | AnomalyResult>
+}
+
+function isAnomaly(r: SensorReading | AnomalyResult): r is AnomalyResult {
+  return 'severity' in r
 }
 
 export function SensorInsights({ readings }: SensorInsightsProps) {
@@ -15,7 +19,7 @@ export function SensorInsights({ readings }: SensorInsightsProps) {
         <CardTitle>Live Sensor Insights</CardTitle>
       </CardHeader>
 
-      <div className="px-[var(--space-lg)] pb-[var(--space-lg)] flex flex-col gap-3">
+      <div className="px-[var(--widget-padding)] pb-[var(--widget-padding)] flex flex-col gap-3">
         {readings.map((r) => (
           <SensorCard key={`${r.assetId}-${r.metric}`} reading={r} />
         ))}
@@ -24,7 +28,8 @@ export function SensorInsights({ readings }: SensorInsightsProps) {
   )
 }
 
-function SensorCard({ reading }: { reading: SensorReading & { severity?: 'warning' | 'critical' } }) {
+function SensorCard({ reading }: { reading: SensorReading | AnomalyResult }) {
+  const anomaly = isAnomaly(reading)
   const isAbove = reading.currentValue > reading.baseline.max
   const sparkColor = reading.anomaly
     ? isAbove
@@ -41,9 +46,10 @@ function SensorCard({ reading }: { reading: SensorReading & { severity?: 'warnin
             <span className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-11)] truncate">
               {reading.assetName}
             </span>
-            {reading.anomaly && (
+            {anomaly && (
               <Badge severity={reading.severity === 'critical' ? 'danger' : 'warning'} dot>
                 {reading.severity === 'critical' ? 'Critical' : 'Warning'}
+                {reading.deviationPercent > 0 && ` (${reading.deviationPercent}%)`}
               </Badge>
             )}
           </div>
@@ -69,7 +75,7 @@ function SensorCard({ reading }: { reading: SensorReading & { severity?: 'warnin
       <Sparkline data={reading.history} width={280} height={36} color={sparkColor} className="w-full" />
 
       <p className="mt-2 text-[length:var(--font-size-xs)] text-[var(--color-neutral-9)] leading-[var(--line-height-relaxed)]">
-        {reading.interpretation}
+        {anomaly ? reading.explanation : reading.interpretation}
       </p>
     </div>
   )

@@ -106,3 +106,113 @@ body {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* ── Widget: Drag placeholder (the item left behind) ── */
+.widget-drag-placeholder {
+  opacity: var(--widget-drag-placeholder-opacity);
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+/* ── Widget: Drag overlay (the floating copy) ── */
+.widget-drag-overlay {
+  opacity: var(--widget-drag-overlay-opacity);
+  box-shadow: var(--widget-drag-shadow);
+  border-radius: var(--widget-radius);
+  rotate: var(--widget-drag-rotation);
+  scale: var(--widget-drag-scale);
+  cursor: grabbing;
+}
+
+/* ── Widget: Drag handle ── */
+.widget-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--widget-drag-handle-size);
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--widget-drag-handle-bg);
+  border: 1px solid var(--widget-drag-handle-border);
+  box-shadow: var(--shadow-sm);
+  color: var(--widget-drag-handle-color);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+  cursor: grab;
+}
+
+.widget-drag-handle:hover {
+  color: var(--widget-drag-handle-color-hover);
+}
+
+.widget-drag-handle:active {
+  cursor: grabbing;
+}
+
+.group:hover .widget-drag-handle,
+[data-dragging="true"] .widget-drag-handle {
+  opacity: 1;
+}
+
+/* ── Widget: Drop target indicator ── */
+@keyframes drop-target-pulse {
+  0%, 100% { border-color: var(--drop-target-border); }
+  50% { border-color: var(--drop-target-border-active); }
+}
+
+.widget-drop-target {
+  background: var(--drop-target-bg);
+  border: 2px dashed var(--drop-target-border);
+  border-radius: var(--widget-radius);
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.widget-drop-target[data-active="true"] {
+  animation: drop-target-pulse 1.2s ease-in-out infinite;
+}
+
+/* ── Widget: Add/remove transitions ── */
+@keyframes widget-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes widget-exit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.widget-enter {
+  animation: widget-enter var(--duration-slow) var(--ease-default) forwards;
+}
+
+.widget-exit {
+  animation: widget-exit var(--duration-normal) var(--ease-default) forwards;
+}
+
+/* ── Widget: Empty state ── */
+.widget-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-3xl) var(--space-xl);
+  background: var(--widget-empty-bg);
+  border: 1px dashed var(--widget-empty-border);
+  border-radius: var(--widget-radius);
+  color: var(--widget-empty-text-color);
+  text-align: center;
+}

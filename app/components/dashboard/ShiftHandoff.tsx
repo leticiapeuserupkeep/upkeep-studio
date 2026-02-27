@@ -56,7 +56,7 @@ export function ShiftHandoff({ handoff }: ShiftHandoffProps) {
         </CardDescription>
       </CardHeader>
 
-      <div className="px-[var(--space-lg)] pb-[var(--space-lg)] flex flex-col gap-[var(--space-md)]">
+      <div className="px-[var(--widget-padding)] pb-[var(--widget-padding)] flex flex-col gap-[var(--space-md)]">
         <Section icon={<CheckCircle2 size={14} className="text-[var(--color-success)]" />} title="Completed" count={handoff.completed.length}>
           {handoff.completed.map((item, i) => (
             <li key={i} className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)] py-0.5">{item}</li>
