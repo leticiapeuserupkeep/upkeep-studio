@@ -1,18 +1,21 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Clock, Wifi, WifiOff, AlertTriangle,
-  TrendingUp, TrendingDown, Minus, Timer, Activity, BarChart3,
-  ClipboardList, Plus, Share2, XCircle, Calendar, ChevronDown,
+  TrendingUp, TrendingDown, Minus, Timer, BarChart3,
+  ClipboardList, Plus, Share2, XCircle, Calendar, ChevronDown, Zap, Trash2,
 } from 'lucide-react'
+import * as Switch from '@radix-ui/react-switch'
 import { Card, CardHeader, CardTitle, CardBody } from '@/app/components/ui/Card'
 import { Badge } from '@/app/components/ui/Badge'
 import { Button } from '@/app/components/ui/Button'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/components/ui/Table'
 import { RuntimeBarChart } from '@/app/components/edge/RuntimeBarChart'
+import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
+import { SyncMeterModal } from '@/app/components/edge/SyncMeterModal'
 import { runtimeSensors } from '@/app/lib/edge-data'
 import type { RuntimeSensor, DailyRuntime } from '@/app/lib/models'
 
@@ -70,6 +73,17 @@ export default function RuntimeDetailPage() {
   const [customFrom, setCustomFrom] = useState(getDefaultRange().from)
   const [customTo, setCustomTo] = useState(getDefaultRange().to)
   const [showRangePicker, setShowRangePicker] = useState(false)
+  const [showMeterModal, setShowMeterModal] = useState(false)
+  const [showSyncMeterModal, setShowSyncMeterModal] = useState(false)
+  const [meterDeleted, setMeterDeleted] = useState(false)
+  const [meterSyncOn, setMeterSyncOn] = useState(true)
+  const [selectedDay, setSelectedDay] = useState<DailyRuntime | null>(null)
+
+  useEffect(() => {
+    const handler = () => setShowMeterModal(true)
+    window.addEventListener('open-edit-runtime', handler)
+    return () => window.removeEventListener('open-edit-runtime', handler)
+  }, [])
 
   const sensor = runtimeSensors.find((s) => s.id === sensorId)
 
@@ -287,19 +301,37 @@ export default function RuntimeDetailPage() {
         <div className="col-span-2 flex flex-col gap-[var(--space-lg)]">
           {/* Daily Runtime Chart */}
           <Card>
-            <CardHeader>
+            <CardHeader
+              action={
+                sensor.runtimeThreshold != null ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-[var(--radius-md)] bg-[var(--color-neutral-3)] text-[length:var(--font-size-xs)] font-semibold text-[var(--color-neutral-11)]">
+                    <Zap size={11} className="text-[var(--color-warning)]" />
+                    Threshold: {sensor.runtimeThreshold} AMP
+                  </span>
+                ) : undefined
+              }
+            >
               <CardTitle>Daily Runtime</CardTitle>
               <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
                 Hours of operation per day
               </p>
             </CardHeader>
             <CardBody>
-              <RuntimeBarChart data={chartData} height={280} />
+              <RuntimeBarChart
+                data={chartData}
+                height={280}
+                onDayClick={(day) => setSelectedDay((prev) => prev?.date === day.date ? null : day)}
+                selectedDate={selectedDay?.date}
+              />
             </CardBody>
           </Card>
 
-          {/* Meter */}
-          <MeterCard sensor={sensor} chartData={chartData} />
+          {/* Day detail readings */}
+          {selectedDay && (
+            <DayReadingsTable day={selectedDay} threshold={sensor.runtimeThreshold} />
+          )}
+
+          {/* Meter card hidden — meter info moved to Sensor Details */}
         </div>
 
         {/* Right column (1 col) */}
@@ -317,191 +349,82 @@ export default function RuntimeDetailPage() {
                 <DetailRow label="Type" value={sensor.type} />
                 <DetailRow label="Location" value={sensor.locationName} />
                 <DetailRow label="Last Reading" value={sensor.lastReading} />
+
+                {/* Runtime Threshold row */}
+                <div className="flex items-center justify-between py-[var(--space-xs)] border-b border-[var(--border-subtle)]">
+                  <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Runtime Threshold</span>
+                  {sensor.runtimeThreshold != null ? (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--color-neutral-3)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)]">
+                      <Zap size={11} className="text-[var(--color-warning)]" />
+                      {sensor.runtimeThreshold} AMP
+                    </span>
+                  ) : (
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Not set</span>
+                  )}
+                </div>
+
+                {/* Meter row */}
+                <div className="flex items-center justify-between py-[var(--space-xs)] border-b border-[var(--border-subtle)] last:border-0">
+                  <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Meter</span>
+                  {sensor.meterName && !meterDeleted ? (
+                    <div className="flex items-center gap-[var(--space-xs)]">
+                      <button
+                        onClick={() => setShowMeterModal(true)}
+                        className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:underline cursor-pointer truncate max-w-[120px]"
+                      >
+                        {sensor.meterName}
+                      </button>
+                      <Switch.Root
+                        checked={meterSyncOn}
+                        onCheckedChange={setMeterSyncOn}
+                        className="relative w-[32px] h-[18px] rounded-full cursor-pointer transition-colors duration-200 shrink-0 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
+                      >
+                        <Switch.Thumb className="block w-[14px] h-[14px] bg-white rounded-full shadow-sm transition-transform duration-200 translate-x-[2px] data-[state=checked]:translate-x-[16px]" />
+                      </Switch.Root>
+                      <button
+                        onClick={() => setMeterDeleted(true)}
+                        className="flex items-center justify-center w-6 h-6 rounded-[var(--radius-sm)] hover:bg-[var(--color-error-light)] transition-colors cursor-pointer shrink-0"
+                        aria-label="Delete meter"
+                      >
+                        <Trash2 size={13} className="text-[var(--color-error)]" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowSyncMeterModal(true)}
+                      className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:underline cursor-pointer"
+                    >
+                      Sync Meter
+                    </button>
+                  )}
+                </div>
               </div>
             </CardBody>
           </Card>
 
-          {/* Work Orders */}
-          <Card>
-            <CardHeader
-              action={
-                <Button variant="primary" size="sm">
-                  <Plus size={14} />
-                  Create Work Order
-                </Button>
-              }
-            >
-              <CardTitle>Work Orders</CardTitle>
-              <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
-                Linked to this sensor
-              </p>
-            </CardHeader>
-            <CardBody className="!pt-0">
-              {sensor.workOrders.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sensor.workOrders.map((wo) => (
-                      <TableRow key={wo.id} className="cursor-pointer">
-                        <TableCell>
-                          <span className="font-medium text-[var(--color-accent-9)]">{wo.id}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="truncate block max-w-[140px]">{wo.title}</span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge severity={woStatusSeverity[wo.status]}>{woStatusLabels[wo.status]}</Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="flex flex-col items-center py-[var(--space-xl)] text-center">
-                  <ClipboardList size={32} className="text-[var(--color-neutral-5)] mb-2" />
-                  <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
-                    No work orders linked
-                  </p>
-                  <Button variant="secondary" size="sm" className="mt-3">
-                    <Plus size={14} />
-                    Create Work Order
-                  </Button>
-                </div>
-              )}
-            </CardBody>
-          </Card>
+          {/* Work Orders — hidden for now */}
 
         </div>
       </div>
-    </div>
-  )
-}
 
-function MeterCard({ sensor, chartData }: { sensor: RuntimeSensor; chartData: DailyRuntime[] }) {
-  const meterName = `${sensor.assetName} Runtime`
-  const currentValue = sensor.meter.currentReading
-  const unit = sensor.meter.unit
+      {/* Edit Runtime Configuration Modal */}
+      <MeterConfigModal
+        open={showMeterModal}
+        onOpenChange={setShowMeterModal}
+        sensorName={sensor.name}
+        totalRuntime={sensor.totalHours}
+        existingMeterName={sensor.meterName}
+        syncEnabled={sensor.meterSyncEnabled}
+        runtimeThreshold={sensor.runtimeThreshold}
+      />
 
-  const last7 = chartData.slice(-7)
-  const maxH = Math.max(...last7.map((d) => d.hours), 1)
-
-  return (
-    <Card>
-      <div className="px-[var(--space-lg)] pt-[var(--space-lg)] pb-[var(--space-sm)]">
-        {/* Top row: label + last reading */}
-        <div className="flex items-center justify-between mb-[var(--space-sm)]">
-          <span className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.04em] text-[var(--color-neutral-8)]">
-            Meter
-          </span>
-          <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">
-            Last reading: {sensor.lastReading}
-          </span>
-        </div>
-
-        {/* Name + current value */}
-        <div className="flex items-end justify-between pt-[15px] pb-[20px] mt-[20px] mb-[20px]">
-          <h3 className="text-[length:var(--font-size-lg)] font-bold text-[var(--color-neutral-12)]">
-            {meterName}
-          </h3>
-          <div className="text-right">
-            <span className="text-[length:var(--font-size-2xl)] font-bold text-[var(--color-error)] leading-none">
-              {currentValue.toLocaleString()}
-            </span>
-            <span className="text-[length:var(--font-size-base)] text-[var(--color-error)] ml-1 font-medium">
-              {unit}
-            </span>
-          </div>
-        </div>
-
-        {/* Line chart — last 7 data points */}
-        <MeterLineChart data={last7} />
-      </div>
-
-      <div className="pb-[var(--space-md)]" />
-    </Card>
-  )
-}
-
-function MeterLineChart({ data }: { data: DailyRuntime[] }) {
-  if (data.length < 2) return null
-
-  const values = data.map((d) => d.hours)
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const range = max - min || 1
-
-  const w = 600
-  const h = 120
-  const padX = 8
-  const padY = 12
-  const chartW = w - padX * 2
-  const chartH = h - padY * 2
-
-  const yTickCount = 4
-  const niceMin = Math.floor(min / 5) * 5
-  const niceMax = Math.ceil(max / 5) * 5
-  const niceRange = niceMax - niceMin || 1
-  const yTicks = Array.from({ length: yTickCount + 1 }, (_, i) => Math.round(niceMin + (niceRange / yTickCount) * i))
-
-  const points = values.map((v, i) => {
-    const x = padX + (i / (values.length - 1)) * chartW
-    const y = padY + chartH - ((v - niceMin) / niceRange) * chartH
-    return { x, y }
-  })
-
-  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ')
-
-  return (
-    <div className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] px-[var(--space-md)] py-[29px]">
-      <svg viewBox={`0 0 ${w} ${h + 28}`} width="100%" className="block">
-        {/* Grid lines + Y labels */}
-        {yTicks.map((tick) => {
-          const y = padY + chartH - ((tick - niceMin) / niceRange) * chartH
-          return (
-            <g key={tick}>
-              <line x1={padX} y1={y} x2={w - padX} y2={y} stroke="var(--color-neutral-3)" strokeWidth={1} />
-              <text
-                x={padX + 2}
-                y={y - 4}
-                fill="var(--color-neutral-7)"
-                fontSize={11}
-                fontFamily="var(--font-family-base)"
-              >
-                {tick}
-              </text>
-            </g>
-          )
-        })}
-
-        {/* Line */}
-        <path d={pathD} fill="none" stroke="var(--color-accent-7)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-
-        {/* X-axis labels */}
-        {data.map((day, i) => {
-          const x = padX + (i / (data.length - 1)) * chartW
-          const dt = new Date(day.date + 'T00:00:00')
-          const label = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          return (
-            <text
-              key={day.date}
-              x={x}
-              y={h + 18}
-              fill="var(--color-neutral-7)"
-              fontSize={11}
-              fontFamily="var(--font-family-base)"
-              textAnchor="middle"
-            >
-              {label}
-            </text>
-          )
-        })}
-      </svg>
+      {/* Sync Meter Modal */}
+      <SyncMeterModal
+        open={showSyncMeterModal}
+        onOpenChange={setShowSyncMeterModal}
+        sensorName={sensor.name}
+        totalRuntime={sensor.totalHours}
+      />
     </div>
   )
 }
@@ -584,9 +507,187 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function formatShortDate(dateStr: string) {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })
+interface IntervalReading {
+  time: string
+  amps: number
+  running: boolean
+  duration: string
+}
+
+function generateIntervalReadings(day: DailyRuntime, threshold?: number): IntervalReading[] {
+  const th = threshold ?? 10
+  const readings: IntervalReading[] = []
+  const rng = seedRandom(day.date)
+  const totalActiveIntervals = Math.round((day.hours / 24) * 144)
+
+  const active = new Array(144).fill(false)
+
+  if (totalActiveIntervals > 0) {
+    let blockStart = Math.floor(rng() * 20)
+    let filled = 0
+    while (filled < totalActiveIntervals && blockStart < 144) {
+      const blockLen = Math.min(
+        Math.floor(rng() * 30) + 6,
+        totalActiveIntervals - filled,
+        144 - blockStart
+      )
+      for (let j = blockStart; j < blockStart + blockLen && j < 144; j++) {
+        active[j] = true
+        filled++
+      }
+      blockStart += blockLen + Math.floor(rng() * 12) + 1
+    }
+  }
+
+  for (let i = 0; i < 144; i++) {
+    const hour = Math.floor(i / 6)
+    const minute = (i % 6) * 10
+    const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+
+    const isRunning = active[i]
+    const amps = isRunning
+      ? Math.round((th + rng() * th * 0.8) * 10) / 10
+      : Math.round(rng() * (th * 0.3) * 10) / 10
+
+    readings.push({
+      time,
+      amps,
+      running: isRunning,
+      duration: '10 min',
+    })
+  }
+
+  return readings
+}
+
+function seedRandom(str: string) {
+  let h = 0
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h + str.charCodeAt(i)) | 0
+  }
+  return () => {
+    h = (h * 16807 + 0) % 2147483647
+    return (h & 0x7fffffff) / 2147483647
+  }
+}
+
+function DayPieChart({ connectedHours, disconnectedHours }: { connectedHours: number; disconnectedHours: number }) {
+  const total = connectedHours + disconnectedHours
+  const connectedPct = total > 0 ? (connectedHours / total) * 100 : 0
+  const size = 48
+  const stroke = 6
+  const radius = (size - stroke) / 2
+  const circumference = 2 * Math.PI * radius
+  const connectedOffset = circumference - (connectedPct / 100) * circumference
+
+  return (
+    <div className="flex items-center gap-[var(--space-md)] pt-1 pb-3">
+      <div className="relative shrink-0" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="-rotate-90">
+          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--color-neutral-4)" strokeWidth={stroke} />
+          <circle
+            cx={size / 2} cy={size / 2} r={radius} fill="none"
+            stroke="var(--color-accent-9)" strokeWidth={stroke} strokeLinecap="round"
+            strokeDasharray={circumference} strokeDashoffset={connectedOffset}
+          />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-[length:10px] font-bold text-[var(--color-accent-9)]">
+          {Math.round(connectedPct)}%
+        </span>
+      </div>
+      <div className="flex flex-col gap-1 hidden">
+        <span className="inline-flex items-center gap-1.5 text-[length:var(--font-size-xs)] font-medium text-[var(--color-success)]">
+          <span className="w-2 h-2 rounded-full bg-[var(--color-success)]" />
+          Connected: {connectedHours}h
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-7)]">
+          <span className="w-2 h-2 rounded-full bg-[var(--color-neutral-4)]" />
+          Disconnected: {disconnectedHours}h
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function DayReadingsTable({ day, threshold }: { day: DailyRuntime; threshold?: number }) {
+  const readings = useMemo(() => generateIntervalReadings(day, threshold), [day, threshold])
+  const activeCount = readings.filter((r) => r.running).length
+  const activeHours = Math.round((activeCount / 6) * 10) / 10
+  const dt = new Date(day.date + 'T00:00:00')
+  const dateLabel = dt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+
+  return (
+    <Card>
+      <CardHeader
+        action={
+          <DayPieChart connectedHours={activeHours} disconnectedHours={Math.round((24 - activeHours) * 10) / 10} />
+        }
+      >
+        <CardTitle>{dateLabel}</CardTitle>
+        <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
+          10-minute interval readings
+        </p>
+      </CardHeader>
+      <CardBody>
+        {/* Timeline visualisation */}
+        <div className="flex gap-[2px] mb-[var(--space-md)] rounded-[var(--radius-md)] overflow-hidden">
+          {readings.map((r, i) => (
+            <div
+              key={i}
+              className="flex-1 h-3 transition-colors"
+              style={{
+                backgroundColor: r.running ? 'var(--color-accent-9)' : 'var(--color-neutral-3)',
+              }}
+              title={`${r.time} — ${r.running ? 'Connected' : 'Disconnected'} (${r.amps} A)`}
+            />
+          ))}
+        </div>
+
+        {/* Hour labels */}
+        <div className="flex justify-between mb-[var(--space-md)] px-0.5 pt-1 pb-3">
+          {[0, 4, 8, 12, 16, 20, 24].map((h) => (
+            <span key={h} className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)]">
+              {h.toString().padStart(2, '0')}:00
+            </span>
+          ))}
+        </div>
+
+        {/* Scrollable table */}
+        <div className="max-h-[320px] overflow-y-auto rounded-[var(--radius-md)] border border-[var(--border-subtle)]">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Time</TableHead>
+                <TableHead>Current (A)</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Duration</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {readings.map((r, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <span className="font-medium text-[var(--color-neutral-11)]">{r.time}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={r.running ? 'text-[var(--color-neutral-11)] font-medium' : 'text-[var(--color-neutral-7)]'}>
+                      {r.amps} A
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge severity={r.running ? 'success' : 'neutral'}>
+                      {r.running ? 'Connected' : 'Disconnected'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-[var(--color-neutral-8)]">{r.duration}</span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardBody>
+    </Card>
+  )
 }

@@ -7,81 +7,39 @@ interface RuntimeBarChartProps {
   data: DailyRuntime[]
   height?: number
   className?: string
+  onDayClick?: (day: DailyRuntime) => void
+  selectedDate?: string
 }
 
-interface ChartBar {
-  label: string
-  hours: number
-  cycles: number
-  dateRange: string
+function formatLabel(date: string, total: number): string {
+  const dt = new Date(date + 'T00:00:00')
+  if (total <= 7) return dt.toLocaleDateString('en-US', { weekday: 'short' })
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function bucketData(data: DailyRuntime[]): ChartBar[] {
-  if (data.length <= 7) {
-    return data.map((d) => {
-      const dt = new Date(d.date + 'T00:00:00')
-      return {
-        label: dt.toLocaleDateString('en-US', { weekday: 'short' }),
-        hours: d.hours,
-        cycles: d.cycles,
-        dateRange: dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      }
-    })
-  }
-
-  if (data.length <= 14) {
-    return data.map((d) => {
-      const dt = new Date(d.date + 'T00:00:00')
-      return {
-        label: dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        hours: d.hours,
-        cycles: d.cycles,
-        dateRange: dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      }
-    })
-  }
-
-  const bucketSize = 3
-  const bars: ChartBar[] = []
-  for (let i = 0; i < data.length; i += bucketSize) {
-    const chunk = data.slice(i, i + bucketSize)
-    const totalHours = Math.round(chunk.reduce((s, d) => s + d.hours, 0) * 10) / 10
-    const totalCycles = chunk.reduce((s, d) => s + d.cycles, 0)
-    const firstDate = new Date(chunk[0].date + 'T00:00:00')
-    const lastDate = new Date(chunk[chunk.length - 1].date + 'T00:00:00')
-    const label = firstDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    const rangeEnd = lastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-
-    bars.push({
-      label,
-      hours: totalHours,
-      cycles: totalCycles,
-      dateRange: chunk.length > 1 ? `${label} – ${rangeEnd}` : label,
-    })
-  }
-  return bars
+function shouldShowLabel(index: number, total: number): boolean {
+  if (total <= 14) return true
+  if (total <= 21) return index % 2 === 0
+  return index % 3 === 0
 }
 
-export function RuntimeBarChart({ data, height = 260, className = '' }: RuntimeBarChartProps) {
+export function RuntimeBarChart({ data, height = 260, className = '', onDayClick, selectedDate }: RuntimeBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
-  const bars = useMemo(() => bucketData(data), [data])
-
-  const maxVal = Math.max(...bars.map((b) => b.hours), 1)
-  const ceilMax = Math.ceil(maxVal / 6) * 6 || 6
-  const yTickCount = 5
-  const yTicks = Array.from({ length: yTickCount + 1 }, (_, i) => Math.round((ceilMax / yTickCount) * i))
+  const ceilMax = 24
+  const yTickCount = 4
+  const yTicks = [0, 6, 12, 18, 24]
 
   const chartPaddingTop = 16
   const chartPaddingBottom = 40
   const yAxisWidth = 44
   const chartAreaHeight = height - chartPaddingTop - chartPaddingBottom
 
-  const barCount = bars.length
-  const gap = barCount <= 7 ? '12px' : barCount <= 10 ? '10px' : '8px'
-  const pad = barCount <= 7 ? '12px' : '6px'
-  const maxBarWidth = barCount <= 7 ? '44px' : barCount <= 10 ? '36px' : '28px'
-  const radius = barCount <= 10 ? '6px 6px 2px 2px' : '4px 4px 1px 1px'
+  const barCount = data.length
+  const gap = barCount <= 7 ? '12px' : barCount <= 14 ? '8px' : '4px'
+  const pad = barCount <= 7 ? '12px' : '4px'
+  const maxBarWidth = barCount <= 7 ? '44px' : barCount <= 14 ? '28px' : '18px'
+  const radius = barCount <= 14 ? '4px 4px 2px 2px' : '3px 3px 1px 1px'
 
   return (
     <div className={`relative select-none ${className}`} style={{ height }}>
@@ -96,7 +54,7 @@ export function RuntimeBarChart({ data, height = 260, className = '' }: RuntimeB
               key={tick}
               className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] text-right pr-3 leading-none"
             >
-              {tick}
+              {tick}h
             </span>
           ))}
         </div>
@@ -105,7 +63,7 @@ export function RuntimeBarChart({ data, height = 260, className = '' }: RuntimeB
         <div className="flex-1 relative">
           {/* Horizontal grid lines */}
           {yTicks.map((tick) => {
-            const pct = ceilMax > 0 ? (tick / ceilMax) * 100 : 0
+            const pct = (tick / ceilMax) * 100
             return (
               <div
                 key={tick}
@@ -130,28 +88,31 @@ export function RuntimeBarChart({ data, height = 260, className = '' }: RuntimeB
               paddingRight: pad,
             }}
           >
-            {bars.map((bar, i) => {
-              const barPct = ceilMax > 0 ? (bar.hours / ceilMax) * 100 : 0
+            {data.map((day, i) => {
+              const barPct = (Math.min(day.hours, 24) / ceilMax) * 100
               const isHovered = hoveredIndex === i
+              const isSelected = selectedDate === day.date
+              const label = formatLabel(day.date, barCount)
 
               return (
                 <div
-                  key={i}
+                  key={day.date}
                   className="flex-1 relative flex flex-col items-center"
                   style={{ height: '100%', minWidth: 0 }}
                   onMouseEnter={() => setHoveredIndex(i)}
                   onMouseLeave={() => setHoveredIndex(null)}
+                  onClick={() => onDayClick?.(day)}
                 >
                   {/* Bar */}
                   <div className="flex-1 w-full flex items-end justify-center">
                     <div
-                      className="relative w-full transition-opacity duration-150 cursor-pointer"
+                      className="relative w-full transition-all duration-150 cursor-pointer"
                       style={{
-                        height: `${Math.max(barPct, bar.hours > 0 ? 1.5 : 0)}%`,
+                        height: `${Math.max(barPct, day.hours > 0 ? 1.5 : 0)}%`,
                         maxWidth: maxBarWidth,
                         borderRadius: radius,
-                        backgroundColor: 'var(--color-accent-7)',
-                        opacity: hoveredIndex !== null && !isHovered ? 0.5 : 1,
+                        backgroundColor: isSelected ? 'var(--color-accent-9)' : 'var(--color-accent-7)',
+                        opacity: hoveredIndex !== null && !isHovered && !isSelected ? 0.5 : 1,
                       }}
                     >
                       {isHovered && (
@@ -165,7 +126,7 @@ export function RuntimeBarChart({ data, height = 260, className = '' }: RuntimeB
                           }}
                         >
                           <span className="text-[length:var(--font-size-xs)] font-semibold whitespace-nowrap leading-none">
-                            {bar.hours}
+                            {day.hours}h
                           </span>
                         </div>
                       )}
@@ -173,12 +134,14 @@ export function RuntimeBarChart({ data, height = 260, className = '' }: RuntimeB
                   </div>
 
                   {/* X-axis label */}
-                  <span
-                    className="absolute text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] whitespace-nowrap leading-none"
-                    style={{ bottom: `-${chartPaddingBottom - 8}px` }}
-                  >
-                    {bar.label}
-                  </span>
+                  {shouldShowLabel(i, barCount) && (
+                    <span
+                      className="absolute text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] whitespace-nowrap leading-none"
+                      style={{ bottom: `-${chartPaddingBottom - 8}px` }}
+                    >
+                      {label}
+                    </span>
+                  )}
                 </div>
               )
             })}

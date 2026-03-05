@@ -45,6 +45,9 @@ export const runtimeSensors: RuntimeSensor[] = [
       avgCyclesPerDay: 78,
       nextServiceAt: 15000,
     },
+    meterName: '#AirComp Runtime | BL1 - EC',
+    meterSyncEnabled: true,
+    runtimeThreshold: 15,
     workOrders: [
       { id: 'WO-2044', title: 'Vibration anomaly detected', status: 'in_progress', createdAt: '2026-02-22', urgency: 'high' },
       { id: 'WO-2031', title: 'Bearing lubrication PM', status: 'completed', createdAt: '2026-02-10', urgency: 'medium' },
@@ -80,6 +83,9 @@ export const runtimeSensors: RuntimeSensor[] = [
       avgCyclesPerDay: 142,
       nextServiceAt: 35000,
     },
+    meterName: '#CoolStorage Runtime | EC - HMD',
+    meterSyncEnabled: true,
+    runtimeThreshold: 10,
     workOrders: [
       { id: 'WO-2041', title: 'HVAC compressor failure', status: 'open', createdAt: '2026-02-24', urgency: 'critical' },
     ],
@@ -114,6 +120,9 @@ export const runtimeSensors: RuntimeSensor[] = [
       avgCyclesPerDay: 54,
       nextServiceAt: 10000,
     },
+    meterName: '#TurboAir Runtime | BL2 - EC',
+    meterSyncEnabled: false,
+    runtimeThreshold: 8,
     workOrders: [
       { id: 'WO-2038', title: 'Conveyor belt misalignment', status: 'in_progress', createdAt: '2026-02-20', urgency: 'high' },
       { id: 'WO-2029', title: 'Motor temperature check', status: 'completed', createdAt: '2026-02-05', urgency: 'medium' },
@@ -142,14 +151,7 @@ export const runtimeSensors: RuntimeSensor[] = [
     peakDay: { date: '2026-02-12', hours: 23.1 },
     uptimePercent: 91.8,
     dailyRuntime: generateDailyRuntime(30, 19.3, 3.5),
-    meter: {
-      currentReading: 22130,
-      unit: 'hours',
-      lastResetDate: '2024-11-20',
-      totalCycles: 88520,
-      avgCyclesPerDay: 112,
-      nextServiceAt: 25000,
-    },
+    runtimeThreshold: 12,
     workOrders: [
       { id: 'WO-2046', title: 'Cooling tower fan bearing replacement', status: 'open', createdAt: '2026-02-23', urgency: 'medium' },
     ],
@@ -176,14 +178,6 @@ export const runtimeSensors: RuntimeSensor[] = [
     peakDay: { date: '2026-02-26', hours: 18.2 },
     uptimePercent: 100,
     dailyRuntime: generateDailyRuntime(30, 4.2, 6),
-    meter: {
-      currentReading: 5680,
-      unit: 'hours',
-      lastResetDate: '2025-01-15',
-      totalCycles: 11360,
-      avgCyclesPerDay: 18,
-      nextServiceAt: 6000,
-    },
     workOrders: [
       { id: 'WO-2039', title: 'Generator oil change PM', status: 'open', createdAt: '2026-02-24', urgency: 'medium' },
     ],
@@ -214,14 +208,6 @@ export const runtimeSensors: RuntimeSensor[] = [
       hours: i < 15 ? Math.round((18 + Math.random() * 4) * 10) / 10 : 0,
       cycles: i < 15 ? Math.round((18 + Math.random() * 4) * 5) : 0,
     })),
-    meter: {
-      currentReading: 18920,
-      unit: 'hours',
-      lastResetDate: '2024-06-01',
-      totalCycles: 75680,
-      avgCyclesPerDay: 0,
-      nextServiceAt: 20000,
-    },
     workOrders: [
       { id: 'WO-2050', title: 'Boiler offline — no sensor data', status: 'open', createdAt: '2026-02-12', urgency: 'critical' },
     ],
@@ -256,6 +242,9 @@ export const runtimeSensors: RuntimeSensor[] = [
       avgCyclesPerDay: 65,
       nextServiceAt: 10000,
     },
+    meterName: '#EliteAir Runtime | BL5 - EC',
+    meterSyncEnabled: true,
+    runtimeThreshold: 10,
     workOrders: [],
     lastReading: '1 min ago',
     insights: [
@@ -288,6 +277,9 @@ export const runtimeSensors: RuntimeSensor[] = [
       avgCyclesPerDay: 82,
       nextServiceAt: 20000,
     },
+    meterName: '#CompAir Runtime | BL6 - EC',
+    meterSyncEnabled: true,
+    runtimeThreshold: 12,
     workOrders: [
       { id: 'WO-2047', title: 'Vibration analysis review', status: 'completed', createdAt: '2026-02-15', urgency: 'low' },
     ],

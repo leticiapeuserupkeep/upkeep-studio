@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import {
   Timer, TrendingUp, TrendingDown, Clock, Activity,
   Zap, Search, ChevronDown, Calendar, XCircle, ArrowUpDown, Radio,
+  Pencil, RotateCcw, X,
 } from 'lucide-react'
 import { KPI } from '@/app/components/ui/KPI'
 import { Chip } from '@/app/components/ui/Chip'
@@ -29,6 +30,16 @@ export default function RuntimePage() {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [dateFrom, setDateFrom] = useState('2026-01-28')
   const [dateTo, setDateTo] = useState('2026-02-26')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  function toggleSelection(id: string, value: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (value) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
 
   const filtered = useMemo(() => {
     let list = [...runtimeSensors]
@@ -230,7 +241,11 @@ export default function RuntimePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[var(--space-md)]">
         {filtered.map((sensor, i) => (
           <div key={sensor.id} className="card-animate" style={{ animationDelay: `${i * 60}ms` }}>
-            <RuntimeCard sensor={sensor} />
+            <RuntimeCard
+              sensor={sensor}
+              selected={selectedIds.has(sensor.id)}
+              onSelectChange={(val) => toggleSelection(sensor.id, val)}
+            />
           </div>
         ))}
       </div>
@@ -244,6 +259,31 @@ export default function RuntimePage() {
           <p className="mt-1 text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
             Try adjusting your filters or search query
           </p>
+        </div>
+      )}
+
+      {/* Floating selection banner */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[var(--z-sticky)] flex items-center gap-4 px-5 py-3 rounded-[var(--radius-xl)] bg-[var(--color-neutral-12)] text-white shadow-[var(--shadow-lg)]">
+          <span className="text-[length:14px] font-medium whitespace-nowrap">
+            {selectedIds.size} Sensor{selectedIds.size !== 1 ? 's' : ''} selected
+          </span>
+          <div className="w-px h-5 bg-white/20" />
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-white/10 hover:bg-white/20 text-[length:14px] font-medium cursor-pointer transition-colors">
+            <Pencil size={14} />
+            Edit
+          </button>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-error)]/80 hover:bg-[var(--color-error)] text-[length:14px] font-medium cursor-pointer transition-colors">
+            <RotateCcw size={14} />
+            Reset
+          </button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-white/15 cursor-pointer transition-colors ml-1"
+            aria-label="Clear selection"
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
     </div>

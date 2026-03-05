@@ -222,7 +222,10 @@ export interface RuntimeSensor {
   peakDay: { date: string; hours: number }
   uptimePercent: number
   dailyRuntime: DailyRuntime[]
-  meter: MeterInfo
+  meter?: MeterInfo
+  meterName?: string
+  meterSyncEnabled?: boolean
+  runtimeThreshold?: number
   workOrders: RuntimeWorkOrder[]
   lastReading: string
   insights: string[]
