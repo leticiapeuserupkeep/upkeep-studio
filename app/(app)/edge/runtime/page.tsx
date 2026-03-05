@@ -9,6 +9,7 @@ import {
 import { KPI } from '@/app/components/ui/KPI'
 import { Chip } from '@/app/components/ui/Chip'
 import { RuntimeCard } from '@/app/components/edge/RuntimeCard'
+import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
 import { runtimeSensors } from '@/app/lib/edge-data'
 import type { SensorStatus } from '@/app/lib/models'
 
@@ -31,6 +32,8 @@ export default function RuntimePage() {
   const [dateFrom, setDateFrom] = useState('2026-01-28')
   const [dateTo, setDateTo] = useState('2026-02-26')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editSensorId, setEditSensorId] = useState<string | null>(null)
 
   function toggleSelection(id: string, value: boolean) {
     setSelectedIds((prev) => {
@@ -245,6 +248,7 @@ export default function RuntimePage() {
               sensor={sensor}
               selected={selectedIds.has(sensor.id)}
               onSelectChange={(val) => toggleSelection(sensor.id, val)}
+              onEdit={() => { setEditSensorId(sensor.id); setShowEditModal(true) }}
             />
           </div>
         ))}
@@ -269,7 +273,10 @@ export default function RuntimePage() {
             {selectedIds.size} Sensor{selectedIds.size !== 1 ? 's' : ''} selected
           </span>
           <div className="w-px h-5 bg-white/20" />
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-white/10 hover:bg-white/20 text-[length:14px] font-medium cursor-pointer transition-colors">
+          <button
+            onClick={() => { setEditSensorId([...selectedIds][0]); setShowEditModal(true) }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-white/10 hover:bg-white/20 text-[length:14px] font-medium cursor-pointer transition-colors"
+          >
             <Pencil size={14} />
             Edit
           </button>
@@ -286,6 +293,23 @@ export default function RuntimePage() {
           </button>
         </div>
       )}
+
+      {/* Edit Runtime Modal */}
+      {editSensorId && (() => {
+        const s = runtimeSensors.find((s) => s.id === editSensorId)
+        if (!s) return null
+        return (
+          <MeterConfigModal
+            open={showEditModal}
+            onOpenChange={(open) => { setShowEditModal(open); if (!open) setEditSensorId(null) }}
+            sensorName={s.name}
+            totalRuntime={s.totalHours}
+            existingMeterName={s.meterName}
+            syncEnabled={s.meterSyncEnabled}
+            runtimeThreshold={s.runtimeThreshold}
+          />
+        )
+      })()}
     </div>
   )
 }

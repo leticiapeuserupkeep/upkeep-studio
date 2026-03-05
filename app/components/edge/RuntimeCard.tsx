@@ -13,6 +13,7 @@ interface RuntimeCardProps {
   sensor: RuntimeSensor
   selected?: boolean
   onSelectChange?: (selected: boolean) => void
+  onEdit?: () => void
 }
 
 function getDeltaPercent(current: number, previous: number): number {
@@ -30,7 +31,7 @@ const statusConfig = {
   warning: { label: 'Overloaded', severity: 'danger' as const },
 }
 
-export function RuntimeCard({ sensor, selected = false, onSelectChange }: RuntimeCardProps) {
+export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }: RuntimeCardProps) {
   const [showMeterModal, setShowMeterModal] = useState(false)
   const [showSyncMeterModal, setShowSyncMeterModal] = useState(false)
   const [showCardMenu, setShowCardMenu] = useState(false)
@@ -100,7 +101,8 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange }: Runtim
                       onClick={(e) => {
                         e.preventDefault()
                         setShowCardMenu(false)
-                        setShowMeterModal(true)
+                        if (onEdit) onEdit()
+                        else setShowMeterModal(true)
                       }}
                       className="flex items-center gap-2 w-full px-3 py-2 text-left text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors"
                     >

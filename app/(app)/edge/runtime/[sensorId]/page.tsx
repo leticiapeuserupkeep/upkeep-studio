@@ -217,7 +217,7 @@ export default function RuntimeDetailPage() {
             )}
           </div>
 
-          <Button variant="secondary" size="sm">
+          <Button variant="secondary" size="sm" className="hidden">
             <Share2 size={14} />
             Share
           </Button>
@@ -364,7 +364,7 @@ export default function RuntimeDetailPage() {
                 </div>
 
                 {/* Meter row */}
-                <div className="flex items-center justify-between py-[var(--space-xs)] border-b border-[var(--border-subtle)] last:border-0">
+                <div className="group/meter flex items-center justify-between py-[var(--space-xs)] border-b border-[var(--border-subtle)] last:border-0">
                   <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Meter</span>
                   {sensor.meterName && !meterDeleted ? (
                     <div className="flex items-center gap-[var(--space-xs)]">
@@ -383,7 +383,7 @@ export default function RuntimeDetailPage() {
                       </Switch.Root>
                       <button
                         onClick={() => setMeterDeleted(true)}
-                        className="flex items-center justify-center w-6 h-6 rounded-[var(--radius-sm)] hover:bg-[var(--color-error-light)] transition-colors cursor-pointer shrink-0"
+                        className="flex items-center justify-center w-6 h-6 rounded-[var(--radius-sm)] hover:bg-[var(--color-error-light)] cursor-pointer shrink-0 hidden"
                         aria-label="Delete meter"
                       >
                         <Trash2 size={13} className="text-[var(--color-error)]" />
