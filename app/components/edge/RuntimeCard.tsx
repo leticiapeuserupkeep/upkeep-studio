@@ -184,7 +184,7 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
                 <span className="text-[length:14px] text-[var(--color-neutral-8)] leading-5 flex-1 truncate">
                   {sensor.meterName}
                 </span>
-                <div onClick={(e) => e.stopPropagation()}>
+                <div onClick={(e) => { e.preventDefault(); e.stopPropagation() }}>
                   <Switch.Root
                     checked={meterSyncOn}
                     onCheckedChange={setMeterSyncOn}
