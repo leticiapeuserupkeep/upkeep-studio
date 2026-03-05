@@ -126,7 +126,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           actions={getActions()}
         />
         <DashboardProvider role={role} site={site}>
-          {children}
+          <div className="flex flex-col flex-1 items-center">
+            {children}
+          </div>
         </DashboardProvider>
       </div>
 

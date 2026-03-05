@@ -136,7 +136,7 @@ export default function RuntimeDetailPage() {
     : 0
 
   return (
-    <div className="flex flex-col gap-[var(--space-xl)] p-[var(--space-xl)] max-w-[1240px]">
+    <div className="flex flex-col gap-[var(--space-xl)] p-[var(--space-xl)] max-w-[1240px] mx-auto w-full">
       {/* Header */}
       <div className="flex items-start justify-between gap-[var(--space-lg)]">
         <div className="flex-1 min-w-0">
