@@ -67,7 +67,7 @@ const sections: NavSection[] = [
     title: 'DATA & ANALYTICS',
     items: [
       { label: 'Analytics', icon: BarChart3 },
-      { label: 'Meters', icon: Gauge, href: '/edge/runtime' },
+      { label: 'Meters', icon: Gauge },
     ],
   },
   {
