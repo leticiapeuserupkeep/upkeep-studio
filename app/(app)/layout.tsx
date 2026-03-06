@@ -124,7 +124,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-[var(--surface-secondary)]">
       <SideNav collapsed={sidebarCollapsed} />
 
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 min-h-screen">
         {!isCreateApp && (
           <TopBar
             title={title}

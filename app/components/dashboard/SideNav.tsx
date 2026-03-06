@@ -170,7 +170,7 @@ export function SideNav({ collapsed }: SideNavProps) {
   return (
     <Tooltip.Provider delayDuration={300}>
       <aside
-        className={`flex flex-col h-screen sticky top-0 border-r border-[var(--border-default)] bg-[#F0F0F3] transition-[width] duration-500 shrink-0 ${
+        className={`flex flex-col min-h-screen h-screen sticky top-0 border-r border-[var(--border-default)] bg-[#F0F0F3] transition-[width] duration-500 shrink-0 ${
           collapsed ? 'w-16' : 'w-[280px]'
         }`}
       >

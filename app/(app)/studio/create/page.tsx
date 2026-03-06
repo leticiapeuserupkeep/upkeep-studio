@@ -266,11 +266,11 @@ function BuilderView({
 
   return (
     <div
-      className="flex flex-col flex-1 min-h-0 bg-white opacity-0"
+      className="flex flex-col h-screen overflow-hidden bg-white opacity-0"
       style={{ animation: 'fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards' }}
     >
       {/* ── Builder top nav ── */}
-      <header className="flex items-center h-[60px] border-b border-[#E8E8EC] bg-white shrink-0">
+      <header className="flex items-center h-[60px] border-b border-[#E8E8EC] bg-white shrink-0 sticky top-0 z-10">
         {/* Left section — back + title (400px aligned with chat panel) */}
         <div className="flex items-center w-[400px] h-[60px] shrink-0">
           <button
@@ -340,7 +340,7 @@ function BuilderView({
       </header>
 
       {/* ── Two-panel content ── */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* ── Chat panel (left, 400px) ── */}
         <div className="flex flex-col w-[400px] shrink-0 h-full">
           {/* Scrollable messages */}
@@ -401,36 +401,36 @@ function BuilderView({
               </>
             )}
 
+            {/* Recommended steps */}
+            {aiPhase === 'responded' && (
+              <div
+                className="px-0 py-0 flex flex-col gap-3 opacity-0"
+                style={{ animation: 'fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards' }}
+              >
+                <h4 className="text-xs font-medium uppercase tracking-wider text-black">Recommended steps</h4>
+                <p className="text-sm leading-5 text-black">
+                  What would you like your Asset Health Monitor to show? Here are potential focus areas based on UpKeep&apos;s asset data:
+                </p>
+                <div className="flex flex-col gap-3">
+                  {recommendedSteps.map((step, i) => (
+                    <button
+                      key={i}
+                      className="flex items-center gap-2.5 p-3 bg-[#F9F9FB] border border-[#D9D9E0] rounded-xl text-left hover:bg-[#F0F0F3] hover:border-[#B9BBC6] transition-colors cursor-pointer group opacity-0"
+                      style={{ animation: `fadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) ${0.3 + i * 0.08}s forwards` }}
+                    >
+                      <span className="flex-1 text-sm leading-5 text-black">{step.text}</span>
+                      <ArrowRight size={18} className="text-[#B9BBC6] shrink-0 group-hover:text-[#60646C] transition-colors" />
+                    </button>
+                  ))}
+                </div>
+                <p className="text-sm leading-5 text-black">
+                  Which fields/metrics are most important to you? Select from above or describe your specific use case. I can also combine multiple focus areas if needed.
+                </p>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
-
-          {/* Recommended steps (pinned between messages and input) */}
-          {aiPhase === 'responded' && (
-            <div
-              className="mx-6 mb-3 px-5 py-4 flex flex-col gap-3 opacity-0"
-              style={{ animation: 'fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards' }}
-            >
-              <h4 className="text-xs font-medium uppercase tracking-wider text-black">Recommended steps</h4>
-              <p className="text-sm leading-5 text-black">
-                What would you like your Asset Health Monitor to show? Here are potential focus areas based on UpKeep&apos;s asset data:
-              </p>
-              <div className="flex flex-col gap-3">
-                {recommendedSteps.map((step, i) => (
-                  <button
-                    key={i}
-                    className="flex items-center gap-2.5 p-3 bg-[#F9F9FB] border border-[#D9D9E0] rounded-xl text-left hover:bg-[#F0F0F3] hover:border-[#B9BBC6] transition-colors cursor-pointer group opacity-0"
-                    style={{ animation: `fadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) ${0.3 + i * 0.08}s forwards` }}
-                  >
-                    <span className="flex-1 text-sm leading-5 text-black">{step.text}</span>
-                    <ArrowRight size={18} className="text-[#B9BBC6] shrink-0 group-hover:text-[#60646C] transition-colors" />
-                  </button>
-                ))}
-              </div>
-              <p className="text-sm leading-5 text-black">
-                Which fields/metrics are most important to you? Select from above or describe your specific use case. I can also combine multiple focus areas if needed.
-              </p>
-            </div>
-          )}
 
           {/* Chat input bar */}
           <div className="px-6 pb-6">
