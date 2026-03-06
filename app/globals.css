@@ -50,7 +50,7 @@ body {
 .skeleton {
   background: linear-gradient(90deg, var(--color-neutral-3) 0%, var(--color-neutral-2) 40%, var(--color-neutral-3) 80%);
   background-size: 200% 100%;
-  animation: skeleton-pulse 1.8s ease-in-out infinite;
+  animation: skeleton-pulse 2.4s ease-in-out infinite;
   border-radius: var(--radius-md);
 }
 
@@ -62,7 +62,7 @@ body {
 
 .card-animate {
   opacity: 0;
-  animation: card-appear 0.4s var(--ease-default) forwards;
+  animation: card-appear 0.6s var(--ease-default) forwards;
 }
 
 /* ── Fade in ── */
@@ -76,7 +76,52 @@ body {
 }
 
 .fade-animate {
-  animation: fade-in 0.4s ease-out forwards;
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+/* ── Fade in + slide up ── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Typing cursor blink ── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Shimmer text gradient ── */
+@keyframes shimmer-text {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, #80838D 0%, #DCDCDC 50%, #80838D 100%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-text 3s linear infinite;
+}
+
+/* ── AI logo pulse ── */
+@keyframes ai-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.7; }
+}
+
+/* ── View transition ── */
+@keyframes fadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.98); }
 }
 
 /* ── Collapsible (Radix) ── */
@@ -91,12 +136,103 @@ body {
 }
 
 [data-radix-collapsible-content][data-state="open"] {
-  animation: collapsible-down 200ms ease-out;
+  animation: collapsible-down 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-radix-collapsible-content][data-state="closed"] {
-  animation: collapsible-up 200ms ease-out;
+  animation: collapsible-up 550ms cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+}
+
+.nav-collapsible-content[data-state="open"] {
+  animation: collapsible-down 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-collapsible-content[data-state="closed"] {
+  animation: collapsible-up 550ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+/* ── Modal overlay ── */
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ── Modal content ── */
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes modal-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+}
+
+[data-dialog-overlay][data-state="open"] {
+  animation: overlay-in 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-dialog-overlay][data-state="closed"] {
+  animation: overlay-out 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-dialog-content][data-state="open"] {
+  animation: modal-in 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-dialog-content][data-state="closed"] {
+  animation: modal-out 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Dropdown / popover ── */
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-animate {
+  animation: dropdown-in 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Panel slide in ── */
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel-animate {
+  animation: panel-in 450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* ── Sparkline ── */
@@ -168,7 +304,7 @@ body {
 }
 
 .widget-drop-target[data-active="true"] {
-  animation: drop-target-pulse 1.2s ease-in-out infinite;
+  animation: drop-target-pulse 1.8s ease-in-out infinite;
 }
 
 /* ── Widget: Add/remove transitions ── */

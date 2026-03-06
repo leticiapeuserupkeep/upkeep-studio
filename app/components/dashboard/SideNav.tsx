@@ -9,14 +9,16 @@ import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as Separator from '@radix-ui/react-separator'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import {
-  Home, ClipboardList, Wrench, CalendarClock,
-  BarChart3, Inbox, MapPin, HardDrive,
-  Package, FileText, ShoppingCart,
-  Gauge, Users, Building2,
-  Gem, Wand2, Download, Hammer,
+  ClipboardList, Wrench, CalendarClock, Inbox,
+  Sparkles, BarChart3, Gauge, Wifi,
+  Box, MapPin, Users, ListChecks, FileText, FileDown,
+  Car, Map, FileSearch, Ticket, AlertTriangle, Plug,
+  Rocket, Receipt, Building2,
+  Gem, Download, Command, Wand2, Wallet,
   Bell, ChevronUp,
   LayoutGrid, CircleHelp, MessageCircle, Settings,
-  Radio, Router, AlertTriangle, Timer,
+  Signal, Radar, Radio, Siren, Timer, Settings2, Warehouse, ScrollText,
+  ClipboardCheck, FileClock,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -24,6 +26,7 @@ interface NavItem {
   label: string
   icon: LucideIcon
   href?: string
+  dot?: boolean
 }
 
 interface NavSection {
@@ -39,50 +42,14 @@ interface SideNavProps {
 
 const sections: NavSection[] = [
   {
-    title: 'MAIN',
+    title: 'CORE',
+    badge: 'NEW',
     items: [
-      { label: 'Dashboard', icon: Home, href: '/dashboard' },
       { label: 'Work Orders', icon: ClipboardList },
       { label: 'Preventive Maintenance', icon: CalendarClock },
-      { label: 'Analytics', icon: BarChart3 },
+      { label: 'Intelligence', icon: Sparkles, dot: true },
+      { label: 'Scheduler', icon: CalendarClock },
       { label: 'Requests', icon: Inbox },
-    ],
-  },
-  {
-    title: 'ASSETS',
-    items: [
-      { label: 'Locations', icon: MapPin },
-      { label: 'Assets', icon: HardDrive },
-      { label: 'Parts & Inventory', icon: Package },
-      { label: 'Purchase Orders', icon: ShoppingCart },
-      { label: 'Meters', icon: Gauge },
-    ],
-  },
-  {
-    title: 'PEOPLE',
-    defaultClosed: true,
-    items: [
-      { label: 'People & Teams', icon: Users },
-      { label: 'Vendors & Customers', icon: Building2 },
-    ],
-  },
-  {
-    title: 'RESOURCES',
-    defaultClosed: true,
-    items: [
-      { label: 'Checklists', icon: FileText },
-      { label: 'Files', icon: FileText },
-      { label: 'Import & Export', icon: Wrench },
-    ],
-  },
-  {
-    title: 'EDGE',
-    items: [
-      { label: 'Sensors', icon: Radio },
-      { label: 'Gateways', icon: Router },
-      { label: 'Alerts', icon: AlertTriangle },
-      { label: 'Runtime', icon: Timer, href: '/edge/runtime' },
-      { label: 'Settings', icon: Settings },
     ],
   },
   {
@@ -91,8 +58,56 @@ const sections: NavSection[] = [
     items: [
       { label: 'Browse Apps', icon: Gem, href: '/studio' },
       { label: 'Installed Apps', icon: Download },
-      { label: 'Apps I Built', icon: Hammer },
-      { label: 'Create New App', icon: Wand2 },
+      { label: 'Apps I Built', icon: Command },
+      { label: 'Create New App', icon: Wand2, href: '/studio/create', dot: true },
+      { label: 'Subscriptions', icon: Wallet },
+    ],
+  },
+  {
+    title: 'DATA & ANALYTICS',
+    items: [
+      { label: 'Analytics', icon: BarChart3 },
+      { label: 'Meters', icon: Gauge, href: '/edge/runtime' },
+    ],
+  },
+  {
+    title: 'RESOURCES',
+    items: [
+      { label: 'Assets', icon: Box },
+      { label: 'Locations', icon: MapPin },
+      { label: 'People & Teams', icon: Users },
+      { label: 'Checklists', icon: ListChecks },
+      { label: 'Files', icon: FileText },
+      { label: 'Import & Export', icon: FileDown },
+    ],
+  },
+  {
+    title: 'FLEET',
+    items: [
+      { label: 'Vehicles', icon: Car },
+      { label: 'Inspections', icon: ClipboardCheck },
+      { label: 'Inspection History', icon: FileClock },
+      { label: 'Recalls', icon: AlertTriangle },
+      { label: 'Alerts', icon: AlertTriangle },
+      { label: 'Integrations', icon: Plug },
+    ],
+  },
+  {
+    title: 'EDGE',
+    items: [
+      { label: 'Sensors', icon: Radio },
+      { label: 'Gateways', icon: Timer },
+      { label: 'Alerts', icon: Siren },
+      { label: 'Runtime', icon: Signal, href: '/edge/runtime' },
+      { label: 'Settings', icon: Settings2 },
+    ],
+  },
+  {
+    title: 'PROCUREMENT',
+    items: [
+      { label: 'Parts & Inventory', icon: Warehouse },
+      { label: 'Purchase Orders', icon: ScrollText },
+      { label: 'Vendors & Customers', icon: Building2 },
     ],
   },
 ]
@@ -107,7 +122,8 @@ const footerIcons = [
 function isActive(pathname: string, href?: string): boolean {
   if (!href) return false
   if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/'
-  return pathname.startsWith(href)
+  if (href === '/studio') return pathname === '/studio' || pathname.startsWith('/studio/browse')
+  return pathname === href || pathname.startsWith(href + '/')
 }
 
 function CollapsedIcon({ item, active, label }: { item: NavItem; active: boolean; label: string }) {
@@ -116,14 +132,17 @@ function CollapsedIcon({ item, active, label }: { item: NavItem; active: boolean
     <Tooltip.Root>
       <Tooltip.Trigger asChild>
         <span
-          className={`flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] cursor-pointer transition-colors ${
+          className={`relative flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
             active
-              ? 'bg-[var(--color-neutral-4)] text-[var(--color-neutral-12)]'
-              : 'text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-4)]'
+              ? 'bg-[#E0E1E6] text-[#1C2024]'
+              : 'text-[#8B8D98] hover:bg-[var(--color-neutral-4)] hover:text-[#1C2024]'
           }`}
           aria-label={label}
         >
           <Icon size={18} />
+          {item.dot && (
+            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#3A5BC7]" />
+          )}
         </span>
       </Tooltip.Trigger>
       <Tooltip.Portal>
@@ -151,8 +170,8 @@ export function SideNav({ collapsed }: SideNavProps) {
   return (
     <Tooltip.Provider delayDuration={300}>
       <aside
-        className={`flex flex-col h-screen sticky top-0 border-r border-[var(--border-default)] bg-[#F0F0F3] transition-[width] duration-200 shrink-0 ${
-          collapsed ? 'w-16' : 'w-[260px]'
+        className={`flex flex-col h-screen sticky top-0 border-r border-[var(--border-default)] bg-[#F0F0F3] transition-[width] duration-500 shrink-0 ${
+          collapsed ? 'w-16' : 'w-[280px]'
         }`}
       >
         {/* Header */}
@@ -174,7 +193,7 @@ export function SideNav({ collapsed }: SideNavProps) {
           {!collapsed && (
             <div className="flex items-center gap-1.5">
               <button
-                className="relative flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-4)] cursor-pointer transition-colors"
+                className="relative flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-4)] cursor-pointer transition-colors duration-350"
                 aria-label="Notifications"
               >
                 <Bell size={16} className="text-[var(--color-neutral-9)]" />
@@ -193,8 +212,8 @@ export function SideNav({ collapsed }: SideNavProps) {
         <ScrollArea.Root className="flex-1 overflow-hidden">
           <ScrollArea.Viewport className="h-full w-full px-[var(--space-xs)]">
             <nav
-              className={`flex flex-col gap-2 py-[var(--space-xs)] ${
-                collapsed ? 'items-center' : ''
+              className={`flex flex-col gap-3 py-[var(--space-xs)] ${
+                collapsed ? 'items-center' : 'items-start'
               }`}
             >
               {sections.map((section) =>
@@ -210,36 +229,39 @@ export function SideNav({ collapsed }: SideNavProps) {
                     ))}
                   </div>
                 ) : (
-                  <Collapsible.Root key={section.title} defaultOpen={!section.defaultClosed}>
-                    <Collapsible.Trigger className="flex items-center gap-[var(--space-xs)] w-full px-[var(--space-xs)] pt-[var(--space-xs)] pb-1 h-7 rounded-[var(--radius-sm)] cursor-pointer group">
-                      <span className="flex-1 text-left text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.04em] text-[color:var(--color-neutral-8)]">
+                  <Collapsible.Root key={section.title} defaultOpen={!section.defaultClosed} className="w-full">
+                    <Collapsible.Trigger className="flex items-center gap-2 w-full px-2 pt-2 pb-1 h-7 rounded-[var(--radius-sm)] cursor-pointer group">
+                      <span className="flex-1 text-left text-[length:var(--font-size-sm)] font-medium uppercase tracking-[0.02em] text-[#8B8D98]">
                         {section.title}
                       </span>
                       {section.badge && (
-                        <span className="px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--color-accent-2)] text-[var(--color-accent-9)] text-[length:9px] font-bold uppercase leading-none">
+                        <span className="flex items-center justify-center px-2 h-5 rounded-lg bg-[#EDF2FE] border border-[#ABBDF9] text-[length:10px] font-medium text-[#3A5BC7]">
                           {section.badge}
                         </span>
                       )}
                       <ChevronUp
                         size={14}
-                        className="text-[color:var(--color-neutral-7)] transition-transform group-data-[state=closed]:rotate-180"
+                        className="text-[#8B8D98] transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[state=closed]:rotate-180"
                       />
                     </Collapsible.Trigger>
-                    <Collapsible.Content className="overflow-hidden">
+                    <Collapsible.Content className="nav-collapsible-content overflow-hidden">
                       {section.items.map((item) => {
                         const active = isActive(pathname, item.href)
-                        const classes = `flex items-center gap-[var(--space-xs)] w-full px-[var(--space-xs)] h-8 rounded-[var(--radius-md)] cursor-pointer transition-colors ${
+                        const classes = `flex items-center gap-2 w-full px-2 h-8 rounded-[var(--radius-sm)] cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                           active
-                            ? 'bg-[var(--color-neutral-4)] font-semibold text-[var(--color-neutral-12)]'
-                            : 'font-medium text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-4)]/50'
+                            ? 'bg-[#E0E1E6] font-semibold text-[#1C2024]'
+                            : 'font-medium text-[#1C2024] hover:bg-[var(--color-neutral-4)]'
                         }`
 
                         const inner = (
                           <>
                             <item.icon size={16} className="shrink-0" />
-                            <span className="text-[length:var(--font-size-sm)] leading-5 truncate">
+                            <span className="flex-1 text-left text-[length:var(--font-size-base)] leading-5 truncate">
                               {item.label}
                             </span>
+                            {item.dot && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#3A5BC7] shrink-0" />
+                            )}
                           </>
                         )
 
@@ -283,7 +305,7 @@ export function SideNav({ collapsed }: SideNavProps) {
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
                 <button
-                  className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] cursor-pointer transition-colors"
+                  className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] cursor-pointer transition-colors duration-350"
                   aria-label="Settings"
                 >
                   <Settings size={18} />
@@ -306,7 +328,7 @@ export function SideNav({ collapsed }: SideNavProps) {
                 <Tooltip.Root key={label}>
                   <Tooltip.Trigger asChild>
                     <button
-                      className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] hover:text-[var(--color-neutral-11)] cursor-pointer transition-colors"
+                      className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] hover:text-[var(--color-neutral-11)] cursor-pointer transition-colors duration-350"
                       aria-label={label}
                     >
                       <Icon size={16} />

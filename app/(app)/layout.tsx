@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Download, Plus, MoreVertical, Pencil, RotateCcw } from 'lucide-react'
@@ -13,6 +13,7 @@ import { sites } from '@/app/lib/mock-data'
 import type { Role } from '@/app/lib/models'
 
 function getPageTitle(pathname: string): string {
+  if (pathname.startsWith('/studio/create')) return 'New App'
   if (pathname.startsWith('/studio/browse')) return 'Studio'
   if (pathname.startsWith('/studio')) return 'Studio'
   if (pathname.startsWith('/edge/runtime')) return 'Runtime'
@@ -32,7 +33,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
   const pathname = usePathname()
 
+  const handleCollapseSidebar = useCallback(() => setSidebarCollapsed(true), [])
+  const handleToggleSidebar = useCallback(() => setSidebarCollapsed((p) => !p), [])
+
+  useEffect(() => {
+    window.addEventListener('collapse-sidebar', handleCollapseSidebar)
+    window.addEventListener('toggle-sidebar', handleToggleSidebar)
+    return () => {
+      window.removeEventListener('collapse-sidebar', handleCollapseSidebar)
+      window.removeEventListener('toggle-sidebar', handleToggleSidebar)
+    }
+  }, [handleCollapseSidebar, handleToggleSidebar])
+
   const title = getPageTitle(pathname)
+  const isCreateApp = pathname === '/studio/create'
   const isStudioBrowse = pathname.startsWith('/studio/browse')
   const isEdge = pathname.startsWith('/edge/')
   const isRuntimeList = pathname === '/edge/runtime'
@@ -111,25 +125,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <SideNav collapsed={sidebarCollapsed} />
 
       <div className="flex flex-col flex-1 min-w-0">
-        <TopBar
-          title={title}
-          role={role}
-          site={site}
-          timeRange={timeRange}
-          onRoleChange={setRole}
-          onSiteChange={setSite}
-          onTimeRangeChange={setTimeRange}
-          onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
-          sites={sites}
-          minimal={isEdge}
-          backHref={isRuntimeDetail ? '/edge/runtime' : undefined}
-          actions={getActions()}
-        />
-        <DashboardProvider role={role} site={site}>
-          <div className="flex flex-col flex-1 items-center">
-            {children}
-          </div>
-        </DashboardProvider>
+        {!isCreateApp && (
+          <TopBar
+            title={title}
+            role={role}
+            site={site}
+            timeRange={timeRange}
+            onRoleChange={setRole}
+            onSiteChange={setSite}
+            onTimeRangeChange={setTimeRange}
+            onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
+            sites={sites}
+            minimal={isEdge}
+            backHref={isRuntimeDetail ? '/edge/runtime' : undefined}
+            actions={getActions()}
+          />
+        )}
+        {isCreateApp ? (
+          children
+        ) : (
+          <DashboardProvider role={role} site={site}>
+            <div className="flex flex-col flex-1 items-center">
+              {children}
+            </div>
+          </DashboardProvider>
+        )}
       </div>
 
       <MeterConfigModal

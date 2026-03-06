@@ -67,8 +67,8 @@ export function MeterConfigModal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[var(--z-overlay)] bg-black/40 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[var(--z-modal)] w-full max-w-[520px] max-h-[85vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] focus:outline-none flex flex-col overflow-hidden">
+        <Dialog.Overlay data-dialog-overlay className="fixed inset-0 z-[var(--z-overlay)] bg-black/40" />
+        <Dialog.Content data-dialog-content className="fixed left-1/2 top-1/2 z-[var(--z-modal)] w-full max-w-[520px] max-h-[85vh] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] focus:outline-none flex flex-col overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-[var(--space-xl)] pt-[var(--space-xl)] pb-[var(--space-md)] bg-[var(--surface-primary)]">
             <Dialog.Title className="text-[length:var(--font-size-lg)] font-bold text-[var(--color-neutral-12)]">
@@ -214,9 +214,9 @@ export function MeterConfigModal({
                     <Switch.Root
                       checked={enableSync}
                       onCheckedChange={setEnableSync}
-                      className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-200 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
+                      className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-350 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
                     >
-                      <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-200 translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
+                      <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-350 translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
                     </Switch.Root>
                     <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] cursor-pointer select-none">
                       Enable Meter Syncing

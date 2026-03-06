@@ -52,7 +52,7 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
     <>
       <Link
         href={`/edge/runtime/${sensor.id}`}
-        className={`group block rounded-[10px] bg-[var(--surface-primary)] shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-md)] transition-all duration-200 ${
+        className={`group block rounded-[10px] bg-[var(--surface-primary)] shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-md)] transition-all duration-350 ${
           selected ? 'ring-2 ring-[var(--color-accent-9)]' : ''
         }`}
       >
@@ -64,7 +64,7 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
                 e.preventDefault()
                 onSelectChange?.(!selected)
               }}
-              className={`transition-opacity duration-150 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+              className={`transition-opacity duration-300 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
             >
               <input
                 type="checkbox"
@@ -188,9 +188,9 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
                   <Switch.Root
                     checked={meterSyncOn}
                     onCheckedChange={setMeterSyncOn}
-                    className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-200 shrink-0 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
+                    className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-350 shrink-0 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
                   >
-                    <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-200 translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
+                    <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-350 translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
                   </Switch.Root>
                 </div>
               </>

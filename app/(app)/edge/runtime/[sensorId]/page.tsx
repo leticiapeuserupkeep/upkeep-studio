@@ -167,7 +167,7 @@ export default function RuntimeDetailPage() {
             {showRangePicker && (
               <>
                 <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setShowRangePicker(false)} />
-                <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] w-[280px] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] p-[var(--space-sm)]">
+                <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] w-[280px] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] p-[var(--space-sm)] dropdown-animate">
                   {/* Presets */}
                   <div className="flex flex-col gap-0.5 mb-[var(--space-sm)]">
                     {rangePresets.map((p) => (
@@ -328,7 +328,9 @@ export default function RuntimeDetailPage() {
 
           {/* Day detail readings */}
           {selectedDay && (
-            <DayReadingsTable day={selectedDay} threshold={sensor.runtimeThreshold} />
+            <div className="panel-animate">
+              <DayReadingsTable day={selectedDay} threshold={sensor.runtimeThreshold} />
+            </div>
           )}
 
           {/* Meter card hidden — meter info moved to Sensor Details */}
@@ -354,8 +356,7 @@ export default function RuntimeDetailPage() {
                 <div className="flex items-center justify-between py-[var(--space-xs)] border-b border-[var(--border-subtle)]">
                   <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Runtime Threshold</span>
                   {sensor.runtimeThreshold != null ? (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--color-neutral-3)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)]">
-                      <Zap size={11} className="text-[var(--color-warning)]" />
+                    <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)]">
                       {sensor.runtimeThreshold} AMP
                     </span>
                   ) : (
@@ -377,9 +378,9 @@ export default function RuntimeDetailPage() {
                       <Switch.Root
                         checked={meterSyncOn}
                         onCheckedChange={setMeterSyncOn}
-                        className="relative w-[32px] h-[18px] rounded-full cursor-pointer transition-colors duration-200 shrink-0 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
+                        className="relative w-[32px] h-[18px] rounded-full cursor-pointer transition-colors duration-350 shrink-0 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
                       >
-                        <Switch.Thumb className="block w-[14px] h-[14px] bg-white rounded-full shadow-sm transition-transform duration-200 translate-x-[2px] data-[state=checked]:translate-x-[16px]" />
+                        <Switch.Thumb className="block w-[14px] h-[14px] bg-white rounded-full shadow-sm transition-transform duration-350 translate-x-[2px] data-[state=checked]:translate-x-[16px]" />
                       </Switch.Root>
                       <button
                         onClick={() => setMeterDeleted(true)}
@@ -457,7 +458,7 @@ function UptimeRing({ percent }: { percent: number }) {
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className="transition-[stroke-dashoffset] duration-700"
+          className="transition-[stroke-dashoffset] duration-1000"
         />
       </svg>
       <span className="absolute text-[length:var(--font-size-sm)] font-bold text-white">

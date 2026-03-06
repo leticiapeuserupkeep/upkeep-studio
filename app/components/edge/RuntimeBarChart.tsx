@@ -106,7 +106,7 @@ export function RuntimeBarChart({ data, height = 260, className = '', onDayClick
                   {/* Bar */}
                   <div className="flex-1 w-full flex items-end justify-center">
                     <div
-                      className="relative w-full transition-all duration-150 cursor-pointer"
+                      className="relative w-full transition-all duration-300 cursor-pointer"
                       style={{
                         height: `${Math.max(barPct, day.hours > 0 ? 1.5 : 0)}%`,
                         maxWidth: maxBarWidth,
