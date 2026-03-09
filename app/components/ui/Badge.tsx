@@ -28,7 +28,7 @@ const dotColors: Record<BadgeSeverity, string> = {
 export function Badge({ severity = 'neutral', children, className = '', dot = false }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[var(--radius-full)] border text-[length:var(--font-size-xs)] font-medium leading-none whitespace-nowrap ${severityStyles[severity]} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-full)] border text-[length:var(--font-size-xs)] font-medium leading-none whitespace-nowrap ${severityStyles[severity]} ${className}`}
     >
       {dot && <span className={`w-1.5 h-1.5 rounded-full ${dotColors[severity]}`} />}
       {children}

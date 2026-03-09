@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { Search, ChevronDown, PanelLeft, ChevronLeft } from 'lucide-react'
-import * as Separator from '@radix-ui/react-separator'
 import type { Role } from '@/app/lib/models'
 
 interface TopBarProps {
@@ -36,7 +35,6 @@ export function TopBar({
   sites, actions, minimal = false, backHref,
 }: TopBarProps) {
   return (
-    <>
       <header className="sticky top-0 z-[var(--z-sticky)] flex items-center gap-[var(--space-sm)] h-[52px] px-[var(--space-md)] bg-[var(--surface-primary)]">
         <button
           onClick={onToggleSidebar}
@@ -114,8 +112,6 @@ export function TopBar({
 
         {actions && <div className="flex items-center gap-[var(--space-sm)]">{actions}</div>}
       </header>
-      <Separator.Root className="h-px bg-[var(--border-default)]" />
-    </>
   )
 }
 

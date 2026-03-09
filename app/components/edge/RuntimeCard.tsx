@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import * as Switch from '@radix-ui/react-switch'
-import { Clock, MapPin, Gauge, EllipsisVertical, Pencil, RotateCcw } from 'lucide-react'
+import { Clock, MapPin, Gauge, EllipsisVertical, Pencil, RotateCcw, TrendingUp, TrendingDown } from 'lucide-react'
 import { Badge } from '@/app/components/ui/Badge'
 import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
 import { SyncMeterModal } from '@/app/components/edge/SyncMeterModal'
@@ -42,21 +42,19 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
   const statusInfo = statusConfig[sensor.status]
 
   const ringColor =
-    sensor.status === 'disconnected'
-      ? 'var(--color-error)'
-      : sensor.status === 'warning'
-        ? 'var(--color-warning)'
-        : 'var(--color-accent-9)'
+    sensor.status === 'connected'
+      ? 'var(--color-accent-9)'
+      : '#CE2C31'
 
   return (
     <>
       <Link
         href={`/edge/runtime/${sensor.id}`}
-        className={`group block rounded-[10px] bg-[var(--surface-primary)] shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-md)] transition-all duration-350 ${
+        className={`group block rounded-[20px] bg-[var(--surface-primary)] shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-md)] transition-all duration-350 ${
           selected ? 'ring-2 ring-[var(--color-accent-9)]' : ''
         }`}
       >
-        <div className="flex flex-col p-5 gap-[18px]">
+        <div className="flex flex-col p-5 gap-6">
           {/* Row 1: Status bar */}
           <div className="flex items-center gap-3">
             <div
@@ -75,8 +73,8 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
             </div>
             <div className="flex-1" />
             <div className="flex items-center gap-1.5">
-              <Clock size={16} className="text-[var(--color-neutral-7)]" />
-              <span className="text-[length:14px] leading-5 tracking-[-0.15px] text-[var(--color-neutral-7)]">
+              <Clock size={12} className="text-[#6A7282]" />
+              <span className="text-[length:12px] leading-5 tracking-[-0.15px] text-[#6A7282]">
                 {sensor.lastReading}
               </span>
             </div>
@@ -89,7 +87,7 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
                   e.preventDefault()
                   setShowCardMenu((v) => !v)
                 }}
-                className="flex items-center justify-center w-6 h-6 rounded-[4px] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer"
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer"
               >
                 <EllipsisVertical size={16} className="text-[var(--color-neutral-9)]" />
               </button>
@@ -126,71 +124,54 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
           </div>
 
           {/* Row 2: Content */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 flex flex-col gap-3 min-w-0">
-              {/* Name + Location */}
-              <div className="flex flex-col gap-1.5">
-                <h3 className="text-[length:16px] font-semibold text-[#101828] truncate leading-5 group-hover:text-[var(--color-accent-9)] transition-colors">
-                  {sensor.name}
-                </h3>
-                <div className="flex items-center gap-2">
-                  <MapPin size={18} className="text-[var(--color-neutral-8)] shrink-0" />
-                  <span className="text-[length:14px] font-medium text-[var(--color-neutral-7)] truncate leading-5">
-                    {sensor.locationName}
-                  </span>
-                </div>
+          <div className="flex items-center gap-6">
+            <div className="flex-1 flex flex-col gap-2.5 min-w-0">
+              <h3 className="text-[length:20px] font-bold text-[#101828] leading-6 group-hover:text-[var(--color-accent-9)] transition-colors">
+                {sensor.name}
+              </h3>
+              <div className="flex items-center gap-2">
+                <MapPin size={16} className="text-[#8B8D98] shrink-0" />
+                <span className="text-[length:12px] font-medium text-[#6A7282] truncate leading-4">
+                  {sensor.locationName}
+                </span>
               </div>
-
-              {/* Metrics */}
-              <div>
-                <div className="flex items-baseline">
-                  <span className="text-[length:36px] font-semibold text-[#101828] leading-10 tracking-[0.37px]">
-                    {formatHours(sensor.totalHours)}
-                  </span>
-                  <span className="text-[length:14px] text-[var(--color-neutral-7)] ml-1 leading-5 tracking-[-0.15px]">
-                    hrs
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 mt-1">
-                  <span
-                    className={`text-[length:14px] leading-5 tracking-[-0.15px] ${
-                      isDown ? 'text-[var(--color-error)]' : isUp ? 'text-[var(--color-success)]' : 'text-[var(--color-neutral-7)]'
-                    }`}
-                  >
-                    {isUp ? '+' : ''}{delta}%
-                  </span>
-                  <span className="text-[length:14px] text-[var(--color-neutral-7)] leading-5 tracking-[-0.15px]">
-                    vs prev period
-                  </span>
-                </div>
+              <div className="flex items-center gap-1 pr-0.5">
+                {isDown ? (
+                  <TrendingDown size={20} className="text-[#CE2C31]" />
+                ) : (
+                  <TrendingUp size={20} className="text-[#3E63DD]" />
+                )}
+                <span className={`text-[length:12px] font-medium leading-[140%] ml-0.5 ${isDown ? 'text-[#CE2C31]' : 'text-[#3451B2]'}`}>
+                  {isUp ? '+' : ''}{delta}%
+                </span>
               </div>
             </div>
 
-            <UptimeRing percent={sensor.uptimePercent} color={ringColor} />
+            <UptimeRing percent={sensor.uptimePercent} color={ringColor} totalHours={sensor.totalHours} />
           </div>
 
           {/* Row 3: Meter */}
           <div
-            className="flex items-center gap-1.5 pt-2 border-t border-[var(--border-subtle)]"
+            className="flex items-center gap-1.5 pt-4 border-t border-[#F0F0F3]"
             onClick={(e) => {
               e.preventDefault()
               setShowMeterModal(true)
             }}
           >
-            <Gauge size={18} className="text-[var(--color-neutral-7)] shrink-0" />
-            <span className="text-[length:14px] text-[var(--color-neutral-7)] leading-5">Meter:</span>
+            <Gauge size={18} className="text-[#1C2024] shrink-0" />
+            <span className="text-[length:12px] text-[#60646C] leading-4">Meter:</span>
             {sensor.meterName ? (
               <>
-                <span className="text-[length:14px] text-[var(--color-neutral-8)] leading-5 flex-1 truncate">
+                <span className="text-[length:12px] text-[#60646C] leading-4 flex-1 truncate">
                   {sensor.meterName}
                 </span>
                 <div onClick={(e) => { e.preventDefault(); e.stopPropagation() }}>
                   <Switch.Root
                     checked={meterSyncOn}
                     onCheckedChange={setMeterSyncOn}
-                    className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-350 shrink-0 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
+                    className="relative w-7 h-4 rounded-full cursor-pointer transition-colors duration-350 shrink-0 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[#E0E1E6]"
                   >
-                    <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-350 translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
+                    <Switch.Thumb className="block w-3.5 h-3.5 bg-white rounded-full shadow-[0px_4px_16px_-8px_rgba(0,0,0,0.1),0px_3px_12px_-4px_rgba(0,0,0,0.1),0px_2px_3px_-2px_rgba(0,0,51,0.06)] transition-transform duration-350 translate-x-[1px] data-[state=checked]:translate-x-[13px]" />
                   </Switch.Root>
                 </div>
               </>
@@ -201,7 +182,7 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
                   e.stopPropagation()
                   setShowSyncMeterModal(true)
                 }}
-                className="text-[length:14px] font-medium text-[var(--color-accent-9)] leading-5 flex-1 text-left hover:underline cursor-pointer"
+                className="text-[length:12px] font-medium text-[var(--color-accent-9)] leading-4 flex-1 text-left hover:underline cursor-pointer"
               >
                 Sync Meter
               </button>
@@ -230,8 +211,8 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
   )
 }
 
-function UptimeRing({ percent, color }: { percent: number; color: string }) {
-  const size = 104
+function UptimeRing({ percent, color, totalHours }: { percent: number; color: string; totalHours: number }) {
+  const size = 136
   const stroke = 8
   const radius = (size - stroke) / 2
   const circumference = 2 * Math.PI * radius
@@ -245,7 +226,7 @@ function UptimeRing({ percent, color }: { percent: number; color: string }) {
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="var(--color-neutral-3)"
+          stroke="#F0F0F3"
           strokeWidth={stroke}
         />
         <circle
@@ -260,9 +241,14 @@ function UptimeRing({ percent, color }: { percent: number; color: string }) {
           strokeDashoffset={offset}
         />
       </svg>
-      <span className="absolute text-[length:20px] font-bold text-[#101828]">
-        {Math.round(percent)}%
-      </span>
+      <div className="absolute flex flex-col items-center">
+        <span className="text-[length:28px] font-extrabold leading-9 text-[#101828]">
+          {Math.round(percent)}%
+        </span>
+        <span className="text-[length:14px] font-normal leading-5 text-[#60646C]">
+          {formatHours(totalHours)} Hs
+        </span>
+      </div>
     </div>
   )
 }

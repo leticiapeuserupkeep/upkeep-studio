@@ -61,18 +61,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       )
     }
     if (isRuntimeList) {
-      return (
-        <>
-          <Button variant="secondary" size="sm">
-            <Download size={14} />
-            Export Readings
-          </Button>
-          <Button variant="primary" size="sm" onClick={() => setShowAddRuntime(true)}>
-            <Plus size={14} />
-            Add Runtime
-          </Button>
-        </>
-      )
+      return undefined
     }
     if (isRuntimeDetail) {
       return (
@@ -141,6 +130,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             actions={getActions()}
           />
         )}
+        {isEdge && !isCreateApp && (
+          <div data-orientation="horizontal" role="separator" className="h-px bg-[var(--border-default)]" />
+        )}
+        <div id="runtime-kpi-portal" />
         {isCreateApp ? (
           children
         ) : (

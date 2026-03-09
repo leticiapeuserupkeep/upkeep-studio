@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Timer, TrendingUp, TrendingDown, Clock, Activity,
   Zap, Search, ChevronDown, Calendar, XCircle, ArrowUpDown, Radio,
-  Pencil, RotateCcw, X,
+  Pencil, RotateCcw, X, Share2, Bookmark, SlidersHorizontal, MapPin, Box,
 } from 'lucide-react'
-import { KPI } from '@/app/components/ui/KPI'
-import { Chip } from '@/app/components/ui/Chip'
 import { RuntimeCard } from '@/app/components/edge/RuntimeCard'
 import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
 import { runtimeSensors } from '@/app/lib/edge-data'
@@ -34,6 +33,11 @@ export default function RuntimePage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showEditModal, setShowEditModal] = useState(false)
   const [editSensorId, setEditSensorId] = useState<string | null>(null)
+  const [kpiPortal, setKpiPortal] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    setKpiPortal(document.getElementById('runtime-kpi-portal'))
+  }, [])
 
   function toggleSelection(id: string, value: boolean) {
     setSelectedIds((prev) => {
@@ -99,90 +103,23 @@ export default function RuntimePage() {
   const mostActiveSensor = [...runtimeSensors].sort((a, b) => b.totalHours - a.totalHours)[0]
   const avgDowntime = Math.round((100 - avgUptime) * 10) / 10
 
-  return (
-    <div className="flex flex-col gap-[var(--space-xl)] p-[var(--space-xl)]">
-      {/* KPI Row */}
-      <div className="grid grid-cols-4 gap-[var(--space-md)]">
-        <KPI
-          label="Total Runtime"
-          value={`${Math.round(totalFleetHours).toLocaleString()}`}
-          subtitle={`${fleetDelta >= 0 ? '+' : ''}${fleetDelta}% vs prev period`}
-          subtitleIcon={
-            fleetDelta < 0
-              ? <TrendingDown size={12} className="text-[var(--color-error)]" />
-              : fleetDelta > 0
-                ? <TrendingUp size={12} className="text-[var(--color-success)]" />
-                : undefined
-          }
-          icon={<Timer size={18} className="text-[var(--color-accent-9)]" />}
-          accent
-        />
-        <KPI
-          label="Avg Uptime"
-          value={`${avgUptime}%`}
-          subtitle={`${connectedCount} connected sensors`}
-          subtitleIcon={<Radio size={12} className="text-[var(--color-success)]" />}
-          icon={<Activity size={18} className="text-[var(--color-success)]" />}
-        />
-        <KPI
-          label="Avg Downtime"
-          value={`${avgDowntime}%`}
-          subtitle={`${disconnectedCount} sensor${disconnectedCount !== 1 ? 's' : ''} offline`}
-          subtitleIcon={<Radio size={12} className="text-[var(--color-neutral-6)]" />}
-          icon={<XCircle size={18} className="text-[var(--color-error)]" />}
-        />
-        <KPI
-          label="Needs Attention"
-          value={`${warningCount + disconnectedCount}`}
-          subtitle={`${warningCount} overloaded, ${disconnectedCount} disconnected`}
-          icon={
-            warningCount + disconnectedCount > 0 ? (
-              <TrendingDown size={18} className="text-[var(--color-error)]" />
-            ) : (
-              <TrendingUp size={18} className="text-[var(--color-success)]" />
-            )
-          }
-        />
-      </div>
-
-      {/* Filters & Search */}
-      <div className="flex items-center justify-between gap-[var(--space-md)]">
-        <div className="flex items-center gap-[var(--space-xs)]">
-          <Chip active={statusFilter === 'all'} onClick={() => setStatusFilter('all')}>
-            All ({runtimeSensors.length})
-          </Chip>
-          <Chip active={statusFilter === 'connected'} onClick={() => setStatusFilter('connected')}>
-            Connected ({connectedCount})
-          </Chip>
-          <Chip active={statusFilter === 'warning'} onClick={() => setStatusFilter('warning')}>
-            Overloaded ({warningCount})
-          </Chip>
-          <Chip active={statusFilter === 'disconnected'} onClick={() => setStatusFilter('disconnected')}>
-            Disconnected ({disconnectedCount})
-          </Chip>
-        </div>
-
+  const kpiStrip = (
+    <div className="flex flex-col items-center gap-3 pb-6">
+      {/* Sensor count row */}
+      <div className="flex items-center justify-between bg-[var(--color-neutral-1)] border-t border-[var(--border-default)] px-6 py-2 w-full">
+        <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">
+          {runtimeSensors.length} Sensors
+        </span>
         <div className="flex items-center gap-[var(--space-sm)]">
-          <div className="flex items-center gap-[var(--space-xs)] px-2.5 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)]">
-            <Search size={14} className="text-[var(--color-neutral-7)] shrink-0" />
-            <input
-              type="text"
-              placeholder="Search sensors..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-[180px] text-[length:var(--font-size-sm)] bg-transparent outline-none text-[var(--color-neutral-11)] placeholder:text-[var(--color-neutral-7)]"
-            />
-          </div>
-
           {/* Date range picker */}
           <div className="relative">
             <button
               onClick={() => setShowDatePicker((v) => !v)}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors"
             >
               <Calendar size={14} className="text-[var(--color-neutral-7)]" />
               {new Date(dateFrom + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              {' – '}
+              {' - '}
               {new Date(dateTo + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               <ChevronDown size={14} className="text-[var(--color-neutral-7)]" />
             </button>
@@ -190,7 +127,7 @@ export default function RuntimePage() {
             {showDatePicker && (
               <>
                 <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setShowDatePicker(false)} />
-                <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] w-[260px] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] p-[var(--space-sm)]">
+                <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] w-[260px] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] p-[var(--space-sm)] dropdown-animate">
                   <span className="block px-[var(--space-sm)] text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.04em] text-[var(--color-neutral-8)] mb-[var(--space-xs)]">
                     Date Range
                   </span>
@@ -220,28 +157,162 @@ export default function RuntimePage() {
             )}
           </div>
 
-          <div className="relative">
+          {/* Search */}
+          <div className="flex items-center gap-[var(--space-xs)] px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)]">
+            <Search size={14} className="text-[var(--color-neutral-7)] shrink-0" />
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-[120px] text-[length:var(--font-size-sm)] bg-transparent outline-none text-[var(--color-neutral-11)] placeholder:text-[var(--color-neutral-7)]"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Filter chips + Sort + Actions */}
+      <div className="flex items-center justify-between px-6 w-full max-w-[1280px]">
+        <div className="flex items-center gap-[var(--space-xs)]">
+          <button
+            onClick={() => setStatusFilter(statusFilter === 'connected' ? 'all' : 'connected')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] border text-[length:var(--font-size-sm)] font-medium cursor-pointer transition-colors ${
+              statusFilter === 'connected'
+                ? 'bg-[#EEF1FF] border-[#ABBDF9] text-[#3A5BC7]'
+                : 'bg-[var(--surface-primary)] border-[var(--border-default)] text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)]'
+            }`}
+          >
+            <SlidersHorizontal size={13} />
+            Status: Connected
+            <ChevronDown size={13} />
+          </button>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors">
+            <MapPin size={13} />
+            Location
+            <ChevronDown size={13} />
+          </button>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors">
+            <Box size={13} />
+            Asset
+            <ChevronDown size={13} />
+          </button>
+          <button
+            onClick={() => { setStatusFilter('all'); setSearchQuery('') }}
+            className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-11)] cursor-pointer transition-colors ml-1"
+          >
+            Reset
+          </button>
+        </div>
+
+        <div className="flex items-center gap-[var(--space-sm)]">
+          {/* Sort */}
+          <div className="relative flex items-center">
             <ArrowUpDown size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-neutral-7)] pointer-events-none" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortBy)}
-              className="appearance-none pl-8 pr-7 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] cursor-pointer outline-none"
+              className="appearance-none pl-8 pr-7 py-1.5 rounded-[var(--radius-lg)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] cursor-pointer outline-none bg-transparent"
             >
               <option value="hours_desc">Most Hours</option>
               <option value="hours_asc">Least Hours</option>
               <option value="name">Name A-Z</option>
               <option value="delta">Biggest Change</option>
             </select>
-            <ChevronDown
-              size={14}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-neutral-7)] pointer-events-none"
-            />
+            <ChevronDown size={14} className="absolute right-1 top-1/2 -translate-y-1/2 text-[var(--color-neutral-7)] pointer-events-none" />
           </div>
+
+          <button className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-accent-9)] hover:underline cursor-pointer">
+            Save View
+          </button>
+          <button className="flex items-center gap-1 text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:text-[var(--color-neutral-12)] cursor-pointer">
+            Saved Views
+            <ChevronDown size={13} />
+          </button>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors">
+            <Share2 size={13} />
+            Share
+          </button>
         </div>
       </div>
 
+      {/* KPI Row */}
+      <div className="grid grid-cols-4 gap-[var(--space-md)] px-6 pt-3 w-full max-w-[1280px]">
+        {/* Total Runtime */}
+        <div className="flex items-center justify-between rounded-[20px] bg-[#EEF1FF] border border-[#D6DEFF] px-5 py-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] bg-white/70">
+              <Clock size={20} className="text-[#5B6AD0]" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Total<br />Runtime</span>
+              <div className="flex items-center gap-1 mt-0.5 hidden">
+                <TrendingUp size={12} className="text-[#2F9E44]" />
+                <span className="text-[length:11px] font-medium text-[#2F9E44]">+2%</span>
+              </div>
+            </div>
+          </div>
+          <div className="shrink-0 flex flex-col items-center">
+            <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{Math.round(totalFleetHours).toLocaleString()}</span>
+            <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] mt-1">Hours</span>
+          </div>
+        </div>
+
+        {/* Average Uptime */}
+        <div className="flex items-center justify-between rounded-[20px] bg-[#E6F9EE] border border-[#C3ECD3] px-5 py-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] bg-white/70">
+              <Activity size={20} className="text-[#2F9E44]" />
+            </div>
+            <div className="flex flex-col min-w-0 max-w-[80px]">
+              <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Average Uptime</span>
+            </div>
+          </div>
+          <div className="shrink-0">
+            <UptimeRingSmall percent={avgUptime} />
+          </div>
+        </div>
+
+        {/* Total Downtime */}
+        <div className="flex items-center justify-between rounded-[20px] bg-[#FFF0F0] border border-[#FECDD3] px-5 py-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] bg-white/70">
+              <XCircle size={20} className="text-[#E03131]" />
+            </div>
+            <div className="flex flex-col min-w-0 max-w-[80px]">
+              <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Total Downtime</span>
+            </div>
+          </div>
+          <div className="shrink-0 flex flex-col items-center">
+            <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{avgDowntime}</span>
+            <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] mt-1">Hours</span>
+          </div>
+        </div>
+
+        {/* Overloaded */}
+        <div className="flex items-center justify-between rounded-[20px] bg-[#FFF8E1] border border-[#FFE5A0] px-4 py-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] bg-white/70">
+              <Radio size={20} className="text-[#E8890C]" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Overloaded<br />Sensors</span>
+            </div>
+          </div>
+          <div className="shrink-0 flex flex-col items-center">
+            <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{warningCount}</span>
+            <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] mt-1">Sensors</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col items-center w-full">
+      {kpiPortal && createPortal(kpiStrip, kpiPortal)}
+
       {/* Sensor Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[var(--space-md)]">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-[var(--space-md)] px-6 pb-6 w-full max-w-[1280px]">
         {filtered.map((sensor, i) => (
           <div key={sensor.id} className="card-animate" style={{ animationDelay: `${i * 60}ms` }}>
             <RuntimeCard
@@ -310,6 +381,31 @@ export default function RuntimePage() {
           />
         )
       })()}
+    </div>
+  )
+}
+
+function UptimeRingSmall({ percent }: { percent: number }) {
+  const size = 80
+  const stroke = 5
+  const radius = (size - stroke) / 2
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (percent / 100) * circumference
+
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#D4EDDA" strokeWidth={stroke} />
+        <circle
+          cx={size / 2} cy={size / 2} r={radius} fill="none"
+          stroke="#2F9E44" strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          className="transition-[stroke-dashoffset] duration-1000"
+        />
+      </svg>
+      <span className="absolute text-[length:var(--font-size-md)] font-bold text-[#1C2024]">
+        {Math.round(percent)}%
+      </span>
     </div>
   )
 }
