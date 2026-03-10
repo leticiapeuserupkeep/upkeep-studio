@@ -147,11 +147,13 @@ export default function RuntimeDetailPage() {
   function selectPreset(key: RangePreset) {
     setRangePreset(key)
     setShowRangePicker(false)
+    setSelectedDay(null)
   }
 
   function applyCustomRange() {
     setRangePreset('custom')
     setShowRangePicker(false)
+    setSelectedDay(null)
   }
 
   if (!sensor) {
@@ -215,14 +217,14 @@ export default function RuntimeDetailPage() {
             {showRangePicker && (
               <>
                 <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setShowRangePicker(false)} />
-                <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] w-[280px] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] p-[var(--space-sm)] dropdown-animate">
+                <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] min-w-[200px] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] p-[var(--space-sm)] pb-4 dropdown-animate">
                   {/* Presets */}
                   <div className="flex flex-col gap-0.5 mb-[var(--space-sm)]">
                     {rangePresets.map((p) => (
                       <button
                         key={p.key}
                         onClick={() => selectPreset(p.key)}
-                        className={`text-left px-[var(--space-sm)] py-[var(--space-xs)] rounded-[var(--radius-md)] text-[length:var(--font-size-sm)] font-medium cursor-pointer transition-colors ${
+                        className={`text-left px-[var(--space-sm)] py-[var(--space-xs)] rounded-[var(--radius-md)] text-[length:var(--font-size-sm)] font-medium cursor-pointer transition-colors whitespace-nowrap ${
                           rangePreset === p.key
                             ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)]'
                             : 'text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)]'
@@ -237,11 +239,11 @@ export default function RuntimeDetailPage() {
                   <div className="h-px bg-[var(--border-subtle)] my-[var(--space-xs)]" />
 
                   {/* Custom range */}
-                  <div className="px-[var(--space-sm)]">
+                  <div className="px-[var(--space-sm)] pt-[var(--space-sm)]">
                     <span className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.04em] text-[var(--color-neutral-8)]">
                       Custom Range
                     </span>
-                    <div className="flex items-center gap-[var(--space-xs)] mt-[var(--space-xs)]">
+                    <div className="flex items-center gap-[var(--space-xs)] mt-[var(--space-xs)] py-3">
                       <input
                         type="date"
                         value={customFrom}
@@ -465,7 +467,7 @@ export default function RuntimeDetailPage() {
         {/* Day detail readings */}
         {selectedDay && (
           <div className="col-span-2 panel-animate">
-            <DayReadingsTable day={selectedDay} threshold={sensor.runtimeThreshold} />
+            <DayReadingsTable day={selectedDay} threshold={sensor.runtimeThreshold} avgDailyHours={sensor.avgDailyHours} />
           </div>
         )}
       </div>
@@ -638,14 +640,14 @@ function seedRandom(str: string) {
   }
 }
 
-function DayPieChart({ connectedHours, disconnectedHours }: { connectedHours: number; disconnectedHours: number }) {
-  const total = connectedHours + disconnectedHours
-  const connectedPct = total > 0 ? (connectedHours / total) * 100 : 0
+function DayPieChart({ dayHours, avgDailyHours }: { dayHours: number; avgDailyHours: number }) {
+  const pct = avgDailyHours > 0 ? Math.round((dayHours / avgDailyHours) * 100) : 0
+  const ringPct = Math.min(pct, 100)
   const size = 88
   const stroke = 6
   const radius = (size - stroke) / 2
   const circumference = 2 * Math.PI * radius
-  const connectedOffset = circumference - (connectedPct / 100) * circumference
+  const connectedOffset = circumference - (ringPct / 100) * circumference
 
   return (
     <div className="flex items-center gap-[var(--space-md)] pt-1 pb-3">
@@ -658,28 +660,31 @@ function DayPieChart({ connectedHours, disconnectedHours }: { connectedHours: nu
             strokeDasharray={circumference} strokeDashoffset={connectedOffset}
           />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-[length:16px] font-bold text-[var(--color-accent-9)]">
-          {Math.round(connectedPct)}%
+        <span className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-[length:16px] font-bold text-[var(--color-accent-9)] leading-none">
+            {pct}%
+          </span>
+          <span className="text-[length:12px] font-medium text-[var(--color-neutral-8)] leading-none mt-1">
+            {dayHours}h
+          </span>
         </span>
       </div>
       <div className="flex flex-col gap-1 hidden">
         <span className="inline-flex items-center gap-1.5 text-[length:var(--font-size-xs)] font-medium text-[var(--color-success)]">
           <span className="w-2 h-2 rounded-full bg-[var(--color-success)]" />
-          Connected: {connectedHours}h
+          Runtime: {dayHours}h
         </span>
         <span className="inline-flex items-center gap-1.5 text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-7)]">
           <span className="w-2 h-2 rounded-full bg-[var(--color-neutral-4)]" />
-          Disconnected: {disconnectedHours}h
+          Avg: {avgDailyHours}h
         </span>
       </div>
     </div>
   )
 }
 
-function DayReadingsTable({ day, threshold }: { day: DailyRuntime; threshold?: number }) {
+function DayReadingsTable({ day, threshold, avgDailyHours }: { day: DailyRuntime; threshold?: number; avgDailyHours: number }) {
   const readings = useMemo(() => generateIntervalReadings(day, threshold), [day, threshold])
-  const activeCount = readings.filter((r) => r.running).length
-  const activeHours = Math.round((activeCount / 6) * 10) / 10
   const dt = new Date(day.date + 'T00:00:00')
   const dateLabel = dt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
 
@@ -687,7 +692,7 @@ function DayReadingsTable({ day, threshold }: { day: DailyRuntime; threshold?: n
     <Card>
       <CardHeader
         action={
-          <DayPieChart connectedHours={activeHours} disconnectedHours={Math.round((24 - activeHours) * 10) / 10} />
+          <DayPieChart dayHours={day.hours} avgDailyHours={avgDailyHours} />
         }
       >
         <CardTitle>{dateLabel}</CardTitle>

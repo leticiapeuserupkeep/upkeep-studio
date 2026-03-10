@@ -13,15 +13,15 @@ import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
 import { runtimeSensors } from '@/app/lib/edge-data'
 import type { SensorStatus } from '@/app/lib/models'
 
-type PeriodFilter = '7d' | '30d' | '90d'
+type PeriodFilter = '7d' | '14d' | '30d' | 'custom'
 type StatusFilter = 'all' | SensorStatus
 type SortBy = 'hours_desc' | 'hours_asc' | 'name' | 'delta'
 
-const periodLabels: Record<PeriodFilter, string> = {
-  '7d': 'Past 7 Days',
-  '30d': 'Past 30 Days',
-  '90d': 'Past 90 Days',
-}
+const rangePresets: { key: Exclude<PeriodFilter, 'custom'>; label: string }[] = [
+  { key: '7d', label: 'Past 7 Days' },
+  { key: '14d', label: 'Past 14 Days' },
+  { key: '30d', label: 'Past 30 Days' },
+]
 
 export default function RuntimePage() {
   const [period, setPeriod] = useState<PeriodFilter>('30d')
@@ -137,40 +137,57 @@ export default function RuntimePage() {
               className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors"
             >
               <Calendar size={14} className="text-[var(--color-neutral-7)]" />
-              {new Date(dateFrom + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              {' - '}
-              {new Date(dateTo + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              {period === 'custom'
+                ? `${new Date(dateFrom + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(dateTo + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                : rangePresets.find((p) => p.key === period)?.label ?? ''}
               <ChevronDown size={14} className="text-[var(--color-neutral-7)]" />
             </button>
 
             {showDatePicker && (
               <>
                 <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setShowDatePicker(false)} />
-                <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] w-[260px] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] p-[var(--space-sm)] dropdown-animate">
-                  <span className="block px-[var(--space-sm)] text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.04em] text-[var(--color-neutral-8)] mb-[var(--space-xs)]">
-                    Date Range
-                  </span>
-                  <div className="flex items-center gap-[var(--space-xs)] px-[var(--space-sm)]">
-                    <input
-                      type="date"
-                      value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                      className="flex-1 px-2 py-1.5 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none"
-                    />
-                    <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)]">to</span>
-                    <input
-                      type="date"
-                      value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
-                      className="flex-1 px-2 py-1.5 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none"
-                    />
+                <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] min-w-[200px] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] p-[var(--space-sm)] pb-4 dropdown-animate">
+                  <div className="flex flex-col gap-0.5 mb-[var(--space-sm)]">
+                    {rangePresets.map((p) => (
+                      <button
+                        key={p.key}
+                        onClick={() => { setPeriod(p.key); setShowDatePicker(false) }}
+                        className={`text-left px-[var(--space-sm)] py-[var(--space-xs)] rounded-[var(--radius-md)] text-[length:var(--font-size-sm)] font-medium cursor-pointer transition-colors whitespace-nowrap ${
+                          period === p.key
+                            ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)]'
+                            : 'text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)]'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
                   </div>
-                  <button
-                    onClick={() => setShowDatePicker(false)}
-                    className="w-[calc(100%-var(--space-md))] mx-[var(--space-sm)] mt-[var(--space-sm)] px-3 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-accent-9)] text-white text-[length:var(--font-size-sm)] font-medium cursor-pointer hover:opacity-90 transition-opacity"
-                  >
-                    Apply
-                  </button>
+
+                  <div className="h-px bg-[var(--border-subtle)] my-[var(--space-xs)]" />
+
+                  <div className="px-[var(--space-sm)] pt-3">
+                    <span className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.04em] text-[var(--color-neutral-8)]">
+                      Custom Range
+                    </span>
+                    <div className="flex items-center gap-[var(--space-xs)] mt-[var(--space-xs)] py-3">
+                      <input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="flex-1 px-2 py-1.5 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none"
+                      />
+                      <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)]">to</span>
+                      <input
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="flex-1 px-2 py-1.5 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none"
+                      />
+                    </div>
+                    <Button variant="primary" size="sm" className="w-full mt-[var(--space-sm)]" onClick={() => { setPeriod('custom'); setShowDatePicker(false) }}>
+                      Apply
+                    </Button>
+                  </div>
                 </div>
               </>
             )}

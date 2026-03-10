@@ -107,7 +107,10 @@ export function RuntimeBarChart({ data, height = 260, className = '', onDayClick
                         maxWidth: maxBarWidth,
                         borderRadius: radius,
                         backgroundColor: isSelected ? 'var(--color-accent-9)' : 'var(--color-accent-7)',
-                        opacity: resetting ? 0 : (hoveredIndex !== null && !isHovered && !isSelected ? 0.5 : 1),
+                        opacity: resetting ? 0
+                          : (selectedDate && !isSelected && !isHovered) ? 0.35
+                          : (hoveredIndex !== null && !isHovered && !isSelected) ? 0.5
+                          : 1,
                         transition: resetting
                           ? `height 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${staggerDelay}ms, opacity 0.6s ease ${staggerDelay}ms`
                           : 'background-color 0.3s ease, opacity 0.3s ease',
