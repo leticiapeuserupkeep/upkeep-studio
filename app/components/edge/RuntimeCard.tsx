@@ -27,7 +27,7 @@ function formatHours(h: number): string {
 
 const statusConfig = {
   connected: { label: 'Connected', severity: 'success' as const },
-  disconnected: { label: 'Disconnected', severity: 'danger' as const },
+  disconnected: { label: 'Disconnected', severity: 'neutral' as const },
   warning: { label: 'Overloaded', severity: 'danger' as const },
 }
 
@@ -73,8 +73,8 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
             </div>
             <div className="flex-1" />
             <div className="flex items-center gap-1.5">
-              <Clock size={12} className="text-[#6A7282]" />
-              <span className="text-[length:12px] leading-5 tracking-[-0.15px] text-[#6A7282]">
+              <Clock size={10} className="text-[var(--widget-empty-text-color)]" />
+              <span className="text-[length:12px] leading-5 tracking-[-0.15px] text-[var(--widget-empty-text-color)]">
                 {sensor.lastReading}
               </span>
             </div>
@@ -125,13 +125,13 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
 
           {/* Row 2: Content */}
           <div className="flex items-center gap-6">
-            <div className="flex-1 flex flex-col gap-2.5 min-w-0">
-              <h3 className="text-[length:20px] font-bold text-[#101828] leading-6 group-hover:text-[var(--color-accent-9)] transition-colors">
+            <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+              <h3 className="text-[length:16px] font-bold text-[#101828] leading-5 group-hover:text-[var(--color-accent-9)] transition-colors">
                 {sensor.name}
               </h3>
               <div className="flex items-center gap-2">
                 <MapPin size={16} className="text-[#8B8D98] shrink-0" />
-                <span className="text-[length:12px] font-medium text-[#6A7282] truncate leading-4">
+                <span className="text-[length:14px] font-medium text-[#6A7282] truncate leading-4">
                   {sensor.locationName}
                 </span>
               </div>
@@ -212,8 +212,8 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
 }
 
 function UptimeRing({ percent, color, totalHours }: { percent: number; color: string; totalHours: number }) {
-  const size = 136
-  const stroke = 8
+  const size = 108
+  const stroke = 4
   const radius = (size - stroke) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (percent / 100) * circumference
@@ -242,10 +242,10 @@ function UptimeRing({ percent, color, totalHours }: { percent: number; color: st
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="text-[length:28px] font-extrabold leading-9 text-[#101828]">
+        <span className="text-[length:22px] font-extrabold leading-5 text-[var(--color-neutral-10)]">
           {Math.round(percent)}%
         </span>
-        <span className="text-[length:14px] font-normal leading-5 text-[#60646C]">
+        <span className="text-[length:14px] font-normal leading-[18px] text-[var(--color-neutral-10)]">
           {formatHours(totalHours)} Hs
         </span>
       </div>

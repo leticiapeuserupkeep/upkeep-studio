@@ -66,9 +66,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (isRuntimeDetail) {
       return (
         <>
-          <Button variant="secondary" size="sm">
+          <Button variant="secondary" size="sm" className="hidden">
             <Download size={14} />
-            Export Readings
+            Export
           </Button>
           <div className="relative">
             <button
@@ -133,6 +133,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {isEdge && !isCreateApp && (
           <div data-orientation="horizontal" role="separator" className="h-px bg-[var(--border-default)]" />
         )}
+        <div id="runtime-sensor-bar-portal" />
         <div id="runtime-kpi-portal" />
         {isCreateApp ? (
           children

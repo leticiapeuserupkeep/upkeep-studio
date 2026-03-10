@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import type { DailyRuntime } from '@/app/lib/models'
 
 interface RuntimeBarChartProps {
@@ -27,13 +27,11 @@ export function RuntimeBarChart({ data, height = 260, className = '', onDayClick
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   const ceilMax = 24
-  const yTickCount = 4
   const yTicks = [0, 6, 12, 18, 24]
 
   const chartPaddingTop = 16
   const chartPaddingBottom = 40
   const yAxisWidth = 44
-  const chartAreaHeight = height - chartPaddingTop - chartPaddingBottom
 
   const barCount = data.length
   const gap = barCount <= 7 ? '12px' : barCount <= 14 ? '8px' : '4px'
@@ -42,7 +40,7 @@ export function RuntimeBarChart({ data, height = 260, className = '', onDayClick
   const radius = barCount <= 14 ? '4px 4px 2px 2px' : '3px 3px 1px 1px'
 
   return (
-    <div className={`relative select-none ${className}`} style={{ height }}>
+    <div className={`relative select-none ${className}`} style={{ height: '100%', minHeight: height }}>
       <div className="absolute inset-0 flex">
         {/* Y-axis */}
         <div
@@ -61,33 +59,27 @@ export function RuntimeBarChart({ data, height = 260, className = '', onDayClick
 
         {/* Chart area */}
         <div className="flex-1 relative">
-          {/* Horizontal grid lines */}
-          {yTicks.map((tick) => {
-            const pct = (tick / ceilMax) * 100
-            return (
-              <div
-                key={tick}
-                className="absolute w-full border-t border-[var(--color-neutral-3)]"
-                style={{
-                  bottom: `${chartPaddingBottom + (pct / 100) * chartAreaHeight}px`,
-                }}
-              />
-            )
-          })}
-
-          {/* Bars container */}
           <div
-            className="absolute flex items-end"
-            style={{
-              left: 0,
-              right: 0,
-              top: chartPaddingTop,
-              bottom: chartPaddingBottom,
-              gap,
-              paddingLeft: pad,
-              paddingRight: pad,
-            }}
+            className="absolute"
+            style={{ left: 0, right: 0, top: chartPaddingTop, bottom: chartPaddingBottom }}
           >
+            {/* Horizontal grid lines */}
+            {yTicks.map((tick) => {
+              const pct = (tick / ceilMax) * 100
+              return (
+                <div
+                  key={tick}
+                  className="absolute w-full border-t border-[var(--color-neutral-3)]"
+                  style={{ bottom: `${pct}%` }}
+                />
+              )
+            })}
+
+            {/* Bars container */}
+            <div
+              className="absolute inset-0 flex items-end"
+              style={{ gap, paddingLeft: pad, paddingRight: pad }}
+            >
             {data.map((day, i) => {
               const barPct = (Math.min(day.hours, 24) / ceilMax) * 100
               const isHovered = hoveredIndex === i
@@ -145,6 +137,7 @@ export function RuntimeBarChart({ data, height = 260, className = '', onDayClick
                 </div>
               )
             })}
+          </div>
           </div>
         </div>
       </div>

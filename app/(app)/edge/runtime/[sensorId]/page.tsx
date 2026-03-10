@@ -6,7 +6,8 @@ import Link from 'next/link'
 import {
   Clock, Wifi, WifiOff, AlertTriangle,
   TrendingUp, TrendingDown, Minus, Timer, BarChart3,
-  ClipboardList, Plus, Share2, XCircle, Calendar, ChevronDown, Zap, Trash2,
+  ClipboardList, Plus, Download, XCircle, Calendar, ChevronDown, Zap, Trash2,
+  MousePointerClick,
 } from 'lucide-react'
 import * as Switch from '@radix-ui/react-switch'
 import { Card, CardHeader, CardTitle, CardBody } from '@/app/components/ui/Card'
@@ -78,11 +79,21 @@ export default function RuntimeDetailPage() {
   const [meterDeleted, setMeterDeleted] = useState(false)
   const [meterSyncOn, setMeterSyncOn] = useState(true)
   const [selectedDay, setSelectedDay] = useState<DailyRuntime | null>(null)
+  const [showChartHint, setShowChartHint] = useState(false)
 
   useEffect(() => {
     const handler = () => setShowMeterModal(true)
     window.addEventListener('open-edit-runtime', handler)
     return () => window.removeEventListener('open-edit-runtime', handler)
+  }, [])
+
+  useEffect(() => {
+    const key = 'runtime-detail-visits'
+    const visits = parseInt(localStorage.getItem(key) ?? '0', 10)
+    if (visits < 3) {
+      setShowChartHint(true)
+      localStorage.setItem(key, String(visits + 1))
+    }
   }, [])
 
   const sensor = runtimeSensors.find((s) => s.id === sensorId)
@@ -218,8 +229,8 @@ export default function RuntimeDetailPage() {
           </div>
 
           <Button variant="secondary" size="sm" className="hidden">
-            <Share2 size={14} />
-            Share
+            <Download size={14} />
+            Export
           </Button>
         </div>
       </div>
@@ -237,49 +248,58 @@ export default function RuntimeDetailPage() {
         )
 
         return (
-          <div className="grid gap-[var(--space-md)]" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
+          <div className="grid grid-cols-3 gap-[var(--space-md)]">
             {/* Runtime — hero card */}
-            <div className="flex items-center justify-between rounded-[var(--radius-xl)] bg-[var(--color-accent-9)] p-[var(--space-lg)] text-white">
-              <div className="flex flex-col gap-1">
-                <span className="text-[length:var(--font-size-sm)] font-medium opacity-80">Runtime</span>
+            <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-accent-9)] p-[var(--space-lg)] text-white">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] border border-white/20">
+                  <Timer size={20} className="text-white" />
+                </div>
+                <div className="flex flex-col gap-1">
+                <span className="text-[length:11px] font-semibold opacity-80 uppercase">Runtime</span>
                 <span className="text-[length:var(--font-size-3xl)] font-bold leading-none">
                   {Math.round(sensor.totalHours)} h
                 </span>
                 <DeltaLabel delta={delta} light />
+                </div>
               </div>
               <UptimeRing percent={sensor.uptimePercent} />
             </div>
 
             {/* Downtime Hours */}
-            <div className="flex flex-col gap-1 rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-[var(--space-lg)]">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[var(--color-error-light)]">
-                  <XCircle size={14} className="text-[var(--color-error)]" />
+            <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-error-light)] border border-[#FECDD3] px-5 py-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] border border-[var(--color-error-border)]">
+                  <XCircle size={20} className="text-[#E03131]" />
                 </div>
-                <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)]">Downtime Hours</span>
+                <div className="flex flex-col min-w-0 max-w-[80px]">
+                  <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Downtime Hours</span>
+                </div>
               </div>
-              <span className="text-[length:var(--font-size-2xl)] font-bold text-[#0044cc] leading-none">
-                {downtimeHours} h
-              </span>
-              <DeltaLabel delta={downtimeDelta} invert />
+              <div className="shrink-0 flex flex-col items-center">
+                <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{downtimeHours}</span>
+                <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] mt-1">Hours</span>
+              </div>
             </div>
 
             {/* Daily Average */}
-            <div className="flex flex-col gap-1 rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-[var(--space-lg)]">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[var(--color-accent-1)]">
-                  <BarChart3 size={14} className="text-[var(--color-accent-9)]" />
+            <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-accent-1)] border border-[#D6DEFF] px-5 py-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] border border-[var(--color-accent-3)]">
+                  <BarChart3 size={20} className="text-[#5B6AD0]" />
                 </div>
-                <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)]">Daily Average</span>
+                <div className="flex flex-col min-w-0 max-w-[80px]">
+                  <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Daily Average</span>
+                </div>
               </div>
-              <span className="text-[length:var(--font-size-2xl)] font-bold text-[var(--color-neutral-12)] leading-none">
-                {sensor.avgDailyHours.toFixed(1)} h
-              </span>
-              <DeltaLabel delta={dailyAvgDelta} />
+              <div className="shrink-0 flex flex-col items-center">
+                <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{sensor.avgDailyHours.toFixed(1)}</span>
+                <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] mt-1">Hours</span>
+              </div>
             </div>
 
             {/* Peak + Minimum stacked */}
-            <div className="flex flex-col gap-[var(--space-sm)]">
+            <div className="flex flex-col gap-[var(--space-sm)] hidden">
               <div className="flex items-center gap-[var(--space-sm)] flex-1 rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-[var(--space-md)] py-[var(--space-sm)]">
                 <TrendingUp size={16} className="text-[var(--color-error)] shrink-0" />
                 <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] font-medium">Peak day</span>
@@ -300,11 +320,11 @@ export default function RuntimeDetailPage() {
         {/* Left column (2 cols) */}
         <div className="col-span-2 flex flex-col gap-[var(--space-lg)]">
           {/* Daily Runtime Chart */}
-          <Card>
+          <Card className="flex flex-col flex-1">
             <CardHeader
               action={
                 sensor.runtimeThreshold != null ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-[var(--radius-md)] bg-[var(--color-neutral-3)] text-[length:var(--font-size-xs)] font-semibold text-[var(--color-neutral-11)]">
+                  <span className="inline-flex items-center gap-1 px-3 py-2 rounded-[var(--radius-md)] bg-[var(--color-white)] border border-[var(--border-default)] text-[length:var(--font-size-xs)] font-semibold text-[var(--color-neutral-11)]">
                     <Zap size={11} className="text-[var(--color-warning)]" />
                     Threshold: {sensor.runtimeThreshold} AMP
                   </span>
@@ -316,13 +336,28 @@ export default function RuntimeDetailPage() {
                 Hours of operation per day
               </p>
             </CardHeader>
-            <CardBody>
-              <RuntimeBarChart
-                data={chartData}
-                height={280}
-                onDayClick={(day) => setSelectedDay((prev) => prev?.date === day.date ? null : day)}
-                selectedDate={selectedDay?.date}
-              />
+            <CardBody className="flex-1 flex flex-col justify-end">
+              <div className="relative flex-1 flex flex-col justify-end">
+                <RuntimeBarChart
+                  data={chartData}
+                  onDayClick={(day) => {
+                    setSelectedDay((prev) => prev?.date === day.date ? null : day)
+                    setShowChartHint(false)
+                  }}
+                  selectedDate={selectedDay?.date}
+                />
+                {showChartHint && (
+                  <button
+                    onClick={() => setShowChartHint(false)}
+                    className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer bg-transparent group/hint"
+                  >
+                    <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[var(--color-neutral-12)]/85 text-white text-[length:var(--font-size-sm)] font-medium shadow-[var(--shadow-lg)] backdrop-blur-sm animate-pulse pointer-events-none select-none">
+                      <MousePointerClick size={15} className="opacity-90" />
+                      Click a bar to view daily details
+                    </span>
+                  </button>
+                )}
+              </div>
             </CardBody>
           </Card>
 
@@ -493,7 +528,7 @@ function DeltaLabel({ delta, light = false, invert = false }: { delta: number; l
         }`}
       >
         {delta > 0 ? '+' : ''}{delta}%
-        <span className={light ? 'opacity-70' : 'text-[var(--color-neutral-7)]'}> vs prev period</span>
+        <span className={`${light ? 'opacity-70' : 'text-[var(--color-neutral-7)]'} hidden`}> vs prev period</span>
       </span>
     </div>
   )
@@ -575,7 +610,7 @@ function seedRandom(str: string) {
 function DayPieChart({ connectedHours, disconnectedHours }: { connectedHours: number; disconnectedHours: number }) {
   const total = connectedHours + disconnectedHours
   const connectedPct = total > 0 ? (connectedHours / total) * 100 : 0
-  const size = 48
+  const size = 72
   const stroke = 6
   const radius = (size - stroke) / 2
   const circumference = 2 * Math.PI * radius
@@ -592,7 +627,7 @@ function DayPieChart({ connectedHours, disconnectedHours }: { connectedHours: nu
             strokeDasharray={circumference} strokeDashoffset={connectedOffset}
           />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-[length:10px] font-bold text-[var(--color-accent-9)]">
+        <span className="absolute inset-0 flex items-center justify-center text-[length:16px] font-bold text-[var(--color-accent-9)]">
           {Math.round(connectedPct)}%
         </span>
       </div>
@@ -645,7 +680,7 @@ function DayReadingsTable({ day, threshold }: { day: DailyRuntime; threshold?: n
         </div>
 
         {/* Hour labels */}
-        <div className="flex justify-between mb-[var(--space-md)] px-0.5 pt-1 pb-3">
+        <div className="flex justify-between mb-[var(--space-md)] px-0.5 pt-1 pb-5">
           {[0, 4, 8, 12, 16, 20, 24].map((h) => (
             <span key={h} className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)]">
               {h.toString().padStart(2, '0')}:00

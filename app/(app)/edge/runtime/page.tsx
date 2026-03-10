@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import {
   Timer, TrendingUp, TrendingDown, Clock, Activity,
   Zap, Search, ChevronDown, Calendar, XCircle, ArrowUpDown, Radio,
-  Pencil, RotateCcw, X, Share2, Bookmark, SlidersHorizontal, MapPin, Box,
+  Pencil, RotateCcw, X, Download, Bookmark, SlidersHorizontal, MapPin, Box,
 } from 'lucide-react'
 import { RuntimeCard } from '@/app/components/edge/RuntimeCard'
 import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
@@ -34,9 +34,11 @@ export default function RuntimePage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editSensorId, setEditSensorId] = useState<string | null>(null)
   const [kpiPortal, setKpiPortal] = useState<HTMLElement | null>(null)
+  const [sensorBarPortal, setSensorBarPortal] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
     setKpiPortal(document.getElementById('runtime-kpi-portal'))
+    setSensorBarPortal(document.getElementById('runtime-sensor-bar-portal'))
   }, [])
 
   function toggleSelection(id: string, value: boolean) {
@@ -103,14 +105,25 @@ export default function RuntimePage() {
   const mostActiveSensor = [...runtimeSensors].sort((a, b) => b.totalHours - a.totalHours)[0]
   const avgDowntime = Math.round((100 - avgUptime) * 10) / 10
 
-  const kpiStrip = (
-    <div className="flex flex-col items-center gap-3 pb-6">
-      {/* Sensor count row */}
-      <div className="flex items-center justify-between bg-[var(--color-neutral-1)] border-t border-[var(--border-default)] px-6 py-2 w-full">
+  const sensorCountBar = (
+    <div className="flex justify-center w-full bg-white border-y border-[var(--border-default)]">
+      <div className="flex items-center justify-between px-6 py-2 w-full max-w-[1280px] mx-auto">
         <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">
           {runtimeSensors.length} Sensors
         </span>
         <div className="flex items-center gap-[var(--space-sm)]">
+          {/* Search */}
+          <div className="flex items-center gap-[var(--space-xs)] px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)]">
+            <Search size={14} className="text-[var(--color-neutral-7)] shrink-0" />
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-[120px] text-[length:var(--font-size-sm)] bg-transparent outline-none text-[var(--color-neutral-11)] placeholder:text-[var(--color-neutral-7)]"
+            />
+          </div>
+
           {/* Date range picker */}
           <div className="relative">
             <button
@@ -156,21 +169,13 @@ export default function RuntimePage() {
               </>
             )}
           </div>
-
-          {/* Search */}
-          <div className="flex items-center gap-[var(--space-xs)] px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)]">
-            <Search size={14} className="text-[var(--color-neutral-7)] shrink-0" />
-            <input
-              type="text"
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-[120px] text-[length:var(--font-size-sm)] bg-transparent outline-none text-[var(--color-neutral-11)] placeholder:text-[var(--color-neutral-7)]"
-            />
-          </div>
         </div>
       </div>
+    </div>
+  )
 
+  const kpiStrip = (
+    <div className="flex flex-col items-center gap-3 pt-3 pb-6">
       {/* Filter chips + Sort + Actions */}
       <div className="flex items-center justify-between px-6 w-full max-w-[1280px]">
         <div className="flex items-center gap-[var(--space-xs)]">
@@ -228,19 +233,19 @@ export default function RuntimePage() {
             Saved Views
             <ChevronDown size={13} />
           </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors">
-            <Share2 size={13} />
-            Share
+          <button className="hidden flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors">
+            <Download size={13} />
+            Export
           </button>
         </div>
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-4 gap-[var(--space-md)] px-6 pt-3 w-full max-w-[1280px]">
+      <div className="grid grid-cols-4 gap-[var(--space-md)] px-6 pt-6 pb-3 w-full max-w-[1280px]">
         {/* Total Runtime */}
-        <div className="flex items-center justify-between rounded-[20px] bg-[#EEF1FF] border border-[#D6DEFF] px-5 py-4">
+        <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-accent-1)] border border-[#D6DEFF] px-5 py-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] bg-white/70">
+            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] border border-[var(--color-accent-3)]">
               <Clock size={20} className="text-[#5B6AD0]" />
             </div>
             <div className="flex flex-col min-w-0">
@@ -258,9 +263,9 @@ export default function RuntimePage() {
         </div>
 
         {/* Average Uptime */}
-        <div className="flex items-center justify-between rounded-[20px] bg-[#E6F9EE] border border-[#C3ECD3] px-5 py-4">
+        <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-success-light)] border border-[#C3ECD3] px-5 py-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] bg-white/70">
+            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] border border-[var(--color-success-border)]">
               <Activity size={20} className="text-[#2F9E44]" />
             </div>
             <div className="flex flex-col min-w-0 max-w-[80px]">
@@ -273,9 +278,9 @@ export default function RuntimePage() {
         </div>
 
         {/* Total Downtime */}
-        <div className="flex items-center justify-between rounded-[20px] bg-[#FFF0F0] border border-[#FECDD3] px-5 py-4">
+        <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-error-light)] border border-[#FECDD3] px-5 py-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] bg-white/70">
+            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] border border-[var(--color-error-border)]">
               <XCircle size={20} className="text-[#E03131]" />
             </div>
             <div className="flex flex-col min-w-0 max-w-[80px]">
@@ -291,7 +296,7 @@ export default function RuntimePage() {
         {/* Overloaded */}
         <div className="flex items-center justify-between rounded-[20px] bg-[#FFF8E1] border border-[#FFE5A0] px-4 py-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] bg-white/70">
+            <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] bg-[var(--color-warning-light)] border border-[var(--color-warning-border)]">
               <Radio size={20} className="text-[#E8890C]" />
             </div>
             <div className="flex flex-col min-w-0">
@@ -309,6 +314,7 @@ export default function RuntimePage() {
 
   return (
     <div className="flex flex-col items-center w-full">
+      {sensorBarPortal && createPortal(sensorCountBar, sensorBarPortal)}
       {kpiPortal && createPortal(kpiStrip, kpiPortal)}
 
       {/* Sensor Cards Grid */}
