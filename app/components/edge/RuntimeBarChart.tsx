@@ -9,6 +9,7 @@ interface RuntimeBarChartProps {
   className?: string
   onDayClick?: (day: DailyRuntime) => void
   selectedDate?: string
+  resetting?: boolean
 }
 
 function formatLabel(date: string, total: number): string {
@@ -23,7 +24,7 @@ function shouldShowLabel(index: number, total: number): boolean {
   return index % 3 === 0
 }
 
-export function RuntimeBarChart({ data, height = 260, className = '', onDayClick, selectedDate }: RuntimeBarChartProps) {
+export function RuntimeBarChart({ data, height = 260, className = '', onDayClick, selectedDate, resetting = false }: RuntimeBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   const ceilMax = 24
@@ -82,9 +83,11 @@ export function RuntimeBarChart({ data, height = 260, className = '', onDayClick
             >
             {data.map((day, i) => {
               const barPct = (Math.min(day.hours, 24) / ceilMax) * 100
+              const barHeight = `${Math.max(barPct, day.hours > 0 ? 1.5 : 0)}%`
               const isHovered = hoveredIndex === i
               const isSelected = selectedDate === day.date
               const label = formatLabel(day.date, barCount)
+              const staggerDelay = i * 25
 
               return (
                 <div
@@ -98,13 +101,16 @@ export function RuntimeBarChart({ data, height = 260, className = '', onDayClick
                   {/* Bar */}
                   <div className="flex-1 w-full flex items-end justify-center">
                     <div
-                      className="relative w-full transition-all duration-300 cursor-pointer"
+                      className="relative w-full cursor-pointer"
                       style={{
-                        height: `${Math.max(barPct, day.hours > 0 ? 1.5 : 0)}%`,
+                        height: resetting ? '0%' : barHeight,
                         maxWidth: maxBarWidth,
                         borderRadius: radius,
                         backgroundColor: isSelected ? 'var(--color-accent-9)' : 'var(--color-accent-7)',
-                        opacity: hoveredIndex !== null && !isHovered && !isSelected ? 0.5 : 1,
+                        opacity: resetting ? 0 : (hoveredIndex !== null && !isHovered && !isSelected ? 0.5 : 1),
+                        transition: resetting
+                          ? `height 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${staggerDelay}ms, opacity 0.6s ease ${staggerDelay}ms`
+                          : 'background-color 0.3s ease, opacity 0.3s ease',
                       }}
                     >
                       {isHovered && (

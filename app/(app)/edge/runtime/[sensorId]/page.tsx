@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -52,6 +52,33 @@ function getDeltaPercent(current: number, previous: number): number {
   return Math.round(((current - previous) / previous) * 1000) / 10
 }
 
+const RESET_DURATION = 1800
+
+function useAnimatedValue(target: number, duration: number, trigger: boolean) {
+  const [value, setValue] = useState(target)
+  const rafRef = useRef<number>(0)
+  const startRef = useRef<{ from: number; start: number } | null>(null)
+
+  useEffect(() => {
+    if (!trigger) { setValue(target); return }
+    const from = target
+    startRef.current = { from, start: performance.now() }
+
+    const tick = (now: number) => {
+      if (!startRef.current) return
+      const elapsed = now - startRef.current.start
+      const t = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setValue(startRef.current.from * (1 - eased))
+      if (t < 1) rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [trigger, duration, target])
+
+  return value
+}
+
 type RangePreset = '7d' | '14d' | '30d' | 'custom'
 
 const rangePresets: { key: RangePreset; label: string; days: number }[] = [
@@ -80,6 +107,7 @@ export default function RuntimeDetailPage() {
   const [meterSyncOn, setMeterSyncOn] = useState(true)
   const [selectedDay, setSelectedDay] = useState<DailyRuntime | null>(null)
   const [showChartHint, setShowChartHint] = useState(false)
+  const [isReset, setIsReset] = useState(false)
 
   useEffect(() => {
     const handler = () => setShowMeterModal(true)
@@ -139,7 +167,12 @@ export default function RuntimeDetailPage() {
     )
   }
 
-  const delta = getDeltaPercent(sensor.totalHours, sensor.previousPeriodHours)
+  const displayTotalHours = useAnimatedValue(sensor.totalHours, RESET_DURATION, isReset)
+  const displayUptimePercent = useAnimatedValue(sensor.uptimePercent, RESET_DURATION, isReset)
+  const displayAvgDailyHours = useAnimatedValue(sensor.avgDailyHours, RESET_DURATION, isReset)
+  const displayPreviousPeriodHours = useAnimatedValue(sensor.previousPeriodHours, RESET_DURATION, isReset)
+  const rawDelta = getDeltaPercent(sensor.totalHours, sensor.previousPeriodHours)
+  const delta = useAnimatedValue(rawDelta, RESET_DURATION, isReset)
   const statusInfo = statusConfig[sensor.status]
 
   const chartMin = chartData.length > 0
@@ -164,6 +197,10 @@ export default function RuntimeDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-[var(--space-sm)]">
+          <Button variant="secondary" size="sm">
+            <Download size={14} />
+            Export
+          </Button>
           {/* Date range picker */}
           <div className="relative">
             <button
@@ -228,10 +265,6 @@ export default function RuntimeDetailPage() {
             )}
           </div>
 
-          <Button variant="secondary" size="sm" className="hidden">
-            <Download size={14} />
-            Export
-          </Button>
         </div>
       </div>
 
@@ -239,12 +272,12 @@ export default function RuntimeDetailPage() {
       {(() => {
         const days = chartData.length || 30
         const maxPossibleHours = days * 24
-        const downtimeHours = Math.round((maxPossibleHours - sensor.totalHours) * 10) / 10
-        const prevDowntime = Math.round((maxPossibleHours - sensor.previousPeriodHours) * 10) / 10
+        const downtimeHours = Math.round((maxPossibleHours - displayTotalHours) * 10) / 10
+        const prevDowntime = Math.round((maxPossibleHours - displayPreviousPeriodHours) * 10) / 10
         const downtimeDelta = getDeltaPercent(downtimeHours, prevDowntime)
         const dailyAvgDelta = getDeltaPercent(
-          sensor.avgDailyHours,
-          sensor.previousPeriodHours > 0 ? Math.round((sensor.previousPeriodHours / days) * 10) / 10 : 0
+          displayAvgDailyHours,
+          displayPreviousPeriodHours > 0 ? Math.round((displayPreviousPeriodHours / days) * 10) / 10 : 0
         )
 
         return (
@@ -258,12 +291,12 @@ export default function RuntimeDetailPage() {
                 <div className="flex flex-col gap-1">
                 <span className="text-[length:11px] font-semibold opacity-80 uppercase">Runtime</span>
                 <span className="text-[length:var(--font-size-3xl)] font-bold leading-none">
-                  {Math.round(sensor.totalHours)} h
+                  {Math.round(displayTotalHours)} h
                 </span>
                 <DeltaLabel delta={delta} light />
                 </div>
               </div>
-              <UptimeRing percent={sensor.uptimePercent} />
+              <UptimeRing percent={displayUptimePercent} />
             </div>
 
             {/* Downtime Hours */}
@@ -293,7 +326,7 @@ export default function RuntimeDetailPage() {
                 </div>
               </div>
               <div className="shrink-0 flex flex-col items-center">
-                <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{sensor.avgDailyHours.toFixed(1)}</span>
+                <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{displayAvgDailyHours.toFixed(1)}</span>
                 <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] mt-1">Hours</span>
               </div>
             </div>
@@ -317,64 +350,51 @@ export default function RuntimeDetailPage() {
 
       {/* Main Content: 2-column layout */}
       <div className="grid grid-cols-3 gap-[var(--space-lg)]">
-        {/* Left column (2 cols) */}
-        <div className="col-span-2 flex flex-col gap-[var(--space-lg)]">
-          {/* Daily Runtime Chart */}
-          <Card className="flex flex-col flex-1">
-            <CardHeader
-              action={
-                sensor.runtimeThreshold != null ? (
-                  <span className="inline-flex items-center gap-1 px-3 py-2 rounded-[var(--radius-md)] bg-[var(--color-white)] border border-[var(--border-default)] text-[length:var(--font-size-xs)] font-semibold text-[var(--color-neutral-11)]">
-                    <Zap size={11} className="text-[var(--color-warning)]" />
-                    Threshold: {sensor.runtimeThreshold} AMP
+        {/* Daily Runtime Chart */}
+        <Card className="col-span-2 flex flex-col">
+          <CardHeader
+            action={
+              sensor.runtimeThreshold != null ? (
+                <span className="inline-flex items-center gap-1 px-3 py-2 rounded-[var(--radius-md)] bg-[var(--color-white)] border border-[var(--border-default)] text-[length:var(--font-size-xs)] font-semibold text-[var(--color-neutral-11)]">
+                  <Zap size={11} className="text-[var(--color-warning)]" />
+                  Threshold: {sensor.runtimeThreshold} AMP
+                </span>
+              ) : undefined
+            }
+          >
+            <CardTitle>Daily Runtime</CardTitle>
+            <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
+              Hours of operation per day
+            </p>
+          </CardHeader>
+          <CardBody className="flex-1 flex flex-col">
+            <div className="relative flex-1">
+              <RuntimeBarChart
+                data={chartData}
+                onDayClick={(day) => {
+                  setSelectedDay((prev) => prev?.date === day.date ? null : day)
+                  setShowChartHint(false)
+                }}
+                selectedDate={selectedDay?.date}
+                resetting={isReset}
+              />
+              {showChartHint && (
+                <button
+                  onClick={() => setShowChartHint(false)}
+                  className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer bg-transparent group/hint"
+                >
+                  <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[var(--color-neutral-12)]/85 text-white text-[length:var(--font-size-sm)] font-medium shadow-[var(--shadow-lg)] backdrop-blur-sm animate-pulse pointer-events-none select-none">
+                    <MousePointerClick size={15} className="opacity-90" />
+                    Click a bar to view daily details
                   </span>
-                ) : undefined
-              }
-            >
-              <CardTitle>Daily Runtime</CardTitle>
-              <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
-                Hours of operation per day
-              </p>
-            </CardHeader>
-            <CardBody className="flex-1 flex flex-col justify-end">
-              <div className="relative flex-1 flex flex-col justify-end">
-                <RuntimeBarChart
-                  data={chartData}
-                  onDayClick={(day) => {
-                    setSelectedDay((prev) => prev?.date === day.date ? null : day)
-                    setShowChartHint(false)
-                  }}
-                  selectedDate={selectedDay?.date}
-                />
-                {showChartHint && (
-                  <button
-                    onClick={() => setShowChartHint(false)}
-                    className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer bg-transparent group/hint"
-                  >
-                    <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[var(--color-neutral-12)]/85 text-white text-[length:var(--font-size-sm)] font-medium shadow-[var(--shadow-lg)] backdrop-blur-sm animate-pulse pointer-events-none select-none">
-                      <MousePointerClick size={15} className="opacity-90" />
-                      Click a bar to view daily details
-                    </span>
-                  </button>
-                )}
-              </div>
-            </CardBody>
-          </Card>
-
-          {/* Day detail readings */}
-          {selectedDay && (
-            <div className="panel-animate">
-              <DayReadingsTable day={selectedDay} threshold={sensor.runtimeThreshold} />
+                </button>
+              )}
             </div>
-          )}
+          </CardBody>
+        </Card>
 
-          {/* Meter card hidden — meter info moved to Sensor Details */}
-        </div>
-
-        {/* Right column (1 col) */}
-        <div className="flex flex-col gap-[var(--space-lg)]">
-          {/* Sensor Details */}
-          <Card>
+        {/* Sensor Details */}
+        <Card className={`transition-opacity duration-700 ease-in-out ${isReset ? 'opacity-40' : 'opacity-100'}`}>
             <CardHeader>
               <CardTitle>Sensor Details</CardTitle>
             </CardHeader>
@@ -385,12 +405,14 @@ export default function RuntimeDetailPage() {
                 <DetailRow label="Gateway" value={sensor.gatewayName} />
                 <DetailRow label="Type" value={sensor.type} />
                 <DetailRow label="Location" value={sensor.locationName} />
-                <DetailRow label="Last Reading" value={sensor.lastReading} />
+                <DetailRow label="Last Reading" value={isReset ? '—' : sensor.lastReading} />
 
                 {/* Runtime Threshold row */}
                 <div className="flex items-center justify-between py-[var(--space-xs)] border-b border-[var(--border-subtle)]">
                   <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Runtime Threshold</span>
-                  {sensor.runtimeThreshold != null ? (
+                  {isReset ? (
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Not set</span>
+                  ) : sensor.runtimeThreshold != null ? (
                     <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)]">
                       {sensor.runtimeThreshold} AMP
                     </span>
@@ -402,7 +424,9 @@ export default function RuntimeDetailPage() {
                 {/* Meter row */}
                 <div className="group/meter flex items-center justify-between py-[var(--space-xs)] border-b border-[var(--border-subtle)] last:border-0">
                   <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Meter</span>
-                  {sensor.meterName && !meterDeleted ? (
+                  {isReset ? (
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">—</span>
+                  ) : sensor.meterName && !meterDeleted ? (
                     <div className="flex items-center gap-[var(--space-xs)]">
                       <button
                         onClick={() => setShowMeterModal(true)}
@@ -436,11 +460,14 @@ export default function RuntimeDetailPage() {
                 </div>
               </div>
             </CardBody>
-          </Card>
+        </Card>
 
-          {/* Work Orders — hidden for now */}
-
-        </div>
+        {/* Day detail readings */}
+        {selectedDay && (
+          <div className="col-span-2 panel-animate">
+            <DayReadingsTable day={selectedDay} threshold={sensor.runtimeThreshold} />
+          </div>
+        )}
       </div>
 
       {/* Edit Runtime Configuration Modal */}
@@ -452,6 +479,10 @@ export default function RuntimeDetailPage() {
         existingMeterName={sensor.meterName}
         syncEnabled={sensor.meterSyncEnabled}
         runtimeThreshold={sensor.runtimeThreshold}
+        onReset={() => {
+          setIsReset(true)
+          setSelectedDay(null)
+        }}
       />
 
       {/* Sync Meter Modal */}
@@ -610,7 +641,7 @@ function seedRandom(str: string) {
 function DayPieChart({ connectedHours, disconnectedHours }: { connectedHours: number; disconnectedHours: number }) {
   const total = connectedHours + disconnectedHours
   const connectedPct = total > 0 ? (connectedHours / total) * 100 : 0
-  const size = 72
+  const size = 88
   const stroke = 6
   const radius = (size - stroke) / 2
   const circumference = 2 * Math.PI * radius

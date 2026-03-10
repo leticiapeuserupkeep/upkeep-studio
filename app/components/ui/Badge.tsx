@@ -12,7 +12,7 @@ interface BadgeProps {
 const severityStyles: Record<BadgeSeverity, string> = {
   info: 'bg-[var(--color-info-light)] text-[var(--color-info)] border-[var(--color-info-border)]',
   success: 'bg-[var(--color-neutral-1)] text-[var(--color-success)] border-[var(--color-success-light)]',
-  warning: 'bg-[var(--color-warning-light)] text-[var(--color-warning)] border-[var(--color-warning-border)]',
+  warning: 'bg-[var(--color-neutral-1)] text-[var(--color-warning)] border-[var(--color-warning-border)]',
   danger: 'bg-[var(--color-neutral-1)] text-[var(--color-error)] border-[var(--color-error-border)]',
   neutral: 'bg-[var(--color-neutral-1)] text-[var(--color-neutral-9)] border-[var(--color-neutral-5)]',
 }

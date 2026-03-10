@@ -7,6 +7,7 @@ import {
   Zap, Search, ChevronDown, Calendar, XCircle, ArrowUpDown, Radio,
   Pencil, RotateCcw, X, Download, Bookmark, SlidersHorizontal, MapPin, Box,
 } from 'lucide-react'
+import { Button } from '@/app/components/ui/Button'
 import { RuntimeCard } from '@/app/components/edge/RuntimeCard'
 import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
 import { runtimeSensors } from '@/app/lib/edge-data'
@@ -33,6 +34,7 @@ export default function RuntimePage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showEditModal, setShowEditModal] = useState(false)
   const [editSensorId, setEditSensorId] = useState<string | null>(null)
+  const [resetIds, setResetIds] = useState<Set<string>>(new Set())
   const [kpiPortal, setKpiPortal] = useState<HTMLElement | null>(null)
   const [sensorBarPortal, setSensorBarPortal] = useState<HTMLElement | null>(null)
 
@@ -112,6 +114,10 @@ export default function RuntimePage() {
           {runtimeSensors.length} Sensors
         </span>
         <div className="flex items-center gap-[var(--space-sm)]">
+          <Button variant="secondary" size="sm">
+            <Download size={14} />
+            Export
+          </Button>
           {/* Search */}
           <div className="flex items-center gap-[var(--space-xs)] px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)]">
             <Search size={14} className="text-[var(--color-neutral-7)] shrink-0" />
@@ -233,10 +239,6 @@ export default function RuntimePage() {
             Saved Views
             <ChevronDown size={13} />
           </button>
-          <button className="hidden flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors">
-            <Download size={13} />
-            Export
-          </button>
         </div>
       </div>
 
@@ -294,7 +296,9 @@ export default function RuntimePage() {
         </div>
 
         {/* Overloaded */}
-        <div className="flex items-center justify-between rounded-[20px] bg-[#FFF8E1] border border-[#FFE5A0] px-4 py-3">
+        <div
+          onClick={() => setStatusFilter(statusFilter === 'warning' ? 'all' : 'warning')}
+          className={`flex items-center justify-between rounded-[20px] border px-4 py-3 cursor-pointer transition-all duration-300 ease-in-out ${statusFilter === 'warning' ? 'bg-[#FFEFD6] border-[#E8890C] ring-2 ring-[#E8890C]/30 shadow-md' : 'bg-[#FFF8E1] border-[#FFE5A0] hover:bg-[#FFEFD6] hover:border-[#E8890C] hover:shadow-sm'}`}>
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] bg-[var(--color-warning-light)] border border-[var(--color-warning-border)]">
               <Radio size={20} className="text-[#E8890C]" />
@@ -326,6 +330,7 @@ export default function RuntimePage() {
               selected={selectedIds.has(sensor.id)}
               onSelectChange={(val) => toggleSelection(sensor.id, val)}
               onEdit={() => { setEditSensorId(sensor.id); setShowEditModal(true) }}
+              reset={resetIds.has(sensor.id)}
             />
           </div>
         ))}
@@ -357,10 +362,7 @@ export default function RuntimePage() {
             <Pencil size={14} />
             Edit
           </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-error)]/80 hover:bg-[var(--color-error)] text-[length:14px] font-medium cursor-pointer transition-colors">
-            <RotateCcw size={14} />
-            Reset
-          </button>
+          {/* Reset button hidden */}
           <button
             onClick={() => setSelectedIds(new Set())}
             className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-white/15 cursor-pointer transition-colors ml-1"
@@ -384,6 +386,9 @@ export default function RuntimePage() {
             existingMeterName={s.meterName}
             syncEnabled={s.meterSyncEnabled}
             runtimeThreshold={s.runtimeThreshold}
+            onReset={() => {
+              setResetIds((prev) => new Set(prev).add(s.id))
+            }}
           />
         )
       })()}

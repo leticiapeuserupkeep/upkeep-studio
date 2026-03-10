@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Switch from '@radix-ui/react-switch'
-import { X, ChevronDown, Info } from 'lucide-react'
+import { X, ChevronDown, Info, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 
 interface MeterConfigModalProps {
@@ -14,6 +14,7 @@ interface MeterConfigModalProps {
   existingMeterName?: string
   syncEnabled?: boolean
   runtimeThreshold?: number
+  onReset?: () => void
 }
 
 type ScheduleMode = 'every_day' | 'weekdays' | 'custom'
@@ -46,6 +47,7 @@ export function MeterConfigModal({
   existingMeterName,
   syncEnabled = false,
   runtimeThreshold = 0,
+  onReset,
 }: MeterConfigModalProps) {
   const [activeTab, setActiveTab] = useState<ConfigTab>('general')
   const [enableSync, setEnableSync] = useState(syncEnabled)
@@ -59,10 +61,34 @@ export function MeterConfigModal({
   const [customDays, setCustomDays] = useState(
     DAYS.map((day) => ({ day, enabled: true, from: '12:00 AM', to: '11:59 PM' }))
   )
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [showResetToast, setShowResetToast] = useState(false)
 
   function updateCustomDay(index: number, field: 'enabled' | 'from' | 'to', value: boolean | string) {
     setCustomDays((prev) => prev.map((d, i) => (i === index ? { ...d, [field]: value } : d)))
   }
+
+  const handleReset = useCallback(() => {
+    setThreshold(0)
+    setThresholdUnit('amps')
+    setAutoUpdate(false)
+    setMeterName(existingMeterName ?? `#${sensorName.split(' |')[0]} Runtime`)
+    setEnableSync(syncEnabled)
+    setScheduleMode('every_day')
+    setGlobalFrom('12:00 AM')
+    setGlobalTo('11:59 PM')
+    setCustomDays(DAYS.map((day) => ({ day, enabled: true, from: '12:00 AM', to: '11:59 PM' })))
+    setShowResetConfirm(false)
+    onOpenChange(false)
+    onReset?.()
+    setShowResetToast(true)
+  }, [existingMeterName, sensorName, syncEnabled, onOpenChange, onReset])
+
+  useEffect(() => {
+    if (!showResetToast) return
+    const timer = setTimeout(() => setShowResetToast(false), 3000)
+    return () => clearTimeout(timer)
+  }, [showResetToast])
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -313,16 +339,53 @@ export function MeterConfigModal({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-[var(--space-sm)] px-[var(--space-xl)] py-[var(--space-md)] bg-[var(--surface-primary)] border-t border-[var(--border-subtle)]">
-            <Button variant="ghost" size="md" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="md" onClick={() => onOpenChange(false)}>
-              Save changes
-            </Button>
-          </div>
+          {showResetConfirm ? (
+            <div className="flex items-center gap-[var(--space-sm)] px-[var(--space-xl)] py-[var(--space-md)] bg-[var(--color-error-light)] border-t border-[var(--color-error)]/20 confirm-reveal-animate">
+              <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-error)]">
+                Reset all settings to default? This can't be undone.
+              </span>
+              <div className="flex-1" />
+              <Button variant="ghost" size="sm" onClick={() => setShowResetConfirm(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                className="bg-[var(--color-error)] hover:bg-[var(--color-error)]/90"
+                onClick={handleReset}
+              >
+                Reset
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-[var(--space-sm)] px-[var(--space-xl)] py-[var(--space-md)] bg-[var(--surface-primary)] border-t border-[var(--border-subtle)]">
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-error)] hover:text-[var(--color-error)]/80 cursor-pointer transition-colors"
+              >
+                Reset
+              </button>
+              <div className="flex-1" />
+              <Button variant="ghost" size="md" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="md" onClick={() => onOpenChange(false)}>
+                Save changes
+              </Button>
+            </div>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
+
+      {/* Reset Toast */}
+      {showResetToast && (
+        <div className="fixed bottom-6 left-1/2 z-[var(--z-toast)] flex items-center gap-2 px-4 py-3 rounded-[var(--radius-lg)] bg-[var(--color-neutral-12)] text-white shadow-[var(--shadow-lg)] toast-animate">
+          <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+          <span className="text-[length:var(--font-size-sm)] font-medium">
+            Configuration reset to defaults
+          </span>
+        </div>
+      )}
     </Dialog.Root>
   )
 }

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import * as Switch from '@radix-ui/react-switch'
-import { Clock, MapPin, Gauge, EllipsisVertical, Pencil, RotateCcw, TrendingUp, TrendingDown } from 'lucide-react'
+import { MapPin, Gauge, EllipsisVertical, Pencil, TrendingUp, TrendingDown } from 'lucide-react'
 import { Badge } from '@/app/components/ui/Badge'
 import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
 import { SyncMeterModal } from '@/app/components/edge/SyncMeterModal'
@@ -14,6 +14,7 @@ interface RuntimeCardProps {
   selected?: boolean
   onSelectChange?: (selected: boolean) => void
   onEdit?: () => void
+  reset?: boolean
 }
 
 function getDeltaPercent(current: number, previous: number): number {
@@ -28,15 +29,48 @@ function formatHours(h: number): string {
 const statusConfig = {
   connected: { label: 'Connected', severity: 'success' as const },
   disconnected: { label: 'Disconnected', severity: 'neutral' as const },
-  warning: { label: 'Overloaded', severity: 'danger' as const },
+  warning: { label: 'Overloaded', severity: 'warning' as const },
 }
 
-export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }: RuntimeCardProps) {
+const RESET_DURATION = 1800
+
+function useAnimatedValue(target: number, duration: number, trigger: boolean) {
+  const [value, setValue] = useState(target)
+  const startRef = useRef<{ from: number; start: number } | null>(null)
+  const rafRef = useRef<number>(0)
+
+  useEffect(() => {
+    if (!trigger) { setValue(target); return }
+    const from = target
+    startRef.current = { from, start: performance.now() }
+
+    const tick = (now: number) => {
+      if (!startRef.current) return
+      const elapsed = now - startRef.current.start
+      const t = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setValue(startRef.current.from * (1 - eased))
+      if (t < 1) rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [trigger, duration, target])
+
+  return value
+}
+
+export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit, reset = false }: RuntimeCardProps) {
   const [showMeterModal, setShowMeterModal] = useState(false)
   const [showSyncMeterModal, setShowSyncMeterModal] = useState(false)
   const [showCardMenu, setShowCardMenu] = useState(false)
+  const [localReset, setLocalReset] = useState(false)
+  const isReset = localReset || reset
+
   const [meterSyncOn, setMeterSyncOn] = useState(sensor.meterSyncEnabled ?? false)
-  const delta = getDeltaPercent(sensor.totalHours, sensor.previousPeriodHours)
+  const rawDelta = getDeltaPercent(sensor.totalHours, sensor.previousPeriodHours)
+  const totalHours = useAnimatedValue(sensor.totalHours, RESET_DURATION, isReset)
+  const uptimePercent = useAnimatedValue(sensor.uptimePercent, RESET_DURATION, isReset)
+  const delta = useAnimatedValue(rawDelta, RESET_DURATION, isReset)
   const isUp = delta > 0
   const isDown = delta < 0
   const statusInfo = statusConfig[sensor.status]
@@ -50,34 +84,33 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
     <>
       <Link
         href={`/edge/runtime/${sensor.id}`}
-        className={`group block rounded-[20px] bg-[var(--surface-primary)] shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-md)] transition-all duration-350 ${
+        className={`group block rounded-[20px] bg-[var(--surface-primary)] shadow-[var(--shadow-xs)] hover:shadow-none border border-transparent hover:border-[var(--color-neutral-6)] transition-all duration-350 ${
           selected ? 'ring-2 ring-[var(--color-accent-9)]' : ''
         }`}
       >
         <div className="flex flex-col p-5 gap-6">
           {/* Row 1: Status bar */}
           <div className="flex items-center gap-3">
-            <div
-              onClick={(e) => {
-                e.preventDefault()
-                onSelectChange?.(!selected)
-              }}
-              className={`transition-opacity duration-300 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-            >
-              <input
-                type="checkbox"
-                checked={selected}
-                readOnly
-                className="w-4 h-4 rounded-[3px] border border-[var(--color-neutral-5)] accent-[var(--color-accent-9)] cursor-pointer pointer-events-none"
-              />
+            <div className="relative flex items-center">
+              <div
+                onClick={(e) => {
+                  e.preventDefault()
+                  onSelectChange?.(!selected)
+                }}
+                className={`flex items-center justify-center rounded-[4px] bg-[var(--surface-primary)] transition-opacity duration-300 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  readOnly
+                  className="w-5 h-5 rounded-[3px] border border-[var(--color-neutral-5)] accent-[var(--color-accent-9)] cursor-pointer pointer-events-none"
+                />
+              </div>
             </div>
             <div className="flex-1" />
-            <div className="flex items-center gap-1.5">
-              <Clock size={10} className="text-[var(--widget-empty-text-color)]" />
-              <span className="text-[length:12px] leading-5 tracking-[-0.15px] text-[var(--widget-empty-text-color)]">
-                {sensor.lastReading}
-              </span>
-            </div>
+            <span className="text-[length:12px] leading-5 tracking-[-0.15px] text-[var(--widget-empty-text-color)]">
+              {sensor.lastReading}
+            </span>
             <Badge severity={statusInfo.severity} dot>
               {statusInfo.label}
             </Badge>
@@ -87,7 +120,7 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
                   e.preventDefault()
                   setShowCardMenu((v) => !v)
                 }}
-                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer"
+                className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-default)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer"
               >
                 <EllipsisVertical size={16} className="text-[var(--color-neutral-9)]" />
               </button>
@@ -106,16 +139,6 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
                     >
                       <Pencil size={14} className="text-[var(--color-neutral-8)]" />
                       Edit
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setShowCardMenu(false)
-                      }}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-left text-[length:var(--font-size-sm)] font-medium text-[var(--color-error)] hover:bg-[var(--color-error-light)] cursor-pointer transition-colors"
-                    >
-                      <RotateCcw size={14} />
-                      Reset
                     </button>
                   </div>
                 </>
@@ -142,12 +165,12 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
                   <TrendingUp size={20} className="text-[#3E63DD]" />
                 )}
                 <span className={`text-[length:12px] font-medium leading-[140%] ml-0.5 ${isDown ? 'text-[#CE2C31]' : 'text-[#3451B2]'}`}>
-                  {isUp ? '+' : ''}{delta}%
+                  {isUp ? '+' : ''}{Math.round(delta * 10) / 10}%
                 </span>
               </div>
             </div>
 
-            <UptimeRing percent={sensor.uptimePercent} color={ringColor} totalHours={sensor.totalHours} />
+            <UptimeRing percent={uptimePercent} color={ringColor} totalHours={totalHours} />
           </div>
 
           {/* Row 3: Meter */}
@@ -199,6 +222,7 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit }
         existingMeterName={sensor.meterName}
         syncEnabled={sensor.meterSyncEnabled}
         runtimeThreshold={sensor.runtimeThreshold}
+        onReset={() => setLocalReset(true)}
       />
 
       <SyncMeterModal

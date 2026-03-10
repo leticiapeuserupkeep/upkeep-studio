@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Download, Plus, MoreVertical, Pencil, RotateCcw } from 'lucide-react'
+import { Plus, Pencil } from 'lucide-react'
 import { SideNav } from '@/app/components/dashboard/SideNav'
 import { TopBar } from '@/app/components/dashboard/TopBar'
 import { Button } from '@/app/components/ui/Button'
@@ -30,7 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [site, setSite] = useState('All Sites')
   const [timeRange, setTimeRange] = useState('Today')
   const [showAddRuntime, setShowAddRuntime] = useState(false)
-  const [showMoreMenu, setShowMoreMenu] = useState(false)
+
   const pathname = usePathname()
 
   const handleCollapseSidebar = useCallback(() => setSidebarCollapsed(true), [])
@@ -65,45 +65,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
     if (isRuntimeDetail) {
       return (
-        <>
-          <Button variant="secondary" size="sm" className="hidden">
-            <Download size={14} />
-            Export
-          </Button>
-          <div className="relative">
-            <button
-              onClick={() => setShowMoreMenu((v) => !v)}
-              className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors"
-              aria-label="More options"
-            >
-              <MoreVertical size={16} className="text-[var(--color-neutral-9)]" />
-            </button>
-            {showMoreMenu && (
-              <>
-                <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setShowMoreMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] w-[160px] rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] py-1">
-                  <button
-                    onClick={() => {
-                      setShowMoreMenu(false)
-                      window.dispatchEvent(new CustomEvent('open-edit-runtime'))
-                    }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-left text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors"
-                  >
-                    <Pencil size={14} className="text-[var(--color-neutral-8)]" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setShowMoreMenu(false)}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-left text-[length:var(--font-size-sm)] font-medium text-[var(--color-error)] hover:bg-[var(--color-error-light)] cursor-pointer transition-colors"
-                  >
-                    <RotateCcw size={14} />
-                    Reset
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => window.dispatchEvent(new CustomEvent('open-edit-runtime'))}
+        >
+          <Pencil size={14} />
+          Edit
+        </Button>
       )
     }
     return undefined
