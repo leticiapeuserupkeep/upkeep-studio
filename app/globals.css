@@ -203,6 +203,36 @@ body {
   animation: modal-out 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ── Install progress bar ── */
+.install-progress-bar {
+  background: linear-gradient(90deg, var(--color-accent-9) 0%, #5b7ef5 50%, var(--color-accent-9) 100%);
+  background-size: 200% 100%;
+  animation: install-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes install-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.install-status-text {
+  animation: install-text-fade 0.4s ease-out;
+}
+
+@keyframes install-text-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.install-done-animate {
+  animation: install-done 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes install-done {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 /* ── Dropdown / popover ── */
 @keyframes dropdown-in {
   from {
@@ -382,4 +412,29 @@ body {
   border-radius: var(--widget-radius);
   color: var(--widget-empty-text-color);
   text-align: center;
+}
+
+/* ── Floating banner ── */
+.banner-float-in {
+  animation: banner-slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.2s both;
+}
+
+@keyframes banner-slide-up {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+.banner-sparkle {
+  animation: banner-sparkle-pulse 2s ease-in-out infinite;
+}
+
+@keyframes banner-sparkle-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
 }

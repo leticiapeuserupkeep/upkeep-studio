@@ -1,0 +1,25 @@
+---
+description: Always use lucide-react for icons — never use inline SVG icons
+globs: "**/*.{tsx,jsx}"
+alwaysApply: false
+---
+
+# Icons: Use lucide-react Only
+
+This project uses **lucide-react** as its icon library.
+
+- Always import icons from `lucide-react` — never write inline `<svg>` elements for icons.
+- Custom `<svg>` is acceptable only for non-icon graphics (e.g. charts, progress rings, illustrations).
+
+```tsx
+// BAD — inline SVG icon
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+  <path d="M5 12h14M12 5l7 7-7 7" />
+</svg>
+
+// GOOD — lucide-react
+import { ArrowRight } from 'lucide-react'
+<ArrowRight size={24} strokeWidth={1.2} />
+```
+
+Browse available icons at https://lucide.dev/icons before creating any custom SVG.
