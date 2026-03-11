@@ -36,7 +36,7 @@ export function PredictedFailures({ assets }: PredictedFailuresProps) {
           return (
             <div
               key={asset.id}
-              className="rounded-[var(--radius-lg)] border border-[var(--border-default)] p-3 hover:shadow-[var(--shadow-sm)] transition-shadow"
+              className="rounded-[var(--radius-lg)] border border-[var(--border-default)] p-3 hover:shadow-[var(--shadow-sm)] transition-shadow duration-[var(--duration-fast)]"
             >
               <div className="flex items-start gap-3 mb-2">
                 <ProgressRing

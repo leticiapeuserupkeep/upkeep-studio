@@ -30,7 +30,7 @@ export function ComplianceCountdown({ items }: ComplianceCountdownProps) {
         {items.map((item) => (
           <div
             key={item.id}
-            className="flex items-center gap-3 py-2.5 px-2 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-2)] transition-colors group"
+            className="flex items-center gap-3 py-2.5 px-2 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)] group"
           >
             <div className={`flex items-center justify-center w-10 h-10 rounded-[var(--radius-lg)] shrink-0 ${
               item.daysLeft < 0
@@ -77,7 +77,7 @@ export function ComplianceCountdown({ items }: ComplianceCountdownProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              className="opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-fast)]"
             >
               {item.daysLeft < 0 ? 'Schedule' : 'Assign'}
               <ArrowRight size={12} />

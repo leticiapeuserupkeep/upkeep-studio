@@ -207,7 +207,7 @@ export default function RuntimeDetailPage() {
           <div className="relative">
             <button
               onClick={() => setShowRangePicker((v) => !v)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
             >
               <Calendar size={14} className="text-[var(--color-neutral-7)]" />
               {getRangeLabel()}
@@ -224,7 +224,7 @@ export default function RuntimeDetailPage() {
                       <button
                         key={p.key}
                         onClick={() => selectPreset(p.key)}
-                        className={`text-left px-[var(--space-sm)] py-[var(--space-xs)] rounded-[var(--radius-md)] text-[length:var(--font-size-sm)] font-medium cursor-pointer transition-colors whitespace-nowrap ${
+                        className={`text-left px-[var(--space-sm)] py-[var(--space-xs)] rounded-[var(--radius-md)] text-[length:var(--font-size-sm)] font-medium cursor-pointer transition-colors duration-[var(--duration-fast)] whitespace-nowrap ${
                           rangePreset === p.key
                             ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)]'
                             : 'text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)]'
@@ -274,10 +274,10 @@ export default function RuntimeDetailPage() {
       {(() => {
         const days = chartData.length || 30
         const maxPossibleHours = days * 24
-        const downtimeHours = Math.round((maxPossibleHours - displayTotalHours) * 10) / 10
+        const downtimeHours = isReset ? 0 : Math.round((maxPossibleHours - displayTotalHours) * 10) / 10
         const prevDowntime = Math.round((maxPossibleHours - displayPreviousPeriodHours) * 10) / 10
-        const downtimeDelta = getDeltaPercent(downtimeHours, prevDowntime)
-        const dailyAvgDelta = getDeltaPercent(
+        const downtimeDelta = isReset ? 0 : getDeltaPercent(downtimeHours, prevDowntime)
+        const dailyAvgDelta = isReset ? 0 : getDeltaPercent(
           displayAvgDailyHours,
           displayPreviousPeriodHours > 0 ? Math.round((displayPreviousPeriodHours / days) * 10) / 10 : 0
         )
@@ -312,8 +312,8 @@ export default function RuntimeDetailPage() {
                 </div>
               </div>
               <div className="shrink-0 flex flex-col items-center">
-                <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{downtimeHours}</span>
-                <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] mt-1">Hours</span>
+                <span className="text-[length:var(--font-size-3xl)] font-bold text-[var(--color-neutral-12)] leading-none">{downtimeHours}</span>
+                <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-7)] mt-1">Hours</span>
               </div>
             </div>
 
@@ -396,71 +396,86 @@ export default function RuntimeDetailPage() {
         </Card>
 
         {/* Sensor Details */}
-        <Card className={`transition-opacity duration-700 ease-in-out ${isReset ? 'opacity-40' : 'opacity-100'}`}>
+        <Card>
             <CardHeader>
               <CardTitle>Sensor Details</CardTitle>
             </CardHeader>
             <CardBody>
-              <div className="flex flex-col gap-[var(--space-xs)]">
-                <DetailRow label="Sensor ID" value={sensor.id} />
-                <DetailRow label="Asset ID" value={sensor.assetId} />
-                <DetailRow label="Gateway" value={sensor.gatewayName} />
-                <DetailRow label="Type" value={sensor.type} />
-                <DetailRow label="Location" value={sensor.locationName} />
-                <DetailRow label="Last Reading" value={isReset ? '—' : sensor.lastReading} />
-
-                {/* Runtime Threshold row */}
-                <div className="flex items-center justify-between py-[var(--space-xs)] border-b border-[var(--border-subtle)]">
-                  <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Runtime Threshold</span>
-                  {isReset ? (
-                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Not set</span>
-                  ) : sensor.runtimeThreshold != null ? (
-                    <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)]">
-                      {sensor.runtimeThreshold} AMP
+              {isReset ? (
+                <div className="flex flex-col items-center justify-center text-center py-[var(--space-xl)] gap-[var(--space-md)] fade-animate">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--color-neutral-3)]">
+                    <Timer size={18} className="text-[var(--color-neutral-7)]" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-11)]">
+                      Runtime was reset
                     </span>
-                  ) : (
-                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Not set</span>
-                  )}
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
+                      Reconfigure this sensor's threshold, meter, and details to start tracking again.
+                    </span>
+                  </div>
+                  <Button variant="primary" size="sm" onClick={() => setShowMeterModal(true)}>
+                    Edit Details
+                  </Button>
                 </div>
+              ) : (
+                <div className="flex flex-col gap-[var(--space-xs)]">
+                  <DetailRow label="Sensor ID" value={sensor.id} />
+                  <DetailRow label="Asset ID" value={sensor.assetId} />
+                  <DetailRow label="Gateway" value={sensor.gatewayName} />
+                  <DetailRow label="Type" value={sensor.type} />
+                  <DetailRow label="Location" value={sensor.locationName} />
+                  <DetailRow label="Last Reading" value={sensor.lastReading} />
 
-                {/* Meter row */}
-                <div className="group/meter flex items-center justify-between py-[var(--space-xs)] border-b border-[var(--border-subtle)] last:border-0">
-                  <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Meter</span>
-                  {isReset ? (
-                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">—</span>
-                  ) : sensor.meterName && !meterDeleted ? (
-                    <div className="flex items-center gap-[var(--space-xs)]">
+                  {/* Runtime Threshold row */}
+                  <div className="flex items-center justify-between py-[var(--space-xs)] border-b border-[var(--border-subtle)]">
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Runtime Threshold</span>
+                    {sensor.runtimeThreshold != null ? (
+                      <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)]">
+                        {sensor.runtimeThreshold} AMP
+                      </span>
+                    ) : (
+                      <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Not set</span>
+                    )}
+                  </div>
+
+                  {/* Meter row */}
+                  <div className="group/meter flex items-center justify-between py-[var(--space-xs)] border-b border-[var(--border-subtle)] last:border-0">
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Meter</span>
+                    {sensor.meterName && !meterDeleted ? (
+                      <div className="flex items-center gap-[var(--space-xs)]">
+                        <button
+                          onClick={() => setShowMeterModal(true)}
+                          className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:underline cursor-pointer truncate max-w-[120px]"
+                        >
+                          {sensor.meterName}
+                        </button>
+                        <Switch.Root
+                          checked={meterSyncOn}
+                          onCheckedChange={setMeterSyncOn}
+                          className="relative w-[32px] h-[18px] rounded-full cursor-pointer transition-colors duration-[var(--duration-fast)] shrink-0 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
+                        >
+                          <Switch.Thumb className="block w-[14px] h-[14px] bg-white rounded-full shadow-sm transition-transform duration-[var(--duration-fast)] translate-x-[2px] data-[state=checked]:translate-x-[16px]" />
+                        </Switch.Root>
+                        <button
+                          onClick={() => setMeterDeleted(true)}
+                          className="flex items-center justify-center w-6 h-6 rounded-[var(--radius-sm)] hover:bg-[var(--color-error-light)] cursor-pointer shrink-0 hidden"
+                          aria-label="Delete meter"
+                        >
+                          <Trash2 size={13} className="text-[var(--color-error)]" />
+                        </button>
+                      </div>
+                    ) : (
                       <button
-                        onClick={() => setShowMeterModal(true)}
-                        className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:underline cursor-pointer truncate max-w-[120px]"
+                        onClick={() => setShowSyncMeterModal(true)}
+                        className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:underline cursor-pointer"
                       >
-                        {sensor.meterName}
+                        Sync Meter
                       </button>
-                      <Switch.Root
-                        checked={meterSyncOn}
-                        onCheckedChange={setMeterSyncOn}
-                        className="relative w-[32px] h-[18px] rounded-full cursor-pointer transition-colors duration-350 shrink-0 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
-                      >
-                        <Switch.Thumb className="block w-[14px] h-[14px] bg-white rounded-full shadow-sm transition-transform duration-350 translate-x-[2px] data-[state=checked]:translate-x-[16px]" />
-                      </Switch.Root>
-                      <button
-                        onClick={() => setMeterDeleted(true)}
-                        className="flex items-center justify-center w-6 h-6 rounded-[var(--radius-sm)] hover:bg-[var(--color-error-light)] cursor-pointer shrink-0 hidden"
-                        aria-label="Delete meter"
-                      >
-                        <Trash2 size={13} className="text-[var(--color-error)]" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setShowSyncMeterModal(true)}
-                      className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:underline cursor-pointer"
-                    >
-                      Sync Meter
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </CardBody>
         </Card>
 

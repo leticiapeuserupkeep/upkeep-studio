@@ -28,10 +28,10 @@ function getInitials(name: string): string {
 
 const avatarColors = [
   'bg-[#e8d5f5] text-[#7C3AED]',
-  'bg-[#d5e8f5] text-[#1971c2]',
-  'bg-[#d5f5e8] text-[#2f9e44]',
-  'bg-[#f5e8d5] text-[#e8890c]',
-  'bg-[#f5d5d5] text-[#e03131]',
+  'bg-[var(--color-info-light)] text-[var(--color-info)]',
+  'bg-[var(--color-success-light)] text-[var(--color-success)]',
+  'bg-[var(--color-warning-light)] text-[var(--color-warning)]',
+  'bg-[var(--color-error-light)] text-[var(--color-error)]',
 ]
 
 function getColorFromName(name: string): string {

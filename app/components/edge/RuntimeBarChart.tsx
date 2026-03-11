@@ -112,8 +112,8 @@ export function RuntimeBarChart({ data, height = 260, className = '', onDayClick
                           : (hoveredIndex !== null && !isHovered && !isSelected) ? 0.5
                           : 1,
                         transition: resetting
-                          ? `height 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${staggerDelay}ms, opacity 0.6s ease ${staggerDelay}ms`
-                          : 'background-color 0.3s ease, opacity 0.3s ease',
+                          ? `height 0.8s var(--ease-default) ${staggerDelay}ms, opacity 0.6s var(--ease-default) ${staggerDelay}ms`
+                          : 'background-color var(--duration-fast) var(--ease-default), opacity var(--duration-fast) var(--ease-default)',
                       }}
                     >
                       {isHovered && (

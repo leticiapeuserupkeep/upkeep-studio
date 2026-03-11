@@ -65,7 +65,7 @@ export function StudioApps({ apps: initialApps }: StudioAppsProps) {
 
 function AppRow({ app, onToggle }: { app: StudioApp; onToggle: () => void }) {
   return (
-    <div className="flex items-center gap-3 py-2 px-2 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-2)] transition-colors">
+    <div className="flex items-center gap-3 py-2 px-2 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)]">
       <div className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] bg-[var(--color-accent-1)] shrink-0">
         <Package size={16} className="text-[var(--color-accent-9)]" />
       </div>

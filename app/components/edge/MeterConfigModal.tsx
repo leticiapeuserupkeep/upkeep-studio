@@ -101,7 +101,7 @@ export function MeterConfigModal({
               Edit Runtime
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer" aria-label="Close">
+              <button className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Close">
                 <X size={18} className="text-[var(--color-neutral-7)]" />
               </button>
             </Dialog.Close>
@@ -113,7 +113,7 @@ export function MeterConfigModal({
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2.5 text-[length:var(--font-size-sm)] font-medium cursor-pointer transition-colors relative ${
+                className={`px-4 py-2.5 text-[length:var(--font-size-sm)] font-medium cursor-pointer transition-colors duration-[var(--duration-fast)] relative ${
                   activeTab === tab.key
                     ? 'text-[var(--color-accent-9)]'
                     : 'text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-11)]'
@@ -240,9 +240,9 @@ export function MeterConfigModal({
                     <Switch.Root
                       checked={enableSync}
                       onCheckedChange={setEnableSync}
-                      className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-350 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
+                      className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-[var(--duration-fast)] data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
                     >
-                      <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-350 translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
+                      <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-[var(--duration-fast)] translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
                     </Switch.Root>
                     <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] cursor-pointer select-none">
                       Enable Meter Syncing
@@ -361,7 +361,7 @@ export function MeterConfigModal({
             <div className="flex items-center gap-[var(--space-sm)] px-[var(--space-xl)] py-[var(--space-md)] bg-[var(--surface-primary)] border-t border-[var(--border-subtle)]">
               <button
                 onClick={() => setShowResetConfirm(true)}
-                className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-error)] hover:text-[var(--color-error)]/80 cursor-pointer transition-colors"
+                className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-error)] hover:text-[var(--color-error)]/80 cursor-pointer transition-colors duration-[var(--duration-fast)]"
               >
                 Reset
               </button>

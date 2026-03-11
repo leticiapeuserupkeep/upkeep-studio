@@ -74,7 +74,7 @@ export function TeamPulse({ technicians, activity }: TeamPulseProps) {
 function TechCard({ tech }: { tech: Technician }) {
   const config = statusConfig[tech.status]
   return (
-    <div className="flex items-center gap-3 py-2 px-2 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-2)] transition-colors">
+    <div className="flex items-center gap-3 py-2 px-2 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)]">
       <Avatar name={tech.name} size="md" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">

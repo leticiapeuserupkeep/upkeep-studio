@@ -13,7 +13,7 @@ const SEGMENT_COLORS = [
   'var(--color-success)',
   'var(--color-warning)',
   'var(--color-error)',
-  '#8b5cf6',
+  'var(--color-accent-11)',
 ]
 
 const CATEGORY_ICONS: Record<string, typeof DollarSign> = {

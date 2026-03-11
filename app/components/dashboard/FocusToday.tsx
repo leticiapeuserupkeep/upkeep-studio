@@ -72,7 +72,7 @@ export function FocusToday({ items }: FocusTodayProps) {
 
 function FocusRow({ item, rank }: { item: FocusItem; rank: number }) {
   return (
-    <div className="flex items-start gap-3 py-2.5 px-2 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-2)] transition-colors group">
+    <div className="flex items-start gap-3 py-2.5 px-2 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)] group">
       <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-neutral-3)] text-[length:var(--font-size-xs)] font-bold text-[var(--color-neutral-8)] shrink-0 mt-0.5">
         {rank}
       </span>
@@ -112,7 +112,7 @@ function FocusRow({ item, rank }: { item: FocusItem; rank: number }) {
       <Button
         variant="ghost"
         size="sm"
-        className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1"
+        className="opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-fast)] shrink-0 mt-1"
       >
         {item.cta.label} <ArrowRight size={14} />
       </Button>

@@ -38,7 +38,7 @@ export function TopBar({
       <header className="sticky top-0 z-[var(--z-sticky)] flex items-center gap-[var(--space-sm)] h-[52px] px-[var(--space-md)] bg-[var(--surface-primary)]">
         <button
           onClick={onToggleSidebar}
-          className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors"
+          className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
           aria-label="Toggle sidebar"
         >
           <PanelLeft size={20} className="text-[color:var(--color-neutral-7)]" />
@@ -47,7 +47,7 @@ export function TopBar({
         {backHref && (
           <Link
             href={backHref}
-            className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)]"
             aria-label="Go back"
           >
             <ChevronLeft size={20} className="text-[var(--color-neutral-7)]" />
@@ -64,7 +64,7 @@ export function TopBar({
               <button
                 key={tr}
                 onClick={() => onTimeRangeChange(tr)}
-                className={`px-2.5 py-1 text-[length:var(--font-size-sm)] font-medium transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 text-[length:var(--font-size-sm)] font-medium transition-colors duration-[var(--duration-fast)] cursor-pointer ${
                   timeRange === tr
                     ? 'bg-[var(--color-accent-9)] text-white'
                     : 'text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-3)]'

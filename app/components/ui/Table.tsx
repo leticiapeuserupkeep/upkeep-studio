@@ -17,7 +17,7 @@ export function TableBody({ children }: { children: ReactNode }) {
 }
 
 export function TableRow({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <tr className={`transition-colors hover:bg-[var(--color-neutral-2)] ${className}`}>{children}</tr>
+  return <tr className={`transition-colors duration-[var(--duration-fast)] hover:bg-[var(--color-neutral-2)] ${className}`}>{children}</tr>
 }
 
 export function TableHead({ children, className = '', ...props }: ThHTMLAttributes<HTMLTableCellElement>) {

@@ -1,19 +1,21 @@
 @import "tailwindcss";
 @import "./styles/tokens.css";
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-}
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
 
-body {
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-normal);
-  color: var(--color-neutral-11);
-  background: var(--surface-secondary);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  body {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    color: var(--color-neutral-11);
+    background: var(--surface-secondary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
 /* ── Focus ring ── */
@@ -76,7 +78,7 @@ body {
 }
 
 .fade-animate {
-  animation: fade-in 0.6s ease-out forwards;
+  animation: fade-in var(--duration-normal) var(--ease-default) forwards;
 }
 
 /* ── Fade in + slide up ── */
@@ -104,7 +106,7 @@ body {
 }
 
 .shimmer-text {
-  background: linear-gradient(90deg, #80838D 0%, #DCDCDC 50%, #80838D 100%);
+  background: linear-gradient(90deg, var(--color-neutral-8) 0%, var(--color-neutral-5) 50%, var(--color-neutral-8) 100%);
   background-size: 200% auto;
   background-clip: text;
   -webkit-background-clip: text;
@@ -116,6 +118,37 @@ body {
 @keyframes ai-pulse {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.15); opacity: 0.7; }
+}
+
+/* ── Completion edge glow ── */
+@keyframes edge-glow {
+  0% { opacity: 0; box-shadow: none; }
+  12% { opacity: 1; box-shadow: 4px 0 20px -2px rgba(59, 91, 219, 0.35); }
+  100% { opacity: 0; box-shadow: none; }
+}
+
+.completion-edge-glow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-accent-9);
+  border-radius: 0 2px 2px 0;
+  animation: edge-glow 2.2s ease-out forwards;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* ── Completion row highlight ── */
+@keyframes row-highlight {
+  0% { background-color: rgba(59, 91, 219, 0.08); }
+  100% { background-color: transparent; }
+}
+
+.completion-row-highlight {
+  animation: row-highlight 2s ease-out forwards;
+  border-radius: var(--radius-lg);
 }
 
 /* ── View transition ── */
@@ -135,21 +168,14 @@ body {
   to { height: 0; opacity: 0; }
 }
 
-[data-radix-collapsible-content][data-state="open"] {
-  animation: collapsible-down 600ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-[data-radix-collapsible-content][data-state="closed"] {
-  animation: collapsible-up 550ms cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-}
-
+[data-radix-collapsible-content][data-state="open"],
 .nav-collapsible-content[data-state="open"] {
-  animation: collapsible-down 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: collapsible-down 600ms var(--ease-default);
 }
 
+[data-radix-collapsible-content][data-state="closed"],
 .nav-collapsible-content[data-state="closed"] {
-  animation: collapsible-up 550ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: collapsible-up 550ms var(--ease-default);
   overflow: hidden;
 }
 
@@ -188,24 +214,24 @@ body {
 }
 
 [data-dialog-overlay][data-state="open"] {
-  animation: overlay-in 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: overlay-in var(--duration-normal) var(--ease-default) forwards;
 }
 
 [data-dialog-overlay][data-state="closed"] {
-  animation: overlay-out 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: overlay-out 300ms var(--ease-default) forwards;
 }
 
 [data-dialog-content][data-state="open"] {
-  animation: modal-in 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modal-in 400ms var(--ease-default) forwards;
 }
 
 [data-dialog-content][data-state="closed"] {
-  animation: modal-out 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modal-out 300ms var(--ease-default) forwards;
 }
 
 /* ── Install progress bar ── */
 .install-progress-bar {
-  background: linear-gradient(90deg, var(--color-accent-9) 0%, #5b7ef5 50%, var(--color-accent-9) 100%);
+  background: linear-gradient(90deg, var(--color-accent-9) 0%, var(--color-accent-7) 50%, var(--color-accent-9) 100%);
   background-size: 200% 100%;
   animation: install-shimmer 1.5s ease-in-out infinite;
 }
@@ -216,7 +242,7 @@ body {
 }
 
 .install-status-text {
-  animation: install-text-fade 0.4s ease-out;
+  animation: install-text-fade var(--duration-normal) var(--ease-default);
 }
 
 @keyframes install-text-fade {
@@ -225,7 +251,7 @@ body {
 }
 
 .install-done-animate {
-  animation: install-done 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: install-done var(--duration-slow) var(--ease-default) forwards;
 }
 
 @keyframes install-done {
@@ -246,7 +272,7 @@ body {
 }
 
 .dropdown-animate {
-  animation: dropdown-in 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: dropdown-in var(--duration-normal) var(--ease-default) forwards;
 }
 
 /* ── Panel slide in ── */
@@ -262,7 +288,7 @@ body {
 }
 
 .panel-animate {
-  animation: panel-in 450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: panel-in var(--duration-slow) var(--ease-default) forwards;
 }
 
 /* ── Toast slide up ── */
@@ -278,7 +304,7 @@ body {
 }
 
 .toast-animate {
-  animation: toast-in 0.3s ease-out forwards;
+  animation: toast-in var(--duration-normal) var(--ease-default) forwards;
 }
 
 @keyframes confirm-reveal {
@@ -293,7 +319,7 @@ body {
 }
 
 .confirm-reveal-animate {
-  animation: confirm-reveal 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: confirm-reveal var(--duration-fast) var(--ease-default) forwards;
 }
 
 /* ── Sparkline ── */
@@ -416,25 +442,27 @@ body {
 
 /* ── Floating banner ── */
 .banner-float-in {
-  animation: banner-slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.2s both;
+  animation: banner-slide-up 700ms var(--ease-default) 1.5s both;
 }
 
 @keyframes banner-slide-up {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(40px) scale(0.95);
+    transform: translateY(24px) scale(0.92);
+    filter: blur(4px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
   }
 }
 
 .banner-sparkle {
-  animation: banner-sparkle-pulse 2s ease-in-out infinite;
+  animation: banner-sparkle-pulse 2.4s ease-in-out infinite;
 }
 
 @keyframes banner-sparkle-pulse {
-  0%, 100% { opacity: 0.7; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.15); }
+  0%, 100% { opacity: 0.7; transform: scale(1) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(8deg); }
 }

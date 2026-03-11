@@ -56,10 +56,10 @@ const sections: NavSection[] = [
     title: 'STUDIO',
     badge: 'NEW',
     items: [
-      { label: 'Browse Apps', icon: Gem, href: '/studio' },
+      { label: 'Create New App', icon: Wand2, href: '/studio/create', dot: true },
+      { label: 'Browse Apps', icon: Gem, href: '/studio/browse' },
       { label: 'Installed Apps', icon: Download },
       { label: 'Apps I Built', icon: Command },
-      { label: 'Create New App', icon: Wand2, href: '/studio/create', dot: true },
       { label: 'Subscriptions', icon: Wallet },
     ],
   },
@@ -122,7 +122,7 @@ const footerIcons = [
 function isActive(pathname: string, href?: string): boolean {
   if (!href) return false
   if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/'
-  if (href === '/studio') return pathname === '/studio' || pathname.startsWith('/studio/browse')
+  if (href === '/studio/browse') return pathname === '/studio' || pathname.startsWith('/studio/browse')
   return pathname === href || pathname.startsWith(href + '/')
 }
 
@@ -132,17 +132,14 @@ function CollapsedIcon({ item, active, label }: { item: NavItem; active: boolean
     <Tooltip.Root>
       <Tooltip.Trigger asChild>
         <span
-          className={`relative flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          className={`relative flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] cursor-pointer transition-all duration-[var(--duration-normal)] ease-[var(--ease-default)] ${
             active
-              ? 'bg-[#E0E1E6] text-[#1C2024]'
-              : 'text-[#8B8D98] hover:bg-[var(--color-neutral-4)] hover:text-[#1C2024]'
+              ? 'bg-[var(--color-neutral-4)] text-[var(--color-neutral-12)]'
+              : 'text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] hover:text-[var(--color-neutral-12)]'
           }`}
           aria-label={label}
         >
           <Icon size={18} />
-          {item.dot && (
-            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#3A5BC7]" />
-          )}
         </span>
       </Tooltip.Trigger>
       <Tooltip.Portal>
@@ -170,7 +167,7 @@ export function SideNav({ collapsed }: SideNavProps) {
   return (
     <Tooltip.Provider delayDuration={300}>
       <aside
-        className={`flex flex-col min-h-screen h-screen sticky top-0 border-r border-[var(--border-default)] bg-[#F0F0F3] transition-[width] duration-500 shrink-0 ${
+        className={`flex flex-col min-h-screen h-screen sticky top-0 border-r border-[var(--border-default)] bg-[var(--surface-secondary)] transition-[width] duration-[var(--duration-slow)] ease-[var(--ease-default)] shrink-0 ${
           collapsed ? 'w-16' : 'w-[280px]'
         }`}
       >
@@ -193,7 +190,7 @@ export function SideNav({ collapsed }: SideNavProps) {
           {!collapsed && (
             <div className="flex items-center gap-1.5">
               <button
-                className="relative flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-4)] cursor-pointer transition-colors duration-350"
+                className="relative flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-4)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
                 aria-label="Notifications"
               >
                 <Bell size={16} className="text-[var(--color-neutral-9)]" />
@@ -231,26 +228,26 @@ export function SideNav({ collapsed }: SideNavProps) {
                 ) : (
                   <Collapsible.Root key={section.title} defaultOpen={!section.defaultClosed} className="w-full">
                     <Collapsible.Trigger className="flex items-center gap-2 w-full px-2 pt-2 pb-1 h-7 rounded-[var(--radius-sm)] cursor-pointer group">
-                      <span className="flex-1 text-left text-[length:var(--font-size-sm)] font-medium uppercase tracking-[0.02em] text-[#8B8D98]">
+                      <span className="flex-1 text-left text-[length:var(--font-size-sm)] font-medium uppercase tracking-[0.02em] text-[var(--color-neutral-8)]">
                         {section.title}
                       </span>
                       {section.badge && (
-                        <span className="flex items-center justify-center px-2 h-5 rounded-lg bg-[#EDF2FE] border border-[#ABBDF9] text-[length:10px] font-medium text-[#3A5BC7]">
+                        <span className="flex items-center justify-center px-2 h-5 rounded-lg bg-[var(--color-accent-1)] border border-[var(--color-accent-4)] text-[length:10px] font-medium text-[var(--color-accent-9)]">
                           {section.badge}
                         </span>
                       )}
                       <ChevronUp
                         size={14}
-                        className="text-[#8B8D98] transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[state=closed]:rotate-180"
+                        className="text-[var(--color-neutral-8)] transition-transform duration-[var(--duration-slow)] ease-[var(--ease-default)] group-data-[state=closed]:rotate-180"
                       />
                     </Collapsible.Trigger>
                     <Collapsible.Content className="nav-collapsible-content overflow-hidden">
                       {section.items.map((item) => {
                         const active = isActive(pathname, item.href)
-                        const classes = `flex items-center gap-2 w-full px-2 h-8 rounded-[var(--radius-sm)] cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                        const classes = `flex items-center gap-2 w-full px-2 h-8 rounded-[var(--radius-sm)] cursor-pointer transition-colors duration-[var(--duration-fast)] ease-[var(--ease-default)] ${
                           active
-                            ? 'bg-[#E0E1E6] font-semibold text-[#1C2024]'
-                            : 'font-medium text-[#1C2024] hover:bg-[var(--color-neutral-4)]'
+                            ? 'bg-[var(--color-neutral-4)] font-semibold text-[var(--color-neutral-12)]'
+                            : 'font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-4)]'
                         }`
 
                         const inner = (
@@ -260,7 +257,7 @@ export function SideNav({ collapsed }: SideNavProps) {
                               {item.label}
                             </span>
                             {item.dot && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#3A5BC7] shrink-0" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent-9)] shrink-0" />
                             )}
                           </>
                         )
@@ -305,7 +302,7 @@ export function SideNav({ collapsed }: SideNavProps) {
             <Tooltip.Root>
               <Tooltip.Trigger asChild>
                 <button
-                  className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] cursor-pointer transition-colors duration-350"
+                  className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
                   aria-label="Settings"
                 >
                   <Settings size={18} />
@@ -328,7 +325,7 @@ export function SideNav({ collapsed }: SideNavProps) {
                 <Tooltip.Root key={label}>
                   <Tooltip.Trigger asChild>
                     <button
-                      className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] hover:text-[var(--color-neutral-11)] cursor-pointer transition-colors duration-350"
+                      className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] hover:text-[var(--color-neutral-11)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
                       aria-label={label}
                     >
                       <Icon size={16} />

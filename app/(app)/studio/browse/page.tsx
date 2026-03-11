@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Search, ChevronDown, ArrowUpDown, X, MessageSquare, Loader, RefreshCw } from 'lucide-react'
+import { Search, ChevronDown, ArrowUpDown, X, MessageSquare, Loader, RefreshCw, Sparkles, ArrowRight } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import { AppCard } from '@/app/components/studio/AppCard'
 import { AppDetailModal, type AppDetail } from '@/app/components/studio/AppDetailModal'
@@ -40,6 +40,18 @@ const tabs: { label: string; subtitle: string }[] = [
   { label: 'Recommended', subtitle: '' },
   { label: 'Popular', subtitle: '' },
   { label: 'New', subtitle: '' },
+]
+
+/* ── Creator filter options ── */
+const creatorOptions = ['All', 'UpKeep Labs', 'Your Team', 'Community']
+
+/* ── Sort options ── */
+const sortOptions = [
+  { value: 'top-installed', label: 'Top Installed' },
+  { value: 'highest-rated', label: 'Highest Rated' },
+  { value: 'most-liked', label: 'Most Liked' },
+  { value: 'newest', label: 'Newest' },
+  { value: 'name-az', label: 'Name A–Z' },
 ]
 
 /* ── Role labels ── */
@@ -447,18 +459,18 @@ const roleRecommendations: Record<Role, string[]> = {
 /* ── Skeleton ── */
 function SkeletonCard() {
   return (
-    <div className="flex flex-col rounded-[var(--radius-xl)] border border-[#E0E1E6] bg-white overflow-hidden">
-      <div className="flex items-center justify-between px-[var(--space-md)] pt-[var(--space-md)] pb-[var(--space-xs)]">
+    <div className="flex flex-col rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] overflow-hidden">
+      <div className="flex items-center justify-between px-7 pt-7 pb-[var(--space-xs)]">
         <div className="flex items-center gap-[var(--space-xs)]">
           <div className="skeleton h-5 w-14 rounded-full" />
           <div className="skeleton h-5 w-16 rounded-full" />
         </div>
         <div className="skeleton h-5 w-5 rounded-full" />
       </div>
-      <div className="px-[var(--space-md)]">
+      <div className="px-7">
         <div className="skeleton h-[180px] rounded-[var(--radius-lg)]" />
       </div>
-      <div className="flex flex-col px-[var(--space-md)] py-[var(--space-md)] gap-[var(--space-sm)]">
+      <div className="flex flex-col px-7 py-7 gap-[var(--space-sm)]">
         <div className="skeleton h-5 w-3/4" />
         <div className="skeleton h-4 w-full" />
         <div className="skeleton h-4 w-2/3" />
@@ -479,6 +491,10 @@ export default function BrowseAppsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const [bannerDismissed, setBannerDismissed] = useState(false)
+  const [creatorFilter, setCreatorFilter] = useState('All')
+  const [creatorOpen, setCreatorOpen] = useState(false)
+  const [sortBy, setSortBy] = useState('top-installed')
+  const [sortOpen, setSortOpen] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
 
   const handleTabChange = useCallback((label: string) => {
@@ -513,32 +529,50 @@ export default function BrowseAppsPage() {
 
   const activeTabData = tabs.find((t) => t.label === activeTab)
 
+  const displayApps = (() => {
+    let result = [...apps]
+
+    if (creatorFilter !== 'All') {
+      if (creatorFilter === 'Your Team') {
+        result = result.filter((a) => a.creator === 'Your Team')
+      } else if (creatorFilter === 'Community') {
+        result = result.filter((a) => a.creator !== 'UpKeep Labs' && a.creator !== 'Your Team')
+      } else {
+        result = result.filter((a) => a.creator === creatorFilter)
+      }
+    }
+
+    if (selectedCategory !== 'All Categories') {
+      result = result.filter((a) => a.category === selectedCategory)
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((a) =>
+        a.title.toLowerCase().includes(q) ||
+        a.description.toLowerCase().includes(q) ||
+        a.tags?.some((t) => t.toLowerCase().includes(q)) ||
+        a.category?.toLowerCase().includes(q)
+      )
+    }
+
+    switch (sortBy) {
+      case 'top-installed': result.sort((a, b) => b.downloads - a.downloads); break
+      case 'highest-rated': result.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)); break
+      case 'most-liked': result.sort((a, b) => b.likes - a.likes); break
+      case 'newest': result.sort((a, b) => a.title.localeCompare(b.title)); break
+      case 'name-az': result.sort((a, b) => a.title.localeCompare(b.title)); break
+    }
+
+    return result
+  })()
+
   return (
     <main className="flex-1 relative">
-      {/* Role recommendation banner */}
-      {!bannerDismissed && uninstalledPopularCount > 0 && (
-        <div className="absolute top-[278px] left-[1px] right-8 z-20 flex justify-center bg-transparent w-full">
-          <div className="flex items-center justify-between w-full max-w-[900px] px-[var(--space-xl)] py-1.5 bg-[#CFCCFF] rounded-[20px] shadow-[-16px_16px_44px_rgba(0,0,0,0.15)]">
-            <div className="flex items-center gap-2">
-              <span className="text-[length:var(--font-size-body-2)] font-medium">
-                You have <strong className="text-[color:var(--color-accent-9)]">{uninstalledPopularCount}</strong> uninstalled app{uninstalledPopularCount > 1 ? 's' : ''} popular with {roleLabels[role]}
-              </span>
-            </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); setBannerDismissed(true) }}
-              className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-[color:var(--color-accent-3)] cursor-pointer transition-colors"
-              aria-label="Dismiss"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Hero */}
       <div
         className="relative flex flex-col justify-center items-center overflow-hidden"
-        style={{ background: '#F2F6FF', height: 332, gap: 32, isolation: 'isolate' }}
+        style={{ background: 'var(--color-accent-1)', height: 300, gap: 32, isolation: 'isolate' }}
       >
         {/* Decorative blur ellipses */}
         <div
@@ -560,10 +594,10 @@ export default function BrowseAppsPage() {
 
         {/* Heading */}
         <div className="relative flex flex-col items-center text-center gap-2" style={{ zIndex: 2 }}>
-          <h1 className="font-extrabold text-[#1C2024]" style={{ fontSize: 40, lineHeight: '52px' }}>
+          <h1 className="font-extrabold text-[var(--color-neutral-12)]" style={{ fontSize: 40, lineHeight: '52px' }}>
             Turn Ideas into Apps in Minutes
           </h1>
-          <p className="font-semibold text-[#1C2024]" style={{ fontSize: 16, lineHeight: '24px' }}>
+          <p className="font-semibold text-[var(--color-neutral-12)]" style={{ fontSize: 16, lineHeight: '24px' }}>
             Describe what you need in plain language →{' '}
             <span>Studio does the rest</span>
           </p>
@@ -572,19 +606,19 @@ export default function BrowseAppsPage() {
         {/* 3-step process */}
         <div className="relative flex items-center justify-center gap-[15px]" style={{ zIndex: 3 }}>
           {[
-            { icon: <MessageSquare size={18} color="#3A5BC7" strokeWidth={1.2} />, label: 'Prompting', hasArrow: true },
-            { icon: <Loader size={18} color="#3A5BC7" strokeWidth={1.2} />, label: 'Building', hasArrow: true },
-            { icon: <RefreshCw size={18} color="#3A5BC7" strokeWidth={1.2} />, label: 'Reiterating', hasArrow: false },
+            { icon: <MessageSquare size={18} color="var(--color-accent-9)" strokeWidth={1.2} />, label: 'Prompting', hasArrow: true },
+            { icon: <Loader size={18} color="var(--color-accent-9)" strokeWidth={1.2} />, label: 'Building', hasArrow: true },
+            { icon: <RefreshCw size={18} color="var(--color-accent-9)" strokeWidth={1.2} />, label: 'Reiterating', hasArrow: false },
           ].map((step) => (
             <div key={step.label} className="relative" style={{ width: 178, height: 64 }}>
-              <div className="absolute bg-white rounded-[20px]" style={{ width: 161, height: 64, left: 0, top: 0, border: '1px solid #ABBDF9' }} />
+              <div className="absolute bg-[var(--surface-primary)] rounded-[20px]" style={{ width: 161, height: 64, left: 0, top: 0, border: '1px solid var(--color-accent-4)' }} />
               {step.hasArrow && (
                 <>
-                  <div className="absolute bg-white" style={{ width: 16, height: 16, left: 150, top: 23.5, border: '1px solid #ABBDF9', transform: 'rotate(45deg)' }} />
-                  <div className="absolute bg-white" style={{ width: 12, height: 28, left: 146, top: 18, zIndex: 1, borderRadius: 2 }} />
+                  <div className="absolute bg-[var(--surface-primary)]" style={{ width: 16, height: 16, left: 150, top: 23.5, border: '1px solid var(--color-accent-4)', transform: 'rotate(45deg)' }} />
+                  <div className="absolute bg-[var(--surface-primary)]" style={{ width: 12, height: 28, left: 146, top: 18, zIndex: 1, borderRadius: 2 }} />
                 </>
               )}
-              <div className="absolute flex items-center justify-center rounded-[16px]" style={{ width: 46, height: 46, background: '#F0F4FF', left: 14, top: 9, zIndex: 2 }}>
+              <div className="absolute flex items-center justify-center rounded-[16px]" style={{ width: 46, height: 46, background: 'var(--color-accent-1)', left: 14, top: 9, zIndex: 2 }}>
                 {step.icon}
               </div>
               <span className="absolute text-black" style={{ fontSize: 12, lineHeight: '16px', left: 70, top: 24, zIndex: 2 }}>{step.label}</span>
@@ -594,10 +628,11 @@ export default function BrowseAppsPage() {
       </div>
 
       {/* Search + Filters */}
-      <div className="sticky top-[53px] z-10 flex items-center gap-[var(--space-md)] px-[var(--space-2xl)] py-[var(--space-md)] border-b border-[#E0E1E6] bg-white">
+      <div className="sticky top-[53px] z-10 border-b border-[var(--border-default)] bg-[var(--surface-primary)]">
+        <div className="flex items-center gap-[var(--space-md)] px-[var(--space-2xl)] py-[var(--space-md)] max-w-[1280px] mx-auto w-full">
         {/* Search with autocomplete */}
         <div ref={searchRef} className="relative flex-1 max-w-[480px]">
-          <div className="flex items-center gap-[var(--space-xs)] px-3 py-2 border border-[#E0E1E6] rounded-[var(--radius-lg)] bg-white">
+          <div className="flex items-center gap-[var(--space-xs)] px-3 py-2 border border-[var(--border-default)] rounded-[var(--radius-lg)] bg-[var(--surface-primary)]">
             <Search size={16} className="text-[color:var(--color-neutral-8)]" />
             <input
               type="text"
@@ -615,7 +650,7 @@ export default function BrowseAppsPage() {
           </div>
           {/* Autocomplete dropdown */}
           {searchFocused && filteredSuggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E0E1E6] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] z-20 overflow-hidden dropdown-animate">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] z-20 overflow-hidden dropdown-animate">
               <div className="px-3 py-2 text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-7)] uppercase tracking-wide">
                 {searchQuery ? 'Suggestions' : 'Popular searches'}
               </div>
@@ -623,7 +658,7 @@ export default function BrowseAppsPage() {
                 <button
                   key={suggestion}
                   onClick={() => { setSearchQuery(suggestion); setSearchFocused(false) }}
-                  className="flex items-center gap-[var(--space-sm)] w-full px-3 py-2 text-left text-[length:var(--font-size-body-2)] text-[#1C2024] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors"
+                  className="flex items-center gap-[var(--space-sm)] w-full px-3 py-2 text-left text-[length:var(--font-size-body-2)] text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
                 >
                   <Search size={13} className="text-[var(--color-neutral-7)]" />
                   {suggestion}
@@ -637,22 +672,22 @@ export default function BrowseAppsPage() {
         <div className="relative">
           <button
             onClick={() => setCategoryOpen(!categoryOpen)}
-            className="flex items-center gap-1 px-3 py-2 border border-[#E0E1E6] rounded-[var(--radius-lg)] text-[length:var(--font-size-body-2)] text-[#1C2024] bg-white cursor-pointer hover:bg-[var(--color-neutral-3)] transition-colors"
+            className="flex items-center gap-1 px-3 py-2 border border-[var(--border-default)] rounded-[var(--radius-lg)] text-[length:var(--font-size-body-2)] text-[var(--color-neutral-12)] bg-[var(--surface-primary)] cursor-pointer hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)]"
           >
             {selectedCategory} <ChevronDown size={14} />
           </button>
           {categoryOpen && (
             <>
               <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setCategoryOpen(false)} />
-              <div className="absolute top-full left-0 mt-1 w-[220px] bg-white border border-[#E0E1E6] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] z-[var(--z-modal)] py-1 dropdown-animate max-h-[320px] overflow-y-auto">
+              <div className="absolute top-full left-0 mt-1 w-[220px] bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] z-[var(--z-modal)] py-1 dropdown-animate max-h-[320px] overflow-y-auto">
                 {categories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => { setSelectedCategory(cat); setCategoryOpen(false) }}
-                    className={`flex items-center w-full px-3 py-2 text-left text-[length:var(--font-size-body-2)] cursor-pointer transition-colors ${
+                    className={`flex items-center w-full px-3 py-2 text-left text-[length:var(--font-size-body-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${
                       selectedCategory === cat
                         ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)] font-medium'
-                        : 'text-[#1C2024] hover:bg-[var(--color-neutral-3)]'
+                        : 'text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)]'
                     }`}
                   >
                     {cat}
@@ -664,22 +699,81 @@ export default function BrowseAppsPage() {
         </div>
 
         <div className="flex-1" />
-        <span className="text-[length:var(--font-size-body-2)] text-[color:var(--color-neutral-8)]">Created By: All</span>
-        <ChevronDown size={14} className="text-[color:var(--color-neutral-8)]" />
-        <span className="text-[length:var(--font-size-body-2)] text-[color:var(--color-neutral-8)]">Sort By: Top Installed</span>
-        <ArrowUpDown size={14} className="text-[color:var(--color-neutral-8)]" />
+
+        {/* Creator filter */}
+        <div className="relative">
+          <button
+            onClick={() => { setCreatorOpen(!creatorOpen); setSortOpen(false) }}
+            className="flex items-center gap-1.5 text-[length:var(--font-size-body-2)] text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-12)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
+          >
+            Created By: <span className="font-medium text-[var(--color-neutral-12)]">{creatorFilter}</span>
+            <ChevronDown size={14} className={`transition-transform duration-[var(--duration-fast)] ${creatorOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {creatorOpen && (
+            <>
+              <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setCreatorOpen(false)} />
+              <div className="absolute top-full right-0 mt-1 w-[180px] bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] z-[var(--z-modal)] py-1 dropdown-animate">
+                {creatorOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => { setCreatorFilter(opt); setCreatorOpen(false) }}
+                    className={`flex items-center w-full px-3 py-2 text-left text-[length:var(--font-size-body-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${
+                      creatorFilter === opt
+                        ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)] font-medium'
+                        : 'text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)]'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Sort dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => { setSortOpen(!sortOpen); setCreatorOpen(false) }}
+            className="flex items-center gap-1.5 text-[length:var(--font-size-body-2)] text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-12)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
+          >
+            Sort By: <span className="font-medium text-[var(--color-neutral-12)]">{sortOptions.find((o) => o.value === sortBy)?.label}</span>
+            <ArrowUpDown size={14} className={`transition-transform duration-[var(--duration-fast)] ${sortOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {sortOpen && (
+            <>
+              <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setSortOpen(false)} />
+              <div className="absolute top-full right-0 mt-1 w-[180px] bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] z-[var(--z-modal)] py-1 dropdown-animate">
+                {sortOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setSortBy(opt.value); setSortOpen(false) }}
+                    className={`flex items-center w-full px-3 py-2 text-left text-[length:var(--font-size-body-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${
+                      sortBy === opt.value
+                        ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)] font-medium'
+                        : 'text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)]'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        </div>
       </div>
 
       {/* Tab pills */}
-      <div className="flex items-center gap-[var(--space-xs)] px-[var(--space-2xl)] pt-[var(--space-2xl)] pb-[var(--space-md)]">
+      <div className="flex items-center gap-[var(--space-xs)] px-[var(--space-2xl)] pt-[var(--space-2xl)] pb-[var(--space-md)] max-w-[1280px] mx-auto w-full">
         {tabs.map((tab) => (
           <button
             key={tab.label}
             onClick={() => handleTabChange(tab.label)}
-            className={`px-4 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer ${
+            className={`px-4 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-colors duration-[var(--duration-fast)] cursor-pointer ${
               activeTab === tab.label
                 ? 'bg-[color:var(--color-accent-9)] text-white'
-                : 'bg-white border border-[#E0E1E6] text-[#1C2024] hover:bg-[#F0F0F3]'
+                : 'bg-[var(--surface-primary)] border border-[var(--border-default)] text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)]'
             }`}
           >
             {tab.label}
@@ -688,7 +782,7 @@ export default function BrowseAppsPage() {
       </div>
 
       {/* Section title */}
-      <div className="px-[var(--space-2xl)] pt-[var(--space-md)] pb-[var(--space-sm)]">
+      <div className="px-[var(--space-2xl)] pt-[var(--space-md)] pb-[var(--space-sm)] max-w-[1280px] mx-auto w-full">
         {loading ? (
           <>
             <div className="skeleton h-7 w-48" />
@@ -696,7 +790,7 @@ export default function BrowseAppsPage() {
           </>
         ) : (
           <div key={activeTab} className="fade-animate">
-            <h2 className="text-[20px] font-bold text-[#1C2024]">{activeTab}</h2>
+            <h2 className="text-[20px] font-bold text-[var(--color-neutral-12)]">{activeTab}</h2>
             <p className="text-[length:var(--font-size-body-2)] text-[color:var(--color-neutral-8)] mt-1">
               {activeTabData?.subtitle || 'Browse the full app library'}
             </p>
@@ -705,13 +799,13 @@ export default function BrowseAppsPage() {
       </div>
 
       {/* App grid */}
-      <div className="grid grid-cols-3 gap-[var(--space-xl)] px-[var(--space-2xl)] pb-[var(--space-2xl)]">
+      <div className="grid grid-cols-3 gap-[var(--space-xl)] px-[var(--space-2xl)] pb-[var(--space-2xl)] max-w-[1280px] mx-auto w-full">
         {loading
           ? Array.from({ length: 9 }).map((_, i) => <SkeletonCard key={i} />)
-          : apps.map((app, i) => (
+          : displayApps.map((app, i) => (
               <div
                 key={`${activeTab}-${app.title}`}
-                className="card-animate"
+                className="card-animate h-full"
                 style={{ animationDelay: `${i * 80}ms` }}
               >
                 <AppCard {...app} onClick={() => { setSelectedApp(app); setModalOpen(true) }} />
@@ -721,21 +815,53 @@ export default function BrowseAppsPage() {
       </div>
 
       {/* Bottom CTA */}
-      <div className="mx-[var(--space-2xl)] mb-[var(--space-2xl)] rounded-[var(--radius-xl)] px-[var(--space-2xl)] py-[var(--space-3xl)] text-center"
-        style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #4F7EF5 50%, #7C3AED 100%)' }}
-      >
-        <h2 className="text-[length:var(--font-size-title-2)] font-bold text-white">
-          Ready to build your own app?
-        </h2>
-        <p className="text-[length:var(--font-size-body-1)] text-white/80 mt-[var(--space-xs)]">
-          Describe what you need in plain language. Build in minutes.
-        </p>
-        <div className="mt-[var(--space-lg)]">
-          <Button variant="secondary" size="lg" className="bg-white text-[#1C2024] border-none hover:bg-white/90">
-            Create Your Own App
-          </Button>
+      <div className="max-w-[1280px] mx-auto w-full px-[var(--space-2xl)] pb-[var(--space-2xl)]">
+        <div className="rounded-[var(--radius-xl)] px-[var(--space-2xl)] py-[var(--space-3xl)] text-center"
+          style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #4F7EF5 50%, #7C3AED 100%)' }}
+        >
+          <h2 className="text-[length:var(--font-size-title-2)] font-bold text-white">
+            Ready to build your own app?
+          </h2>
+          <p className="text-[length:var(--font-size-body-1)] text-white/80 mt-[var(--space-xs)]">
+            Describe what you need in plain language. Build in minutes.
+          </p>
+          <div className="mt-[var(--space-lg)]">
+            <Button variant="secondary" size="lg" className="bg-[var(--surface-primary)] text-[var(--color-neutral-12)] border-none hover:bg-[var(--surface-primary)]/90">
+              Create Your Own App
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Floating recommendation nudge */}
+      {!bannerDismissed && uninstalledPopularCount > 0 && (
+        <div className="sticky bottom-6 z-50 flex justify-center pointer-events-none banner-float-in">
+          <div className="relative group pointer-events-auto">
+            <div className="absolute -inset-1 rounded-full bg-[var(--color-info-border)] opacity-40 blur-lg group-hover:opacity-60 transition-opacity duration-[var(--duration-slow)]" />
+
+            <div
+              className="relative flex items-center gap-3 pl-4 pr-2 py-2 rounded-full cursor-pointer transition-all duration-[var(--duration-normal)] hover:shadow-[0_8px_32px_rgba(37,99,235,0.3)] hover:scale-[1.02] active:scale-[0.98]"
+              style={{ background: 'linear-gradient(135deg, var(--color-info-light) 0%, var(--color-info-border) 50%, var(--color-info-border) 100%)' }}
+              onClick={() => { handleTabChange('Recommended'); setBannerDismissed(true) }}
+            >
+              <Sparkles size={15} className="text-[var(--color-accent-7)] banner-sparkle shrink-0" />
+              <span className="text-[13px] font-semibold text-[var(--color-accent-12)] whitespace-nowrap">
+                {uninstalledPopularCount} app{uninstalledPopularCount > 1 ? 's' : ''} popular with {roleLabels[role]}
+              </span>
+              <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--color-accent-7)] text-white text-[12px] font-semibold whitespace-nowrap transition-colors duration-[var(--duration-fast)] hover:bg-[var(--color-accent-8)]">
+                View <ArrowRight size={12} />
+              </span>
+              <button
+                onClick={(e) => { e.stopPropagation(); setBannerDismissed(true) }}
+                className="flex items-center justify-center w-6 h-6 rounded-full text-[var(--color-accent-7)]/60 hover:text-[var(--color-accent-7)] hover:bg-[var(--surface-primary)]/40 cursor-pointer transition-colors duration-[var(--duration-fast)]"
+                aria-label="Dismiss"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AppDetailModal
         app={selectedApp}

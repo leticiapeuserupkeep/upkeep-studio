@@ -128,7 +128,7 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
                     {app.title}
                   </Dialog.Title>
                   {app.verified && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#EDF2FE] border border-[#ABBDF9] text-[length:var(--font-size-xs)] font-medium text-[#3A5BC7]">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-accent-1)] border border-[var(--color-accent-4)] text-[length:var(--font-size-xs)] font-medium text-[var(--color-accent-9)]">
                       <ShieldCheck size={12} /> Verified by UpKeep
                     </span>
                   )}
@@ -139,7 +139,7 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
               </div>
               <Dialog.Close asChild>
                 <button
-                  className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer shrink-0 mt-1"
+                  className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0 mt-1"
                   aria-label="Close"
                   disabled={installPhase !== 'idle'}
                 >
@@ -172,7 +172,7 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
             {/* Screenshot carousel */}
             <div className="relative px-[var(--space-2xl)] pb-[var(--space-lg)]">
               <div className="relative rounded-[var(--radius-xl)] overflow-hidden h-[260px]">
-                <div className="flex h-full transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" style={{ transform: `translateX(-${screenshotIdx * 100}%)` }}>
+                <div className="flex h-full transition-transform duration-[var(--duration-slow)] ease-[var(--ease-default)]" style={{ transform: `translateX(-${screenshotIdx * 100}%)` }}>
                   {hasScreenshots ? (
                     app.screenshots!.map((src, i) => (
                       <div key={i} className="min-w-full h-full">
@@ -184,30 +184,30 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
                       <div className="flex items-center justify-center min-w-full h-full px-[var(--space-2xl)] py-[var(--space-lg)]" style={{ backgroundColor: accentColor }}>
                         <div className="w-full max-w-[600px] h-full rounded-[var(--radius-lg)] bg-white/90 flex flex-col gap-2 p-5">
                           <div className="grid grid-cols-3 gap-2 flex-1">
-                            <div className="rounded bg-[#E0E1E6]" />
+                            <div className="rounded bg-[var(--color-neutral-4)]" />
                             <div className="rounded" style={{ backgroundColor: `${accentColor}20` }} />
-                            <div className="rounded bg-[#E0E1E6]" />
+                            <div className="rounded bg-[var(--color-neutral-4)]" />
                           </div>
-                          <div className="h-10 rounded bg-[#E0E1E6]" />
+                          <div className="h-10 rounded bg-[var(--color-neutral-4)]" />
                         </div>
                       </div>
                       <div className="flex items-center justify-center min-w-full h-full px-[var(--space-2xl)] py-[var(--space-lg)]" style={{ backgroundColor: accentColor }}>
                         <div className="w-full max-w-[600px] h-full rounded-[var(--radius-lg)] bg-white/90 flex flex-col gap-2 p-5">
                           {Array.from({ length: 4 }).map((_, i) => (
                             <div key={i} className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded bg-[#E0E1E6] shrink-0" />
-                              <div className="flex-1 h-3 rounded bg-[#E0E1E6]" />
+                              <div className="w-8 h-8 rounded bg-[var(--color-neutral-4)] shrink-0" />
+                              <div className="flex-1 h-3 rounded bg-[var(--color-neutral-4)]" />
                             </div>
                           ))}
                         </div>
                       </div>
                       <div className="flex items-center justify-center min-w-full h-full px-[var(--space-2xl)] py-[var(--space-lg)]" style={{ backgroundColor: accentColor }}>
                         <div className="w-full max-w-[600px] h-full rounded-[var(--radius-lg)] bg-white/90 flex flex-col gap-3 p-5">
-                          <div className="h-5 w-2/3 rounded bg-[#E0E1E6]" />
-                          <div className="h-3 w-full rounded bg-[#E0E1E6]" />
+                          <div className="h-5 w-2/3 rounded bg-[var(--color-neutral-4)]" />
+                          <div className="h-3 w-full rounded bg-[var(--color-neutral-4)]" />
                           <div className="flex gap-2 flex-1">
                             <div className="flex-1 rounded" style={{ backgroundColor: `${accentColor}15` }} />
-                            <div className="flex-1 rounded bg-[#E0E1E6]" />
+                            <div className="flex-1 rounded bg-[var(--color-neutral-4)]" />
                           </div>
                         </div>
                       </div>
@@ -215,10 +215,10 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
                   )}
                 </div>
                 {/* Carousel arrows */}
-                <button onClick={prevShot} className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-[var(--shadow-md)] cursor-pointer hover:bg-white transition-colors">
+                <button onClick={prevShot} className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-[var(--shadow-md)] cursor-pointer hover:bg-white transition-colors duration-[var(--duration-fast)]">
                   <ChevronLeft size={16} className="text-[var(--color-neutral-11)]" />
                 </button>
-                <button onClick={nextShot} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-[var(--shadow-md)] cursor-pointer hover:bg-white transition-colors">
+                <button onClick={nextShot} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-[var(--shadow-md)] cursor-pointer hover:bg-white transition-colors duration-[var(--duration-fast)]">
                   <ChevronRight size={16} className="text-[var(--color-neutral-11)]" />
                 </button>
                 {/* Carousel dots */}
@@ -227,7 +227,7 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
                     <button
                       key={i}
                       onClick={() => setScreenshotIdx(i)}
-                      className={`w-2 h-2 rounded-full transition-colors cursor-pointer ${i === screenshotIdx ? 'bg-white' : 'bg-white/50'}`}
+                      className={`w-2 h-2 rounded-full transition-colors duration-[var(--duration-fast)] cursor-pointer ${i === screenshotIdx ? 'bg-white' : 'bg-white/50'}`}
                     />
                   ))}
                 </div>
@@ -239,7 +239,7 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
               <StatItem label="RATINGS" value={app.rating.toFixed(1)} sub={
                 <div className="flex items-center gap-1 mt-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={12} className={i < Math.round(app.rating) ? 'text-[#F5A623] fill-[#F5A623]' : 'text-[var(--color-neutral-5)]'} />
+                    <Star key={i} size={12} className={i < Math.round(app.rating) ? 'text-[var(--color-warning)] fill-[var(--color-warning)]' : 'text-[var(--color-neutral-5)]'} />
                   ))}
                   <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] ml-0.5">({app.ratingCount})</span>
                 </div>
@@ -295,7 +295,7 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] text-[length:var(--font-size-sm)] font-medium ${
                     app.permissionScope === 'read-only'
                       ? 'bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)]'
-                      : 'bg-[var(--color-warning-light)] text-[#946800] border border-[var(--color-warning-border)]'
+                      : 'bg-[var(--color-warning-light)] text-[var(--color-warning)] border border-[var(--color-warning-border)]'
                   }`}>
                     {app.permissionScope === 'read-only' ? (
                       <><Eye size={13} /> Read-only access</>
@@ -395,7 +395,7 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
                       </div>
                       <div className="flex items-center gap-0.5">
                         {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} size={11} className={i < review.rating ? 'text-[#F5A623] fill-[#F5A623]' : 'text-[var(--color-neutral-5)]'} />
+                          <Star key={i} size={11} className={i < review.rating ? 'text-[var(--color-warning)] fill-[var(--color-warning)]' : 'text-[var(--color-neutral-5)]'} />
                         ))}
                       </div>
                       <p className="text-[length:var(--font-size-body-2)] text-[var(--color-neutral-9)] leading-relaxed">
@@ -420,13 +420,13 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
                 )}
                 {app.status === 'installed' && (
                   <>
-                    <Button variant="destructive" size="lg">Uninstall</Button>
+                    <Button variant="danger" size="lg">Uninstall</Button>
                     <Button variant="primary" size="lg" onClick={() => { onOpenChange(false); router.push('/studio/browse') }}>Open</Button>
                   </>
                 )}
                 {app.status === 'update' && (
                   <>
-                    <Button variant="destructive" size="lg">Uninstall</Button>
+                    <Button variant="danger" size="lg">Uninstall</Button>
                     <Button variant="primary" size="lg" onClick={handleInstall}>Update</Button>
                   </>
                 )}

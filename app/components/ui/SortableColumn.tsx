@@ -116,7 +116,7 @@ function SortableCard({ id, children, isOverlay }: { id: string; children: React
         <button
           ref={setActivatorNodeRef}
           {...listeners}
-          className="absolute -left-1 top-4 z-10 flex items-center justify-center w-6 h-8 rounded-[var(--radius-md)] bg-[var(--surface-primary)] border border-[var(--border-default)] shadow-[var(--shadow-sm)] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          className="absolute -left-1 top-4 z-10 flex items-center justify-center w-6 h-8 rounded-[var(--radius-md)] bg-[var(--surface-primary)] border border-[var(--border-default)] shadow-[var(--shadow-sm)] opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-fast)] cursor-grab active:cursor-grabbing"
           aria-label={`Drag to reorder ${id}`}
         >
           <GripVertical size={14} className="text-[var(--color-neutral-7)]" />

@@ -73,7 +73,7 @@ export function SyncMeterModal({ open, onOpenChange, sensorName, totalRuntime }:
               Sync Meter
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer" aria-label="Close">
+              <button className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Close">
                 <X size={18} className="text-[var(--color-neutral-7)]" />
               </button>
             </Dialog.Close>
@@ -98,7 +98,7 @@ export function SyncMeterModal({ open, onOpenChange, sensorName, totalRuntime }:
                     }}
                     onFocus={() => setDropdownOpen(true)}
                     placeholder="Select or type a meter name…"
-                    className="w-full px-[var(--space-md)] py-[10px] pr-9 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none focus:border-[var(--color-accent-7)] transition-colors"
+                    className="w-full px-[var(--space-md)] py-[10px] pr-9 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none focus:border-[var(--color-accent-7)] transition-colors duration-[var(--duration-fast)]"
                   />
                   <button
                     type="button"
@@ -115,8 +115,8 @@ export function SyncMeterModal({ open, onOpenChange, sensorName, totalRuntime }:
                       <button
                         key={option}
                         onClick={() => selectOption(option)}
-                        className="flex items-center gap-2 w-full px-[var(--space-md)] py-2 text-left text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors"
-                      >
+                        className="flex items-center gap-2 w-full px-[var(--space-md)] py-2 text-left text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
+                        >
                         {meterName === option && (
                           <Check size={14} className="text-[var(--color-accent-9)] shrink-0" />
                         )}
@@ -154,9 +154,9 @@ export function SyncMeterModal({ open, onOpenChange, sensorName, totalRuntime }:
               <Switch.Root
                 checked={enabled}
                 onCheckedChange={setEnabled}
-                className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-350 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
+                className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-[var(--duration-fast)] data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
               >
-                <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-350 translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
+                <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-[var(--duration-fast)] translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
               </Switch.Root>
             </div>
           </div>
