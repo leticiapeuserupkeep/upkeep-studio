@@ -56,7 +56,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (isStudioBrowse) {
       return (
         <Button variant="primary" size="md" asChild>
-          <Link href="/studio/create">Create Your Own App</Link>
+          <Link href="/studio/create">Create App</Link>
         </Button>
       )
     }
@@ -136,7 +136,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             onTimeRangeChange={setTimeRange}
             onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
             sites={sites}
-            minimal={isEdge}
+            minimal={isEdge || isStudioBrowse}
             backHref={isRuntimeDetail ? '/edge/runtime' : undefined}
             actions={getActions()}
           />
@@ -145,7 +145,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           children
         ) : (
           <DashboardProvider role={role} site={site}>
-            <div className="flex flex-col flex-1 items-center">
+            <div className="flex flex-col flex-1 w-full">
               {children}
             </div>
           </DashboardProvider>
