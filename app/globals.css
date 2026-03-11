@@ -190,6 +190,18 @@
   to { opacity: 0; }
 }
 
+/* ── Settings drawer ── */
+@keyframes settings-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* ── Modal content ── */
 @keyframes modal-in {
   from {
@@ -305,6 +317,25 @@
 
 .toast-animate {
   animation: toast-in var(--duration-normal) var(--ease-default) forwards;
+}
+
+/* ── Publish toast ── */
+@keyframes publish-toast-in {
+  from { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes publish-toast-out {
+  from { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  to { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
+}
+
+.publish-toast {
+  animation: publish-toast-in 0.4s var(--ease-default) forwards;
+}
+
+.publish-toast-exit {
+  animation: publish-toast-out 0.3s var(--ease-default) forwards;
 }
 
 @keyframes confirm-reveal {

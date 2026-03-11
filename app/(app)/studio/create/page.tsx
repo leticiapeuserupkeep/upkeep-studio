@@ -16,7 +16,7 @@ import {
   HelpCircle, Check, X, Monitor, AlertCircle,
   Users, Eye, Lock, Building2, Globe, Sparkles,
   Zap, Wrench, ClipboardList, Gauge, Package,
-  Bell, Upload, Image,
+  Bell, Upload, Image, Info, ChevronRight, Tag, Link2,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 
@@ -76,7 +76,15 @@ type ViewState = 'prompt' | 'transitioning' | 'building'
 type AiPhase = 'thinking' | 'responded'
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile'
 type SaveState = 'saved' | 'saving' | 'unsaved'
+type PublishStatus = 'draft' | 'in_review' | 'published'
+type AudienceOption = 'company' | 'private' | 'restricted'
 type SelectedTemplate = typeof templates[number] | null
+
+const audienceOptions: { value: AudienceOption; label: string; description: string; icon: typeof Building2 }[] = [
+  { value: 'company', label: 'Anyone at my company', description: 'App will be available for anyone at your company', icon: Building2 },
+  { value: 'private', label: 'Private', description: 'Only visible for you', icon: Lock },
+  { value: 'restricted', label: 'Restricted access', description: 'Available only to selected users or groups', icon: Eye },
+]
 
 export default function CreateAppPage() {
   const [view, setView] = useState<ViewState>('prompt')
@@ -600,6 +608,47 @@ function FilterDropdown({ label, options, value, onChange }: {
   )
 }
 
+/* ── Publish celebration sound (Web Audio API) ── */
+
+function playTadaSound() {
+  try {
+    const ctx = new AudioContext()
+    const now = ctx.currentTime
+
+    function playNote(freq: number, start: number, dur: number, vol: number, type: OscillatorType = 'sine') {
+      const gain = ctx.createGain()
+      gain.connect(ctx.destination)
+      gain.gain.setValueAtTime(vol, now + start)
+      gain.gain.setValueAtTime(vol, now + start + dur * 0.7)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur)
+
+      const osc = ctx.createOscillator()
+      osc.type = type
+      osc.frequency.value = freq
+      osc.connect(gain)
+      osc.start(now + start)
+      osc.stop(now + start + dur)
+    }
+
+    // Rising arpeggio: C5 → E5 → G5
+    playNote(523.25, 0, 0.15, 0.06, 'triangle')
+    playNote(659.25, 0.08, 0.15, 0.06, 'triangle')
+    playNote(783.99, 0.16, 0.15, 0.06, 'triangle')
+
+    // Triumphant major chord: C5 + E5 + G5 + C6
+    playNote(523.25, 0.26, 0.6, 0.045, 'sine')
+    playNote(659.25, 0.26, 0.6, 0.04, 'sine')
+    playNote(783.99, 0.26, 0.6, 0.04, 'sine')
+    playNote(1046.50, 0.26, 0.6, 0.035, 'sine')
+
+    // Soft shimmer overtone
+    playNote(1567.98, 0.3, 0.4, 0.015, 'sine')
+    playNote(2093.00, 0.34, 0.3, 0.01, 'sine')
+
+    setTimeout(() => ctx.close(), 2000)
+  } catch { /* AudioContext not available */ }
+}
+
 /* ── Completion chime (Web Audio API) ── */
 
 function playCompletionChime() {
@@ -635,6 +684,98 @@ function playCompletionChime() {
   } catch { /* AudioContext not available */ }
 }
 
+/* ── Confetti canvas ── */
+
+const CONFETTI_COLORS = ['#3E63DD', '#5B7CF7', '#7C66DC', '#9B8AFF', '#0CA6E9', '#3BC4F2', '#6E56CF', '#4A90D9']
+
+function ConfettiCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+
+    const particles: Array<{
+      x: number; y: number; vx: number; vy: number
+      w: number; h: number; color: string
+      rotation: number; rotationSpeed: number
+      wobble: number; wobbleSpeed: number
+      opacity: number; gravity: number; drag: number
+    }> = []
+
+    for (let i = 0; i < 80; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const speed = 4 + Math.random() * 8
+      particles.push({
+        x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+        y: canvas.height * 0.35,
+        vx: Math.cos(angle) * speed * (0.6 + Math.random()),
+        vy: Math.sin(angle) * speed - 4 - Math.random() * 4,
+        w: 4 + Math.random() * 6,
+        h: 6 + Math.random() * 8,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 0.3,
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: 0.03 + Math.random() * 0.05,
+        opacity: 1,
+        gravity: 0.12 + Math.random() * 0.04,
+        drag: 0.98 + Math.random() * 0.015,
+      })
+    }
+
+    let frame: number
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      let alive = false
+
+      for (const p of particles) {
+        p.vy += p.gravity
+        p.vx *= p.drag
+        p.vy *= p.drag
+        p.x += p.vx + Math.sin(p.wobble) * 0.8
+        p.y += p.vy
+        p.rotation += p.rotationSpeed
+        p.wobble += p.wobbleSpeed
+
+        if (p.y > canvas.height + 20) {
+          p.opacity -= 0.05
+        }
+        if (p.opacity <= 0) continue
+        alive = true
+
+        ctx.save()
+        ctx.globalAlpha = Math.max(0, p.opacity)
+        ctx.translate(p.x, p.y)
+        ctx.rotate(p.rotation)
+        ctx.fillStyle = p.color
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h)
+        ctx.restore()
+      }
+
+      if (alive) {
+        frame = requestAnimationFrame(animate)
+      }
+    }
+
+    frame = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 9999 }}
+    />
+  )
+}
+
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Builder View (after prompt submission)
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -658,13 +799,27 @@ function BuilderView({
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const [savedAgo, setSavedAgo] = useState(0)
   const [publishOpen, setPublishOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingStep, setOnboardingStep] = useState(0)
-  const [publishAudience, setPublishAudience] = useState<string>('team')
+  const [publishAudience, setPublishAudience] = useState<AudienceOption>('company')
+  const [publishStatus, setPublishStatus] = useState<PublishStatus>('draft')
+  const [appTitle, setAppTitle] = useState('Data Overview Dashboard')
+  const [appInstructions, setAppInstructions] = useState('')
+  const [showReviewTooltip, setShowReviewTooltip] = useState(false)
+  const [audienceDropdownOpen, setAudienceDropdownOpen] = useState(false)
+  const [marketplacePublish, setMarketplacePublish] = useState(false)
+  const [appDescription, setAppDescription] = useState('')
+  const [appCategory, setAppCategory] = useState('Operations')
+  const [appTags, setAppTags] = useState<string[]>(['dashboard', 'alerts', 'monitoring'])
+  const [settingsDirty, setSettingsDirty] = useState(false)
   const [thinkingStep, setThinkingStep] = useState(-1)
   const [showActivityLog, setShowActivityLog] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [completionSignal, setCompletionSignal] = useState(false)
+  const [publishToast, setPublishToast] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
     { role: 'user', content: submittedPrompt },
@@ -722,6 +877,8 @@ function BuilderView({
     setMessages(prev => [...prev, { role: 'user', content: userMsg }])
     setLocalPhase('thinking')
     setShowActivityLog(false)
+    setSaveState('unsaved')
+    if (publishStatus === 'published') setPublishStatus('draft')
 
     const idx = responseCountRef.current
     setTimeout(() => {
@@ -731,9 +888,22 @@ function BuilderView({
         content: followUpResponses[idx % followUpResponses.length],
       }])
       setLocalPhase('responded')
+      setSaveState('saving')
+      setTimeout(() => {
+        setSaveState('saved')
+        setSavedAgo(0)
+      }, 800)
     }, 3500)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatInput, setChatInput, localPhase])
+
+  const triggerPublishCelebration = useCallback(() => {
+    setPublishToast(true)
+    setShowConfetti(true)
+    playTadaSound()
+    setTimeout(() => setShowConfetti(false), 3000)
+    setTimeout(() => setPublishToast(false), 6000)
+  }, [])
 
   // Auto-save simulation
   useEffect(() => {
@@ -887,7 +1057,7 @@ function BuilderView({
                     : 'text-[var(--color-neutral-12)]'
                 }`}
               >
-                Desktop
+                Preview
               </button>
               <button
                 onClick={() => setPreviewTab('code')}
@@ -906,112 +1076,163 @@ function BuilderView({
         {/* Right section */}
         <Tooltip.Provider delayDuration={200}>
         <div className="flex items-center gap-2 pr-4">
-          {/* Auto-save indicator */}
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <span className={`text-xs font-medium mr-1 transition-colors duration-[var(--duration-fast)] cursor-default ${
-                saveState === 'saving' ? 'text-[var(--color-accent-9)]'
-                  : saveState === 'unsaved' ? 'text-[var(--color-warning)]'
-                  : 'text-[var(--color-neutral-8)]'
-              }`}>
-                {saveState === 'saving' && (
-                  <span className="inline-block w-3 h-3 mr-1 border-2 border-[var(--color-accent-9)] border-t-transparent rounded-full animate-spin align-middle" />
-                )}
-                {saveLabel}
-              </span>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content side="bottom" sideOffset={6} className="px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
-                {saveState === 'unsaved' ? 'Changes will be saved automatically' : 'Your work is saved continuously'}
-                <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
-
-          <div className="w-px h-5 bg-[var(--border-default)]" />
-
-          {/* Review Before Applying toggle */}
-          <div className="flex items-center gap-1.5">
-            <Switch.Root
-              checked={planMode}
-              onCheckedChange={setPlanMode}
-              className={`relative inline-flex items-center w-8 h-[18px] rounded-full transition-colors duration-[var(--duration-fast)] cursor-pointer ${
-                planMode ? 'bg-[var(--color-accent-9)]' : 'bg-[var(--color-neutral-5)]'
-              }`}
-            >
-              <Switch.Thumb className="block w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-transform data-[state=checked]:translate-x-[14px] data-[state=unchecked]:translate-x-0.5" />
-            </Switch.Root>
-            <span className="text-xs font-medium text-[var(--color-neutral-9)] whitespace-nowrap">Review</span>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <button className="flex items-center justify-center w-4 h-4 cursor-pointer" aria-label="What is review mode?">
-                  <HelpCircle size={13} className="text-[var(--color-neutral-7)]" />
-                </button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  side="bottom"
-                  sideOffset={6}
-                  className="max-w-[220px] px-3 py-2 rounded-[var(--radius-lg)] bg-[var(--color-neutral-12)] text-white text-xs leading-relaxed shadow-[var(--shadow-lg)] z-[var(--z-toast)]"
-                >
-                  <strong>Review Before Applying:</strong> Changes will be described before being applied, so you can approve or adjust first.
-                  <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </div>
-
-          <div className="w-px h-5 bg-[var(--border-default)]" />
+          {/* Auto-save indicator — hidden */}
 
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <button
-                onClick={restartOnboarding}
+                onClick={() => setSettingsOpen(true)}
                 className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-                aria-label="Settings & restart tour"
+                aria-label="Settings"
               >
                 <Settings size={20} strokeWidth={1.5} className="text-[var(--color-neutral-9)]" />
               </button>
             </Tooltip.Trigger>
             <Tooltip.Portal>
               <Tooltip.Content side="bottom" sideOffset={6} className="px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
-                Settings & restart tour
+                Settings
                 <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
               </Tooltip.Content>
             </Tooltip.Portal>
           </Tooltip.Root>
 
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
+
+          {publishStatus === 'in_review' && (
+            <div className="relative">
               <button
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                className={`relative flex items-center justify-center w-10 h-10 rounded-xl transition-colors duration-[var(--duration-fast)] cursor-pointer ${
-                  soundEnabled ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-7)] hover:bg-[var(--color-neutral-3)] hover:text-[var(--color-neutral-9)]'
-                }`}
-                aria-label={soundEnabled ? 'Sound on' : 'Sound off'}
+                onClick={() => setShowReviewTooltip(!showReviewTooltip)}
+                className="flex items-center gap-1.5 h-10 px-3 text-sm font-medium text-[var(--color-warning)] cursor-pointer"
               >
-                <Bell size={18} strokeWidth={1.5} />
-                {!soundEnabled && (
-                  <span className="absolute w-[2px] h-[18px] bg-current rounded-full rotate-45 opacity-50" />
-                )}
+                In Review
               </button>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content side="bottom" sideOffset={6} className="px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
-                {soundEnabled ? 'Sound notifications on' : 'Sound notifications off'}
-                <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
+              {showReviewTooltip && (
+                <>
+                  <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setShowReviewTooltip(false)} />
+                  <div className="absolute right-0 top-full mt-2 z-[var(--z-modal)] w-[280px] rounded-xl bg-[var(--color-neutral-12)] text-white p-4 shadow-[var(--shadow-xl)] dropdown-animate">
+                    <p className="text-xs leading-relaxed">We&apos;re reviewing your app before it goes live. We&apos;ll send you an email to let you know when it&apos;s published, or if we need any changes.</p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
-          <button
-            id="publish-button"
-            onClick={() => setPublishOpen(true)}
-            className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)] transition-colors cursor-pointer group"
-          >
-            <span className="text-sm font-medium text-white">Publish</span>
-            <kbd className="hidden sm:inline-flex items-center px-1 py-0.5 rounded bg-white/20 text-[10px] font-medium text-white/70 group-hover:text-white/90 transition-colors duration-[var(--duration-fast)]">⌘P</kbd>
-          </button>
+          {publishStatus === 'published' && (
+            <Tooltip.Root open={linkCopied || undefined}>
+              <Tooltip.Trigger asChild>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://upkeep.app/apps/${appTitle.toLowerCase().replace(/\s+/g, '-')}`)
+                    setLinkCopied(true)
+                    setTimeout(() => setLinkCopied(false), 2000)
+                  }}
+                  className={`flex items-center justify-center w-10 h-10 rounded-xl border transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+                    linkCopied
+                      ? 'border-[var(--color-success-light)] bg-[var(--color-success-light)]'
+                      : 'border-[var(--border-default)] hover:bg-[var(--color-neutral-3)]'
+                  }`}
+                  aria-label="Share"
+                >
+                  {linkCopied
+                    ? <Check size={16} className="text-[var(--color-success)]" />
+                    : <Link2 size={16} className="text-[var(--color-neutral-9)]" />
+                  }
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content side="bottom" sideOffset={6} className="px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
+                  {linkCopied ? 'Copied!' : 'Copy share link'}
+                  <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          )}
+
+          <div className="relative">
+            <button
+              id="publish-button"
+              onClick={() => {
+                if (publishStatus === 'published') {
+                  setPublishStatus('published')
+                  return
+                }
+                setPublishOpen(!publishOpen)
+              }}
+              className={`flex items-center justify-center gap-2 h-10 px-4 rounded-xl transition-colors cursor-pointer group ${
+                publishStatus === 'published'
+                  ? 'bg-[var(--color-success)] hover:bg-[var(--color-success)]'
+                  : publishStatus === 'in_review'
+                  ? 'bg-[var(--color-neutral-5)] text-[var(--color-neutral-9)]'
+                  : 'bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)]'
+              }`}
+            >
+              <span className={`text-sm font-medium ${publishStatus === 'published' ? 'text-white' : publishStatus === 'in_review' ? 'text-[var(--color-neutral-9)]' : 'text-white'}`}>
+                {publishStatus === 'published' ? 'Published' : publishStatus === 'in_review' ? 'Published' : 'Publish'}
+              </span>
+            </button>
+
+            {publishOpen && (
+              <>
+                <div className="fixed inset-0 z-[var(--z-overlay)] bg-black/10" onClick={() => setPublishOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 z-[var(--z-modal)] w-[360px] bg-[var(--surface-primary)] rounded-2xl shadow-[var(--shadow-xl)] p-6 flex flex-col gap-5 dropdown-animate">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-[var(--color-neutral-12)]">Publish</h3>
+                    <button
+                      onClick={() => setPublishOpen(false)}
+                      className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
+                      aria-label="Close"
+                    >
+                      <X size={18} className="text-[var(--color-neutral-9)]" />
+                    </button>
+                  </div>
+
+                  <p className="sr-only">Publish your app</p>
+
+                  <div className="flex flex-col gap-5">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-sm font-semibold text-[var(--color-neutral-12)] shrink-0">Title</span>
+                      <input
+                        type="text"
+                        value={appTitle}
+                        onChange={(e) => setAppTitle(e.target.value)}
+                        className="text-sm text-[var(--color-neutral-12)] bg-transparent outline-none border border-[var(--border-default)] rounded-lg px-3 py-2 w-full max-w-[220px]"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-[var(--color-neutral-12)]">Status</span>
+                      <span className="text-sm font-medium text-[var(--color-neutral-12)] px-2.5 py-1 rounded-full border border-[var(--border-default)]">
+                        {publishStatus === 'draft' ? 'Draft' : publishStatus === 'in_review' ? 'In Review' : 'Published'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-[var(--color-neutral-12)]">Who can view</span>
+                      <span className="text-sm text-[var(--color-neutral-9)]">
+                        {audienceOptions.find(o => o.value === publishAudience)?.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-1">
+                    <button
+                      onClick={() => { setPublishOpen(false); setSettingsOpen(true) }}
+                      className="flex-1 flex items-center justify-center h-10 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                    >
+                      Manage Settings
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPublishStatus('published')
+                        setPublishOpen(false)
+                        triggerPublishCelebration()
+                      }}
+                      className="flex-1 flex items-center justify-center h-10 rounded-xl bg-[var(--color-accent-9)] text-sm font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                    >
+                      Publish
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
         </Tooltip.Provider>
       </header>
@@ -1177,6 +1398,26 @@ function BuilderView({
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Post-publish CTAs */}
+          {publishStatus !== 'draft' && (
+            <div className="px-6 flex flex-col gap-2 pb-3 fade-animate">
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="flex items-center justify-between w-full px-4 py-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer group"
+              >
+                <span className="text-sm font-medium text-[var(--color-neutral-12)]">Add setup instructions</span>
+                <ArrowRight size={16} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
+              </button>
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="flex items-center justify-between w-full px-4 py-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer group"
+              >
+                <span className="text-sm font-medium text-[var(--color-neutral-12)]">Add tags so users can find your app</span>
+                <ArrowRight size={16} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
+              </button>
+            </div>
+          )}
+
           <div className="px-6 pb-6">
             <div
               className="w-full bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-2xl p-3 flex flex-col gap-3 transition-[border-color,box-shadow] duration-[var(--duration-normal)] focus-within:border-[var(--color-accent-8)] focus-within:shadow-[0_0_0_3px_rgba(59,91,219,0.12),0px_4px_16px_-8px_rgba(59,91,219,0.18),0px_3px_12px_-4px_rgba(59,91,219,0.12)]"
@@ -1189,7 +1430,7 @@ function BuilderView({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSend() }
                 }}
-                placeholder="Tell me what to change or add…"
+                placeholder={publishStatus !== 'draft' ? 'Ask for changes' : 'Tell me what to change or add…'}
                 className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[#9CA0A8] outline-none ring-0 focus:outline-none focus:ring-0 bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border-none shadow-none appearance-none"
                 rows={3}
               />
@@ -1236,7 +1477,7 @@ function BuilderView({
           )}
         </div>
 
-        {/* ── Builder panel (right, flexible) ── */}
+        {/* ── Preview panel (always visible) ── */}
         <div id="preview-panel" className="flex-1 bg-[var(--color-neutral-2)] border-l border-[var(--border-default)] p-8 flex flex-col gap-4 overflow-auto relative">
           {localPhase === 'thinking' ? (
             <BuilderSkeletons />
@@ -1257,6 +1498,284 @@ function BuilderView({
           )}
         </div>
 
+        {/* ── Settings Drawer ── */}
+        {settingsOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-[var(--z-overlay)] bg-black/40"
+              style={{ animation: 'overlay-in var(--duration-normal) var(--ease-default) forwards' }}
+              onClick={() => setSettingsOpen(false)}
+            />
+            <div
+              className="fixed right-0 top-0 bottom-0 z-[var(--z-modal)] w-full max-w-[680px] bg-[var(--surface-primary)] shadow-[var(--shadow-xl)] flex flex-col"
+              style={{ animation: 'settings-drawer-in var(--duration-slow) var(--ease-default) forwards' }}
+            >
+              {/* Settings header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)] shrink-0">
+                <h2 className="text-lg font-semibold text-[var(--color-neutral-12)]">Settings</h2>
+                <button
+                  onClick={() => setSettingsOpen(false)}
+                  className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
+                  aria-label="Close settings"
+                >
+                  <X size={18} className="text-[var(--color-neutral-9)]" />
+                </button>
+              </div>
+
+              {/* Settings content */}
+              <div className="flex-1 overflow-auto px-6 pt-6 pb-10 flex flex-col gap-6">
+                {/* Published app access card */}
+                <div className="flex flex-col gap-4 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
+                  <div className="flex items-start justify-between">
+                    <div className="flex flex-col gap-0.5">
+                      <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Published app access</h3>
+                      <p className="text-xs text-[var(--color-neutral-8)]">Changing audience will take effect immediately</p>
+                    </div>
+                    <button className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0">
+                      <Link2 size={14} />
+                      Copy link
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-[var(--color-neutral-12)]">Who can view</label>
+                    <div className="relative">
+                      <button
+                        onClick={() => setAudienceDropdownOpen(!audienceDropdownOpen)}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] text-sm text-[var(--color-neutral-12)] cursor-pointer hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)]"
+                      >
+                        <div className="flex items-center gap-2">
+                          {(() => { const opt = audienceOptions.find(o => o.value === publishAudience); const Icon = opt?.icon || Building2; return <Icon size={16} className="text-[var(--color-neutral-8)]" /> })()}
+                          <span>{audienceOptions.find(o => o.value === publishAudience)?.label}</span>
+                        </div>
+                        <ChevronDown size={16} className={`text-[var(--color-neutral-8)] transition-transform duration-[var(--duration-fast)] ${audienceDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {audienceDropdownOpen && (
+                        <>
+                          <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setAudienceDropdownOpen(false)} />
+                          <div className="absolute left-0 right-0 top-full mt-1 z-[var(--z-modal)] rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] py-1 dropdown-animate">
+                            {audienceOptions.map((opt) => {
+                              const Icon = opt.icon
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => { setPublishAudience(opt.value); setAudienceDropdownOpen(false); setSettingsDirty(true) }}
+                                  className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${publishAudience === opt.value ? 'bg-[var(--color-accent-1)]' : ''}`}
+                                >
+                                  <Icon size={16} className="text-[var(--color-neutral-8)] shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-[var(--color-neutral-12)]">{opt.label}</p>
+                                    <p className="text-xs text-[var(--color-neutral-8)]">{opt.description}</p>
+                                  </div>
+                                  {publishAudience === opt.value && (
+                                    <Check size={16} className="text-[var(--color-accent-9)] shrink-0" />
+                                  )}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Marketplace toggle */}
+                  <div className="flex items-center gap-3 py-2">
+                    <Switch.Root
+                      checked={marketplacePublish}
+                      onCheckedChange={(v) => { setMarketplacePublish(v); setSettingsDirty(true) }}
+                      className={`relative inline-flex items-center w-10 h-[22px] rounded-full transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0 ${
+                        marketplacePublish ? 'bg-[var(--color-accent-9)]' : 'bg-[var(--color-neutral-5)]'
+                      }`}
+                    >
+                      <Switch.Thumb className="block w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-transform duration-[var(--duration-fast)] translate-x-0.5 data-[state=checked]:translate-x-[20px]" />
+                    </Switch.Root>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-[var(--color-neutral-12)]">Publish to Marketplace</span>
+                      <span className="text-sm text-[var(--color-neutral-8)]"> (Visible for anyone in the UpKeep community</span>
+                    </div>
+                  </div>
+
+                  {/* Info banner — only when marketplace toggle is on */}
+                  {marketplacePublish && (
+                    <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-[var(--color-accent-1)] border border-[var(--color-accent-3)]">
+                      <Info size={16} className="text-[var(--color-accent-9)] shrink-0 mt-0.5" />
+                      <span className="text-xs text-[var(--color-neutral-11)] leading-relaxed">
+                        Publishing makes it available to your team instantly. Marketplace visibility requires review first.
+                      </span>
+                    </div>
+                  )}
+
+                </div>
+
+                {/* App Details card */}
+                <div className="flex flex-col gap-5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
+                  <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">App Details</h3>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Name</label>
+                    <input
+                      type="text"
+                      value={appTitle}
+                      onChange={(e) => { setAppTitle(e.target.value); setSettingsDirty(true) }}
+                      className="w-full text-sm text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none ring-0 focus:outline-none focus:ring-0 border-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Description</label>
+                    <div className="relative">
+                      <textarea
+                        value={appDescription}
+                        onChange={(e) => { setAppDescription(e.target.value); setSettingsDirty(true) }}
+                        placeholder="Briefly describe what this app does and who it's for…"
+                        className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 leading-5 outline-none ring-0 focus:outline-none focus:ring-0 border-none shadow-none appearance-none"
+                        rows={3}
+                      />
+                      <button className="absolute right-3 bottom-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-accent-5)] text-xs font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                        <Sparkles size={12} />
+                        Writing Assistant
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex flex-col gap-1.5 flex-1">
+                      <label className="text-xs font-medium text-[var(--color-neutral-9)]">Category</label>
+                      <select
+                        value={appCategory}
+                        onChange={(e) => { setAppCategory(e.target.value); setSettingsDirty(true) }}
+                        className="w-full text-sm text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none border-none cursor-pointer appearance-none"
+                      >
+                        {['Operations', 'Reporting', 'Compliance', 'Work Orders', 'Inventory', 'Assets', 'Data Management', 'Safety'].map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1.5 flex-1">
+                      <label className="text-xs font-medium text-[var(--color-neutral-9)]">Version</label>
+                      <input
+                        type="text"
+                        defaultValue="1.0.0"
+                        className="w-full text-sm text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none ring-0 focus:outline-none focus:ring-0 border-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Tags</label>
+                    <div className="flex flex-wrap items-center gap-1.5 bg-[var(--color-neutral-2)] rounded-lg px-3 py-2 min-h-[38px]">
+                      {appTags.map((tag) => (
+                        <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-primary)] border border-[var(--border-default)] text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-11)]">
+                          {tag}
+                          <button onClick={() => { setAppTags(prev => prev.filter(t => t !== tag)); setSettingsDirty(true) }} className="text-[var(--color-neutral-7)] hover:text-[var(--color-neutral-12)] cursor-pointer">
+                            <X size={10} />
+                          </button>
+                        </span>
+                      ))}
+                      <input
+                        type="text"
+                        placeholder="Add tag…"
+                        className="flex-1 min-w-[60px] text-xs text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-transparent outline-none border-none"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                            setAppTags(prev => [...prev, e.currentTarget.value.trim()])
+                            setSettingsDirty(true)
+                            e.currentTarget.value = ''
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Instructions</label>
+                    <div className="relative">
+                      <textarea
+                        value={appInstructions}
+                        onChange={(e) => { setAppInstructions(e.target.value); setSettingsDirty(true) }}
+                        placeholder="step by step for users to install and use the app"
+                        className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 leading-5 outline-none ring-0 focus:outline-none focus:ring-0 border-none shadow-none appearance-none"
+                        rows={4}
+                      />
+                      <button className="absolute right-3 bottom-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-accent-5)] text-xs font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                        <Sparkles size={12} />
+                        Writing Assistant
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Images card */}
+                <div className="flex flex-col gap-5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
+                  <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Images</h3>
+
+                  {/* Favicon */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-[var(--color-neutral-12)]">Favicon</label>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[var(--color-neutral-2)] border border-[var(--border-default)]">
+                        <Camera size={20} className="text-[var(--color-neutral-7)]" />
+                      </div>
+                      <button className="flex items-center justify-center h-8 px-3 rounded-lg bg-[var(--color-accent-9)] text-xs font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                        Upload an image
+                      </button>
+                      <span className="text-xs text-[var(--color-neutral-7)]">Recommended dimensions: 48×48</span>
+                    </div>
+                  </div>
+
+                  {/* Preview app Images */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-[var(--color-neutral-12)]">Preview app Images (up to 5)</label>
+                    <div className="flex flex-col items-center gap-4 p-8 rounded-xl border-2 border-dashed border-[var(--color-accent-5)] bg-[var(--color-neutral-2)]">
+                      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--color-accent-2)]">
+                        <Upload size={20} className="text-[var(--color-accent-7)]" />
+                      </div>
+                      <div className="flex flex-col items-center gap-0.5 text-center">
+                        <p className="text-sm font-medium text-[var(--color-neutral-12)]">Drag and drop your file here to upload</p>
+                        <p className="text-xs text-[var(--color-neutral-7)]">Recommended dimensions: 1920×1080 px</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                          <Sparkles size={12} />
+                          Make an Image
+                        </button>
+                        <button className="flex items-center justify-center h-8 px-3 rounded-lg bg-[var(--color-accent-9)] text-xs font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                          Browse files
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Settings footer */}
+              <div className="flex items-center gap-3 px-6 py-4 border-t border-[var(--border-default)] bg-[var(--color-neutral-2)] shrink-0">
+                <button
+                  onClick={() => setSettingsOpen(false)}
+                  className="mr-auto flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { setSettingsOpen(false); setPublishStatus('published'); triggerPublishCelebration() }}
+                  className="flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                >
+                  Save &amp; Publish
+                </button>
+                <button
+                  disabled={!settingsDirty}
+                  onClick={() => { setSettingsOpen(false); setSettingsDirty(false) }}
+                  className="flex items-center justify-center h-10 px-5 rounded-xl bg-[var(--color-accent-9)] text-sm font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  Save changes
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* Onboarding tooltip — Publish button (#11) */}
         {showOnboarding && onboardingStep === 2 && (
           <OnboardingTooltip
@@ -1270,88 +1789,39 @@ function BuilderView({
         )}
       </div>
 
-      {/* Pre-Publish Confirmation Modal (#15) */}
-      <Dialog.Root open={publishOpen} onOpenChange={setPublishOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-[var(--z-overlay)] bg-black/50" data-dialog-overlay />
-          <Dialog.Content
-            className="fixed left-1/2 top-1/2 z-[var(--z-modal)] w-[480px] bg-[var(--surface-primary)] rounded-2xl shadow-[var(--shadow-xl)] p-6 flex flex-col gap-5"
-            data-dialog-content
-          >
-            <div className="flex items-start gap-3">
-              <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-[var(--color-accent-1)] shrink-0">
-                <Sparkles size={24} className="text-[var(--color-accent-9)]" />
-              </div>
-              <div>
-                <Dialog.Title className="text-lg font-semibold text-[var(--color-neutral-12)]">Ready to publish?</Dialog.Title>
-                <Dialog.Description className="text-sm text-[var(--color-neutral-8)] mt-0.5">Quick review before your team can use it</Dialog.Description>
-              </div>
-            </div>
+      {/* Publish dropdown is now inline next to the button */}
 
-            {/* Audience selector */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium uppercase tracking-wider text-[var(--color-neutral-8)]">Who can see this app?</label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { value: 'me', label: 'Only Me', icon: Lock },
-                  { value: 'team', label: 'My Team', icon: Users },
-                  { value: 'company', label: 'Entire Company', icon: Building2 },
-                  { value: 'restricted', label: 'Restricted', icon: Eye },
-                ].map(({ value, label, icon: AudIcon }) => (
-                  <button
-                    key={value}
-                    onClick={() => setPublishAudience(value)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors duration-[var(--duration-fast)] cursor-pointer ${
-                      publishAudience === value
-                        ? 'border-[var(--color-accent-9)] bg-[var(--color-accent-1)] text-[var(--color-accent-9)]'
-                        : 'border-[var(--border-default)] text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-3)]'
-                    }`}
-                  >
-                    <AudIcon size={16} />
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
+      {/* Confetti canvas */}
+      {showConfetti && <ConfettiCanvas />}
 
-            {/* Publish checklist */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium uppercase tracking-wider text-[var(--color-neutral-8)]">Checklist</label>
-              {[
-                { label: 'App has a name', ok: true },
-                { label: 'App has a description', ok: true },
-                { label: 'App has been previewed on mobile', ok: false },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-2 py-1">
-                  <div className={`flex items-center justify-center w-5 h-5 rounded-full ${item.ok ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-warning-light)] text-[var(--color-warning)]'}`}>
-                    {item.ok ? <Check size={12} strokeWidth={2.5} /> : <AlertCircle size={12} />}
-                  </div>
-                  <span className={`text-sm ${item.ok ? 'text-[var(--color-neutral-12)]' : 'text-[var(--color-warning)]'}`}>{item.label}</span>
-                </div>
-              ))}
+      {/* Publish toast */}
+      {publishToast && (
+        <div className="fixed bottom-8 left-1/2 z-[var(--z-toast)] publish-toast">
+          <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[var(--surface-primary)] border border-[var(--border-default)] shadow-[var(--shadow-xl)]">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[var(--color-success)] shrink-0">
+              <Check size={16} className="text-white" />
             </div>
-
-            <p className="text-xs text-[var(--color-neutral-7)] leading-relaxed">
-              You can unpublish or update this app at any time from Apps I Built.
-            </p>
-
-            <div className="flex gap-3 pt-1">
-              <Dialog.Close asChild>
-                <Button variant="secondary" size="lg" className="flex-1 gap-2">
-                  Keep Editing
-                  <kbd className="px-1 py-0.5 rounded bg-[var(--color-neutral-4)] text-[10px] font-medium text-[var(--color-neutral-8)]">esc</kbd>
-                </Button>
-              </Dialog.Close>
-              <Dialog.Close asChild>
-                <Button variant="primary" size="lg" className="flex-1 gap-2">
-                  Publish
-                  <kbd className="px-1 py-0.5 rounded bg-white/20 text-[10px] font-medium text-white/70">⌘↵</kbd>
-                </Button>
-              </Dialog.Close>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-semibold text-[var(--color-neutral-12)]">App published successfully!</span>
+              <span className="text-xs text-[var(--color-neutral-8)]">Your app is now live and accessible</span>
             </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+            <button
+              onClick={() => { navigator.clipboard.writeText(`https://upkeep.app/apps/${appTitle.toLowerCase().replace(/\s+/g, '-')}`) }}
+              className="flex items-center gap-1.5 ml-3 px-3 py-1.5 rounded-lg border border-[var(--border-default)] text-xs font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0"
+            >
+              <Link2 size={12} />
+              Copy link
+            </button>
+            <button
+              onClick={() => setPublishToast(false)}
+              className="flex items-center justify-center w-6 h-6 rounded-md hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)] shrink-0 ml-1"
+              aria-label="Dismiss"
+            >
+              <X size={14} className="text-[var(--color-neutral-8)]" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
