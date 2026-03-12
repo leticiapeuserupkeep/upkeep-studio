@@ -2109,7 +2109,7 @@ function OnboardingTooltip({
   // Highlight ring on target element
   useEffect(() => {
     const el = document.getElementById(step.target)
-    if (!el || step.anchor === 'center') return
+    if (!el) return
     el.style.animation = 'onboarding-pulse 2s ease-in-out infinite'
     el.style.borderRadius = el.style.borderRadius || '16px'
     el.style.position = 'relative'
