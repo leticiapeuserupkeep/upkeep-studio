@@ -76,14 +76,20 @@ type ViewState = 'prompt' | 'transitioning' | 'building'
 type AiPhase = 'thinking' | 'responded'
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile'
 type SaveState = 'saved' | 'saving' | 'unsaved'
-type PublishStatus = 'draft' | 'in_review' | 'published'
+type PublishStatus = 'draft' | 'publishing' | 'published' | 'dirty'
 type AudienceOption = 'company' | 'private' | 'restricted'
+type AgentMode = 'plan' | 'action'
 type SelectedTemplate = typeof templates[number] | null
 
 const audienceOptions: { value: AudienceOption; label: string; description: string; icon: typeof Building2 }[] = [
   { value: 'company', label: 'Anyone at my company', description: 'App will be available for anyone at your company', icon: Building2 },
   { value: 'private', label: 'Private', description: 'Only visible for you', icon: Lock },
   { value: 'restricted', label: 'Restricted access', description: 'Available only to selected users or groups', icon: Eye },
+]
+
+const agentModeOptions: { value: AgentMode; label: string; description: string; icon: typeof ClipboardList }[] = [
+  { value: 'plan', label: 'Plan mode', description: 'Review the approach before acting', icon: ClipboardList },
+  { value: 'action', label: 'Action mode', description: 'Execute actions directly', icon: Zap },
 ]
 
 export default function CreateAppPage() {
@@ -285,7 +291,7 @@ function PromptView({
                 animation: 'fadeInUp 0.6s var(--ease-default) 0.1s forwards',
               }}
             >
-              <div className="relative">
+              <div className="relative bg-[var(--color-neutral-2)] rounded-xl">
                 <textarea
                   ref={promptRef}
                   value={prompt}
@@ -293,14 +299,14 @@ function PromptView({
                     setPrompt(e.target.value)
                     const el = e.target
                     el.style.height = 'auto'
-                    const maxH = 20 * 6 + 20 // 6 lines (20px each) + padding
+                    const maxH = 20 * 6 + 20
                     el.style.height = `${Math.min(el.scrollHeight, maxH)}px`
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
                   }}
                   placeholder=""
-                  className="w-full resize-none text-sm text-[var(--color-neutral-12)] outline-none ring-0 focus:outline-none focus:ring-0 bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 relative z-[1] border-none shadow-none appearance-none overflow-auto"
+                  className="w-full resize-none text-sm text-[var(--color-neutral-12)] outline-none ring-0 focus:outline-none focus:ring-0 bg-transparent rounded-xl px-3 py-2.5 leading-5 relative z-[1] border-none shadow-none appearance-none overflow-auto"
                   rows={3}
                   style={{ maxHeight: 20 * 6 + 20 }}
                 />
@@ -412,15 +418,16 @@ function PromptView({
 
             <Collapsible.Content>
               <div className="grid grid-cols-3 gap-[var(--space-md)] pt-[var(--space-md)]">
-                {templates.slice(3).map((t) => {
+                {templates.slice(3).map((t, i) => {
                   const Icon = t.icon
                   return (
                     <button
                       key={t.title}
                       onClick={() => handleTemplateSelect(t)}
-                      className={`flex flex-col items-start bg-[var(--surface-primary)] border rounded-2xl p-5 gap-3 text-left transition-all duration-[var(--duration-fast)] cursor-pointer hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 ${
+                      className={`flex flex-col items-start bg-[var(--surface-primary)] border rounded-2xl p-5 gap-3 text-left transition-all duration-[var(--duration-fast)] cursor-pointer hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 opacity-0 ${
                         selectedTemplate?.title === t.title ? 'border-[var(--color-accent-9)] ring-1 ring-[var(--color-accent-9)]' : 'border-[var(--border-default)]'
                       }`}
+                      style={templatesOpen ? { animation: `fadeInUp 0.35s var(--ease-default) ${i * 0.05}s forwards` } : { opacity: 1 }}
                     >
                       <div className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-xl)] bg-[var(--color-accent-1)]">
                         <Icon size={20} strokeWidth={1.5} className="text-[var(--color-accent-9)]" />
@@ -686,93 +693,278 @@ function playCompletionChime() {
 
 /* ── Confetti canvas ── */
 
-const CONFETTI_COLORS = ['#3E63DD', '#5B7CF7', '#7C66DC', '#9B8AFF', '#0CA6E9', '#3BC4F2', '#6E56CF', '#4A90D9']
+const CONFETTI_BRAND = [
+  '#3b5bdb', '#6d9ef9', '#bfd7fe', '#3b63eb',
+  '#2f9e44', '#86EFAC',
+  '#FDE68A', '#f8f9fa',
+]
+const CONFETTI_SHAPES = ['rect', 'rect', 'rect', 'circle', 'strip'] as const
 
-function ConfettiCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-
-    const particles: Array<{
-      x: number; y: number; vx: number; vy: number
-      w: number; h: number; color: string
-      rotation: number; rotationSpeed: number
-      wobble: number; wobbleSpeed: number
-      opacity: number; gravity: number; drag: number
-    }> = []
-
-    for (let i = 0; i < 80; i++) {
-      const angle = Math.random() * Math.PI * 2
-      const speed = 4 + Math.random() * 8
-      particles.push({
-        x: canvas.width / 2 + (Math.random() - 0.5) * 200,
-        y: canvas.height * 0.35,
-        vx: Math.cos(angle) * speed * (0.6 + Math.random()),
-        vy: Math.sin(angle) * speed - 4 - Math.random() * 4,
-        w: 4 + Math.random() * 6,
-        h: 6 + Math.random() * 8,
-        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-        rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.3,
-        wobble: Math.random() * Math.PI * 2,
-        wobbleSpeed: 0.03 + Math.random() * 0.05,
-        opacity: 1,
-        gravity: 0.12 + Math.random() * 0.04,
-        drag: 0.98 + Math.random() * 0.015,
-      })
+function generateBurstParticles(count: number, spread: number) {
+  return Array.from({ length: count }, (_, i) => {
+    const angle = (Math.random() * Math.PI * 2)
+    const velocity = spread * 0.4 + Math.random() * spread * 0.6
+    return {
+      cx: Math.cos(angle) * velocity,
+      cy: Math.sin(angle) * velocity * 0.75,
+      cr: (Math.random() - 0.5) * 720,
+      size: 6 + Math.random() * 8,
+      color: CONFETTI_BRAND[i % CONFETTI_BRAND.length],
+      delay: Math.random() * 350,
+      shape: CONFETTI_SHAPES[i % CONFETTI_SHAPES.length],
     }
+  })
+}
 
-    let frame: number
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      let alive = false
-
-      for (const p of particles) {
-        p.vy += p.gravity
-        p.vx *= p.drag
-        p.vy *= p.drag
-        p.x += p.vx + Math.sin(p.wobble) * 0.8
-        p.y += p.vy
-        p.rotation += p.rotationSpeed
-        p.wobble += p.wobbleSpeed
-
-        if (p.y > canvas.height + 20) {
-          p.opacity -= 0.05
-        }
-        if (p.opacity <= 0) continue
-        alive = true
-
-        ctx.save()
-        ctx.globalAlpha = Math.max(0, p.opacity)
-        ctx.translate(p.x, p.y)
-        ctx.rotate(p.rotation)
-        ctx.fillStyle = p.color
-        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h)
-        ctx.restore()
-      }
-
-      if (alive) {
-        frame = requestAnimationFrame(animate)
-      }
-    }
-
-    frame = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(frame)
-  }, [])
+function ConfettiBurst({ count = 60, spread = 280, duration = 1.6, className = '' }: {
+  count?: number; spread?: number; duration?: number; className?: string
+}) {
+  const particles = useRef(generateBurstParticles(count, spread)).current
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 9999 }}
-    />
+    <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>
+      {particles.map((p, i) => (
+        <div
+          key={i}
+          className="absolute"
+          style={{
+            top: '50%',
+            left: '50%',
+            width: p.shape === 'strip' ? p.size * 1.8 : p.size,
+            height: p.shape === 'circle' ? p.size : p.shape === 'strip' ? p.size * 0.35 : p.size * 0.6,
+            marginTop: -(p.shape === 'circle' ? p.size : p.size * 0.3),
+            marginLeft: -(p.shape === 'strip' ? p.size * 0.9 : p.size * 0.5),
+            borderRadius: p.shape === 'circle' ? '50%' : p.shape === 'strip' ? '1px' : '2px',
+            backgroundColor: p.color,
+            '--cx': `${p.cx}px`,
+            '--cy': `${p.cy}px`,
+            '--cr': `${p.cr}deg`,
+            animation: `confetti-burst ${duration}s ${p.delay}ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards`,
+            opacity: 0,
+          } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  )
+}
+
+function PublishSuccessOverlay({ appTitle, onDismiss }: { appTitle: string; onDismiss: () => void }) {
+  const [exiting, setExiting] = useState(false)
+
+  const handleDismiss = useCallback(() => {
+    setExiting(true)
+    setTimeout(onDismiss, 300)
+  }, [onDismiss])
+
+  useEffect(() => {
+    const timer = setTimeout(handleDismiss, 4000)
+    return () => clearTimeout(timer)
+  }, [handleDismiss])
+
+  return (
+    <div
+      className="success-overlay fixed inset-0 z-[var(--z-toast)] flex items-center justify-center cursor-pointer"
+      onClick={handleDismiss}
+      style={{
+        animation: exiting
+          ? 'success-overlay-out 0.3s ease forwards'
+          : 'success-overlay-in 0.3s ease forwards',
+        backgroundColor: 'rgba(0, 0, 20, 0.55)',
+        backdropFilter: 'blur(6px)',
+      }}
+    >
+      {/* Center-burst confetti */}
+      <ConfettiBurst count={70} spread={320} duration={1.8} />
+
+      <div className="flex flex-col items-center gap-5 relative z-10" onClick={(e) => e.stopPropagation()}>
+        {/* Filled checkmark */}
+        <div style={{ width: 80, height: 80 }}>
+          <svg
+            viewBox="0 0 80 80"
+            fill="none"
+            width={80}
+            height={80}
+          >
+            <circle
+              cx={40} cy={40} r={36}
+              fill="#22C55E"
+              style={{
+                transformOrigin: 'center',
+                animation: 'success-circle-fill 500ms ease-out forwards',
+              }}
+            />
+            <path
+              d="M27 40 L36 50 L54 30"
+              stroke="white"
+              strokeWidth={4}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+              style={{
+                strokeDasharray: 42,
+                strokeDashoffset: 42,
+                animation: 'success-check-stroke 300ms ease-out 450ms forwards',
+              }}
+            />
+          </svg>
+        </div>
+
+        {/* Title */}
+        <p
+          className="text-lg font-semibold text-white"
+          style={{ opacity: 0, animation: 'success-text-fade-up 250ms ease-out 750ms forwards' }}
+        >
+          Published!
+        </p>
+
+        {/* Subtitle */}
+        <p
+          className="text-sm text-white/50 -mt-2"
+          style={{ opacity: 0, animation: 'success-text-fade-up 250ms ease-out 850ms forwards' }}
+        >
+          Your app is now live and accessible
+        </p>
+
+        {/* Copy link button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            navigator.clipboard.writeText(`https://upkeep.app/apps/${appTitle.toLowerCase().replace(/\s+/g, '-')}`)
+          }}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/15 bg-white/10 text-sm font-medium text-white hover:bg-white/15 transition-colors duration-[var(--duration-fast)] cursor-pointer"
+          style={{ opacity: 0, animation: 'success-text-fade-up 250ms ease-out 950ms forwards' }}
+        >
+          <Link2 size={14} />
+          Copy link
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const ratingOptions = [
+  { value: 1, emoji: '😟', label: 'Terrible' },
+  { value: 2, emoji: '😕', label: 'Bad' },
+  { value: 3, emoji: '🙂', label: 'Ok' },
+  { value: 4, emoji: '😊', label: 'Good' },
+  { value: 5, emoji: '😁', label: 'Great' },
+]
+
+function PublishRatingPrompt({ onDismiss }: { onDismiss: () => void }) {
+  const [selected, setSelected] = useState<number | null>(null)
+  const [submitted, setSubmitted] = useState(false)
+  const [showFollowUp, setShowFollowUp] = useState(false)
+  const [feedback, setFeedback] = useState('')
+  const [exiting, setExiting] = useState(false)
+
+  const dismiss = useCallback(() => {
+    setExiting(true)
+    setTimeout(onDismiss, 300)
+  }, [onDismiss])
+
+  const handleSelect = useCallback((value: number) => {
+    setSelected(value)
+    if (value <= 2) {
+      setShowFollowUp(true)
+    } else {
+      setSubmitted(true)
+      setTimeout(dismiss, 1600)
+    }
+  }, [dismiss])
+
+  const handleSubmitFeedback = useCallback(() => {
+    setShowFollowUp(false)
+    setSubmitted(true)
+    setTimeout(dismiss, 1600)
+  }, [dismiss])
+
+  return (
+    <div
+      className="fixed bottom-6 right-6 z-[var(--z-toast)]"
+      style={{
+        animation: exiting
+          ? 'rating-prompt-out 0.3s ease forwards'
+          : 'rating-prompt-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+      }}
+    >
+      <div
+        className="bg-[var(--surface-primary)] rounded-2xl border border-[var(--border-default)] py-5 px-6"
+        style={{ boxShadow: '0 8px 40px -8px rgba(0,0,0,0.15), 0 4px 16px -4px rgba(0,0,0,0.08)' }}
+      >
+        {submitted ? (
+          <div className="flex flex-col items-center gap-1 px-4 py-2">
+            <span className="text-base">🙏</span>
+            <p className="text-sm font-medium text-[var(--color-neutral-12)]">Thanks for your feedback!</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-start justify-between gap-6 mb-5">
+              <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)] leading-snug">
+                How was your experience using Studio?
+              </h3>
+              <button
+                onClick={dismiss}
+                className="flex items-center justify-center w-6 h-6 rounded-lg hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0 -mt-0.5 -mr-1"
+                aria-label="Dismiss"
+              >
+                <X size={14} className="text-[var(--color-neutral-8)]" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {ratingOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleSelect(opt.value)}
+                  className={`flex flex-col items-center gap-2 px-3 py-2.5 rounded-xl transition-all duration-[var(--duration-fast)] cursor-pointer group ${
+                    selected === opt.value
+                      ? 'bg-[var(--color-accent-2)] ring-2 ring-[var(--color-accent-7)] scale-105'
+                      : 'hover:bg-[var(--color-neutral-2)] hover:scale-105'
+                  }`}
+                >
+                  <span
+                    className={`text-[28px] leading-none transition-transform duration-[var(--duration-fast)] ${
+                      selected === opt.value ? 'scale-110' : 'group-hover:scale-110'
+                    }`}
+                  >
+                    {opt.emoji}
+                  </span>
+                  <span className={`text-xs font-medium transition-colors duration-[var(--duration-fast)] ${
+                    selected === opt.value ? 'text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-8)]'
+                  }`}>
+                    {opt.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {showFollowUp && (
+              <div
+                className="mt-4 flex flex-col gap-2.5"
+                style={{ animation: 'success-text-fade-up 200ms ease-out forwards' }}
+              >
+                <textarea
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="What could we improve? (optional)"
+                  className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border border-[var(--border-default)] outline-none focus:border-[var(--color-accent-8)] transition-colors duration-[var(--duration-fast)]"
+                  rows={2}
+                  autoFocus
+                />
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleSubmitFeedback}
+                    className="px-3.5 py-1.5 rounded-lg bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)] text-white text-sm font-medium transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -795,18 +987,20 @@ function BuilderView({
   setPreviewDevice: (d: PreviewDevice) => void
 }) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [planMode, setPlanMode] = useState(false)
+  const [agentMode, setAgentMode] = useState<AgentMode>('plan')
+  const [modeDropdownOpen, setModeDropdownOpen] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const [savedAgo, setSavedAgo] = useState(0)
   const [publishOpen, setPublishOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsFromPublish, setSettingsFromPublish] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingStep, setOnboardingStep] = useState(0)
   const [publishAudience, setPublishAudience] = useState<AudienceOption>('company')
   const [publishStatus, setPublishStatus] = useState<PublishStatus>('draft')
   const [appTitle, setAppTitle] = useState('Data Overview Dashboard')
   const [appInstructions, setAppInstructions] = useState('')
-  const [showReviewTooltip, setShowReviewTooltip] = useState(false)
+  const [showPublishing, setShowPublishing] = useState(false)
   const [audienceDropdownOpen, setAudienceDropdownOpen] = useState(false)
   const [marketplacePublish, setMarketplacePublish] = useState(false)
   const [appDescription, setAppDescription] = useState('')
@@ -817,9 +1011,12 @@ function BuilderView({
   const [showActivityLog, setShowActivityLog] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [completionSignal, setCompletionSignal] = useState(false)
-  const [publishToast, setPublishToast] = useState(false)
-  const [showConfetti, setShowConfetti] = useState(false)
+  const [showPublishSuccess, setShowPublishSuccess] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [postPublishCTAsDismissed, setPostPublishCTAsDismissed] = useState(false)
+  const [showRatingPrompt, setShowRatingPrompt] = useState(false)
+  const hasPublishedOnce = useRef(false)
+  const hasShownRating = useRef(false)
 
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
     { role: 'user', content: submittedPrompt },
@@ -878,7 +1075,7 @@ function BuilderView({
     setLocalPhase('thinking')
     setShowActivityLog(false)
     setSaveState('unsaved')
-    if (publishStatus === 'published') setPublishStatus('draft')
+    if (publishStatus === 'published') setPublishStatus('dirty')
 
     const idx = responseCountRef.current
     setTimeout(() => {
@@ -897,12 +1094,16 @@ function BuilderView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatInput, setChatInput, localPhase])
 
-  const triggerPublishCelebration = useCallback(() => {
-    setPublishToast(true)
-    setShowConfetti(true)
-    playTadaSound()
-    setTimeout(() => setShowConfetti(false), 3000)
-    setTimeout(() => setPublishToast(false), 6000)
+  const triggerPublish = useCallback(() => {
+    setPublishStatus('publishing')
+    setShowPublishing(true)
+    setTimeout(() => {
+      setShowPublishing(false)
+      setPublishStatus('published')
+      hasPublishedOnce.current = true
+      setShowPublishSuccess(true)
+      playTadaSound()
+    }, 1800)
   }, [])
 
   // Auto-save simulation
@@ -1076,7 +1277,21 @@ function BuilderView({
         {/* Right section */}
         <Tooltip.Provider delayDuration={200}>
         <div className="flex items-center gap-2 pr-4">
-          {/* Auto-save indicator — hidden */}
+          {/* Status badge */}
+          {publishStatus === 'draft' && (
+            <span className="px-2.5 py-1 rounded-full border border-[var(--border-default)] text-xs font-medium text-[var(--color-neutral-8)]">
+              Draft
+            </span>
+          )}
+          {(publishStatus === 'published' || publishStatus === 'dirty') && (
+            <span className={`px-2.5 py-1 rounded-full border text-xs font-medium ${
+              publishStatus === 'dirty'
+                ? 'border-[var(--color-warning-border)] text-[var(--color-warning)] bg-[var(--color-warning-light)]'
+                : 'border-[var(--color-success-light)] text-[var(--color-success)]'
+            }`}>
+              {publishStatus === 'dirty' ? 'Unpublished changes' : 'Published'}
+            </span>
+          )}
 
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
@@ -1096,27 +1311,8 @@ function BuilderView({
             </Tooltip.Portal>
           </Tooltip.Root>
 
-
-          {publishStatus === 'in_review' && (
-            <div className="relative">
-              <button
-                onClick={() => setShowReviewTooltip(!showReviewTooltip)}
-                className="flex items-center gap-1.5 h-10 px-3 text-sm font-medium text-[var(--color-warning)] cursor-pointer"
-              >
-                In Review
-              </button>
-              {showReviewTooltip && (
-                <>
-                  <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setShowReviewTooltip(false)} />
-                  <div className="absolute right-0 top-full mt-2 z-[var(--z-modal)] w-[280px] rounded-xl bg-[var(--color-neutral-12)] text-white p-4 shadow-[var(--shadow-xl)] dropdown-animate">
-                    <p className="text-xs leading-relaxed">We&apos;re reviewing your app before it goes live. We&apos;ll send you an email to let you know when it&apos;s published, or if we need any changes.</p>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {publishStatus === 'published' && (
+          {/* Share button — visible when published or dirty */}
+          {(publishStatus === 'published' || publishStatus === 'dirty') && (
             <Tooltip.Root open={linkCopied || undefined}>
               <Tooltip.Trigger asChild>
                 <button
@@ -1150,23 +1346,25 @@ function BuilderView({
           <div className="relative">
             <button
               id="publish-button"
+              disabled={publishStatus === 'published' || publishStatus === 'publishing'}
               onClick={() => {
-                if (publishStatus === 'published') {
-                  setPublishStatus('published')
+                if (publishStatus === 'dirty') {
+                  triggerPublish()
                   return
                 }
-                setPublishOpen(!publishOpen)
+                if (publishStatus === 'draft' && !hasPublishedOnce.current) {
+                  setPublishOpen(!publishOpen)
+                  return
+                }
+                triggerPublish()
               }}
-              className={`flex items-center justify-center gap-2 h-10 px-4 rounded-xl transition-colors cursor-pointer group ${
-                publishStatus === 'published'
-                  ? 'bg-[var(--color-success)] hover:bg-[var(--color-success)]'
-                  : publishStatus === 'in_review'
-                  ? 'bg-[var(--color-neutral-5)] text-[var(--color-neutral-9)]'
-                  : 'bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)]'
-              }`}
+              className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl transition-colors cursor-pointer group disabled:opacity-50 disabled:cursor-default bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)]"
             >
-              <span className={`text-sm font-medium ${publishStatus === 'published' ? 'text-white' : publishStatus === 'in_review' ? 'text-[var(--color-neutral-9)]' : 'text-white'}`}>
-                {publishStatus === 'published' ? 'Published' : publishStatus === 'in_review' ? 'Published' : 'Publish'}
+              {publishStatus === 'publishing' && (
+                <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              )}
+              <span className="text-sm font-medium text-white">
+                {publishStatus === 'publishing' ? 'Publishing…' : 'Publish'}
               </span>
             </button>
 
@@ -1200,7 +1398,7 @@ function BuilderView({
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold text-[var(--color-neutral-12)]">Status</span>
                       <span className="text-sm font-medium text-[var(--color-neutral-12)] px-2.5 py-1 rounded-full border border-[var(--border-default)]">
-                        {publishStatus === 'draft' ? 'Draft' : publishStatus === 'in_review' ? 'In Review' : 'Published'}
+                        Draft
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -1213,16 +1411,15 @@ function BuilderView({
 
                   <div className="flex gap-3 pt-1">
                     <button
-                      onClick={() => { setPublishOpen(false); setSettingsOpen(true) }}
+                      onClick={() => { setPublishOpen(false); setSettingsOpen(true); setSettingsFromPublish(true) }}
                       className="flex-1 flex items-center justify-center h-10 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                     >
                       Manage Settings
                     </button>
                     <button
                       onClick={() => {
-                        setPublishStatus('published')
                         setPublishOpen(false)
-                        triggerPublishCelebration()
+                        triggerPublish()
                       }}
                       className="flex-1 flex items-center justify-center h-10 rounded-xl bg-[var(--color-accent-9)] text-sm font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                     >
@@ -1318,8 +1515,8 @@ function BuilderView({
                     )}
                   </div>
 
-                  {/* Recommended steps — only after the first AI response */}
-                  {isFirst && (
+                  {/* Recommended steps — only after first AI response, hidden once published */}
+                  {isFirst && publishStatus === 'draft' && (
                     <div
                       className="px-0 py-0 flex flex-col gap-3 opacity-0"
                       style={{ animation: 'fadeInUp 0.5s var(--ease-default) 0.2s forwards' }}
@@ -1399,22 +1596,36 @@ function BuilderView({
           </div>
 
           {/* Post-publish CTAs */}
-          {publishStatus !== 'draft' && (
-            <div className="px-6 flex flex-col gap-2 pb-3 fade-animate">
-              <button
-                onClick={() => setSettingsOpen(true)}
-                className="flex items-center justify-between w-full px-4 py-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer group"
-              >
-                <span className="text-sm font-medium text-[var(--color-neutral-12)]">Add setup instructions</span>
-                <ArrowRight size={16} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
-              </button>
-              <button
-                onClick={() => setSettingsOpen(true)}
-                className="flex items-center justify-between w-full px-4 py-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer group"
-              >
-                <span className="text-sm font-medium text-[var(--color-neutral-12)]">Add tags so users can find your app</span>
-                <ArrowRight size={16} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
-              </button>
+          {(publishStatus === 'published' || publishStatus === 'dirty') && !postPublishCTAsDismissed && (
+            <div className="px-6 pb-3 fade-animate">
+              <div className="rounded-xl border border-[var(--color-accent-5)] bg-[var(--color-accent-1)] overflow-hidden">
+                <div className="flex items-center justify-between px-4 pt-3 pb-1.5">
+                  <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-accent-9)]">Finish setting up</span>
+                  <button
+                    onClick={() => setPostPublishCTAsDismissed(true)}
+                    className="flex items-center justify-center w-5 h-5 rounded-md hover:bg-[var(--color-accent-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                    aria-label="Dismiss"
+                  >
+                    <X size={12} className="text-[var(--color-accent-8)]" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => { setSettingsOpen(true); setPostPublishCTAsDismissed(true) }}
+                  className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-[var(--color-accent-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer group"
+                >
+                  <Settings size={15} className="text-[var(--color-accent-9)] shrink-0" />
+                  <span className="flex-1 text-sm font-medium text-[var(--color-neutral-12)]">Add setup instructions</span>
+                  <ArrowRight size={14} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
+                </button>
+                <button
+                  onClick={() => { setSettingsOpen(true); setPostPublishCTAsDismissed(true) }}
+                  className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-[var(--color-accent-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer group"
+                >
+                  <Tag size={15} className="text-[var(--color-accent-9)] shrink-0" />
+                  <span className="flex-1 text-sm font-medium text-[var(--color-neutral-12)]">Add tags so users can find your app</span>
+                  <ArrowRight size={14} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
+                </button>
+              </div>
             </div>
           )}
 
@@ -1430,20 +1641,52 @@ function BuilderView({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSend() }
                 }}
-                placeholder={publishStatus !== 'draft' ? 'Ask for changes' : 'Tell me what to change or add…'}
+                placeholder={(publishStatus === 'published' || publishStatus === 'dirty') ? 'Ask for changes' : 'Tell me what to change or add…'}
                 className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[#9CA0A8] outline-none ring-0 focus:outline-none focus:ring-0 bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border-none shadow-none appearance-none"
                 rows={3}
               />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <button
+                      onClick={() => setModeDropdownOpen(!modeDropdownOpen)}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                    >
+                      {(() => { const opt = agentModeOptions.find(o => o.value === agentMode); const Icon = opt?.icon || ClipboardList; return <Icon size={14} className="text-[var(--color-neutral-8)]" /> })()}
+                      <span className="text-xs font-medium text-[var(--color-neutral-9)]">{agentModeOptions.find(o => o.value === agentMode)?.label}</span>
+                      <ChevronDown size={12} className={`text-[var(--color-neutral-7)] transition-transform duration-[var(--duration-fast)] ${modeDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {modeDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setModeDropdownOpen(false)} />
+                        <div className="absolute left-0 bottom-full mb-1 z-[var(--z-modal)] rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] py-1 w-[260px] dropdown-animate">
+                          {agentModeOptions.map((opt) => {
+                            const Icon = opt.icon
+                            return (
+                              <button
+                                key={opt.value}
+                                onClick={() => { setAgentMode(opt.value); setModeDropdownOpen(false) }}
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${agentMode === opt.value ? 'bg-[var(--color-accent-1)]' : ''}`}
+                              >
+                                <Icon size={16} className="text-[var(--color-neutral-8)] shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-[var(--color-neutral-12)]">{opt.label}</p>
+                                  <p className="text-xs text-[var(--color-neutral-8)]">{opt.description}</p>
+                                </div>
+                                {agentMode === opt.value && (
+                                  <Check size={16} className="text-[var(--color-accent-9)] shrink-0" />
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </div>
                   <button className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Attach file">
                     <Plus size={16} strokeWidth={1.5} className="text-[var(--color-neutral-12)]" />
                   </button>
-                  <span className="text-[10px] text-[var(--color-neutral-7)] select-none">
-                    <kbd className="px-1 py-0.5 rounded bg-[var(--color-neutral-3)] border border-[var(--border-default)] text-[10px] font-medium text-[var(--color-neutral-8)]">↵</kbd> send
-                    <span className="mx-1 text-[var(--color-neutral-5)]">·</span>
-                    <kbd className="px-1 py-0.5 rounded bg-[var(--color-neutral-3)] border border-[var(--border-default)] text-[10px] font-medium text-[var(--color-neutral-8)]">⇧↵</kbd> new line
-                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Voice input">
@@ -1753,20 +1996,22 @@ function BuilderView({
               {/* Settings footer */}
               <div className="flex items-center gap-3 px-6 py-4 border-t border-[var(--border-default)] bg-[var(--color-neutral-2)] shrink-0">
                 <button
-                  onClick={() => setSettingsOpen(false)}
+                  onClick={() => { setSettingsOpen(false); setSettingsFromPublish(false) }}
                   className="mr-auto flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button
-                  onClick={() => { setSettingsOpen(false); setPublishStatus('published'); triggerPublishCelebration() }}
-                  className="flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-                >
-                  Save &amp; Publish
-                </button>
+                {settingsFromPublish && (
+                  <button
+                    onClick={() => { setSettingsOpen(false); setSettingsFromPublish(false); triggerPublish() }}
+                    className="flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                  >
+                    Save &amp; Publish
+                  </button>
+                )}
                 <button
                   disabled={!settingsDirty}
-                  onClick={() => { setSettingsOpen(false); setSettingsDirty(false) }}
+                  onClick={() => { setSettingsOpen(false); setSettingsDirty(false); setSettingsFromPublish(false) }}
                   className="flex items-center justify-center h-10 px-5 rounded-xl bg-[var(--color-accent-9)] text-sm font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                 >
                   Save changes
@@ -1791,36 +2036,40 @@ function BuilderView({
 
       {/* Publish dropdown is now inline next to the button */}
 
-      {/* Confetti canvas */}
-      {showConfetti && <ConfettiCanvas />}
-
-      {/* Publish toast */}
-      {publishToast && (
-        <div className="fixed bottom-8 left-1/2 z-[var(--z-toast)] publish-toast">
-          <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[var(--surface-primary)] border border-[var(--border-default)] shadow-[var(--shadow-xl)]">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[var(--color-success)] shrink-0">
-              <Check size={16} className="text-white" />
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-semibold text-[var(--color-neutral-12)]">App published successfully!</span>
-              <span className="text-xs text-[var(--color-neutral-8)]">Your app is now live and accessible</span>
-            </div>
-            <button
-              onClick={() => { navigator.clipboard.writeText(`https://upkeep.app/apps/${appTitle.toLowerCase().replace(/\s+/g, '-')}`) }}
-              className="flex items-center gap-1.5 ml-3 px-3 py-1.5 rounded-lg border border-[var(--border-default)] text-xs font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0"
-            >
-              <Link2 size={12} />
-              Copy link
-            </button>
-            <button
-              onClick={() => setPublishToast(false)}
-              className="flex items-center justify-center w-6 h-6 rounded-md hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)] shrink-0 ml-1"
-              aria-label="Dismiss"
-            >
-              <X size={14} className="text-[var(--color-neutral-8)]" />
-            </button>
+      {/* Publishing loading overlay */}
+      {showPublishing && (
+        <div
+          className="fixed inset-0 z-[var(--z-toast)] flex items-center justify-center"
+          style={{
+            backgroundColor: 'rgba(0, 0, 20, 0.55)',
+            backdropFilter: 'blur(6px)',
+            animation: 'success-overlay-in 0.3s ease forwards',
+          }}
+        >
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-3 border-white/80 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm font-medium text-white/70">Publishing your app…</p>
           </div>
         </div>
+      )}
+
+      {/* Publish success overlay */}
+      {showPublishSuccess && (
+        <PublishSuccessOverlay
+          appTitle={appTitle}
+          onDismiss={() => {
+            setShowPublishSuccess(false)
+            if (!hasShownRating.current) {
+              hasShownRating.current = true
+              setTimeout(() => setShowRatingPrompt(true), 400)
+            }
+          }}
+        />
+      )}
+
+      {/* Post-publish rating prompt */}
+      {showRatingPrompt && (
+        <PublishRatingPrompt onDismiss={() => setShowRatingPrompt(false)} />
       )}
     </div>
   )

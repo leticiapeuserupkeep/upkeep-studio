@@ -159,23 +159,24 @@
 
 /* ── Collapsible (Radix) ── */
 @keyframes collapsible-down {
-  from { height: 0; opacity: 0; }
-  to { height: var(--radix-collapsible-content-height); opacity: 1; }
+  from { height: 0; opacity: 0; transform: translateY(-8px); }
+  to { height: var(--radix-collapsible-content-height); opacity: 1; transform: translateY(0); }
 }
 
 @keyframes collapsible-up {
-  from { height: var(--radix-collapsible-content-height); opacity: 1; }
-  to { height: 0; opacity: 0; }
+  from { height: var(--radix-collapsible-content-height); opacity: 1; transform: translateY(0); }
+  to { height: 0; opacity: 0; transform: translateY(-8px); }
 }
 
 [data-radix-collapsible-content][data-state="open"],
 .nav-collapsible-content[data-state="open"] {
-  animation: collapsible-down 600ms var(--ease-default);
+  animation: collapsible-down 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
 [data-radix-collapsible-content][data-state="closed"],
 .nav-collapsible-content[data-state="closed"] {
-  animation: collapsible-up 550ms var(--ease-default);
+  animation: collapsible-up 300ms cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
 
@@ -319,23 +320,84 @@
   animation: toast-in var(--duration-normal) var(--ease-default) forwards;
 }
 
-/* ── Publish toast ── */
-@keyframes publish-toast-in {
-  from { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
-  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+/* ── Publish success overlay ── */
+@keyframes success-circle-fill {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-@keyframes publish-toast-out {
-  from { opacity: 1; transform: translate(-50%, 0) scale(1); }
-  to { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
+@keyframes success-check-stroke {
+  from { stroke-dashoffset: 42; }
+  to { stroke-dashoffset: 0; }
 }
 
-.publish-toast {
-  animation: publish-toast-in 0.4s var(--ease-default) forwards;
+@keyframes confetti-burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(0);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(calc(var(--cx) * 0.2), calc(var(--cy) * 0.2)) rotate(calc(var(--cr) * 0.2)) scale(1);
+  }
+  60% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--cx), calc(var(--cy) + 60px)) rotate(var(--cr)) scale(0.35);
+  }
 }
 
-.publish-toast-exit {
-  animation: publish-toast-out 0.3s var(--ease-default) forwards;
+@keyframes confetti-burst-card {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(0);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(calc(var(--cx) * 0.25), calc(var(--cy) * 0.25)) rotate(calc(var(--cr) * 0.2)) scale(1);
+  }
+  55% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--cx), calc(var(--cy) + 30px)) rotate(var(--cr)) scale(0.3);
+  }
+}
+
+@keyframes success-text-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes success-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes success-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes rating-prompt-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes rating-prompt-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(12px) scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .success-overlay * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 @keyframes confirm-reveal {

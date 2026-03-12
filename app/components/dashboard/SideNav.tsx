@@ -58,8 +58,8 @@ const sections: NavSection[] = [
     items: [
       { label: 'Create New App', icon: Wand2, href: '/studio/create', dot: true },
       { label: 'Browse Apps', icon: Gem, href: '/studio/browse' },
-      { label: 'Installed Apps', icon: Download },
-      { label: 'Apps I Built', icon: Command },
+      { label: 'Installed Apps', icon: Download, href: '/studio/installed' },
+      { label: 'Apps I Built', icon: Command, href: '/studio/built' },
       { label: 'Subscriptions', icon: Wallet },
     ],
   },

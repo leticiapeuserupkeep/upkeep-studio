@@ -48,15 +48,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const title = getPageTitle(pathname)
   const isCreateApp = pathname === '/studio/create'
   const isStudioBrowse = pathname.startsWith('/studio/browse')
+  const isStudioInstalled = pathname.startsWith('/studio/installed')
+  const isStudioBuilt = pathname.startsWith('/studio/built')
+  const isStudioSection = isStudioBrowse || isStudioInstalled || isStudioBuilt
   const isEdge = pathname.startsWith('/edge/')
   const isRuntimeList = pathname === '/edge/runtime'
   const isRuntimeDetail = /^\/edge\/runtime\/[^/]+/.test(pathname)
 
   function getActions() {
-    if (isStudioBrowse) {
+    if (isStudioSection) {
       return (
         <Button variant="primary" size="md" asChild>
-          <Link href="/studio/create">Create App</Link>
+          <Link href="/studio/create">New App</Link>
         </Button>
       )
     }
@@ -94,7 +97,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             onTimeRangeChange={setTimeRange}
             onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
             sites={sites}
-            minimal={isEdge || isStudioBrowse}
+            minimal={isEdge || isStudioSection}
             backHref={isRuntimeDetail ? '/edge/runtime' : undefined}
             actions={getActions()}
           />

@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { Download, Heart, RefreshCw, Star } from 'lucide-react'
+import { useState, useRef, useCallback } from 'react'
+import { Download, Heart, RefreshCw, Star, Check } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 
 type AppStatus = 'install' | 'installed' | 'update' | 'built'
-type BuildStatus = 'published' | 'in-review' | 'rejected'
+export type BuildStatus = 'published' | 'in-review' | 'rejected' | 'draft'
+type CardPhase = 'idle' | 'installing' | 'install-success' | 'uninstalling'
 
 interface AppCardProps {
   title: string
@@ -24,34 +25,149 @@ interface AppCardProps {
   suggestedNote?: string
   rating?: number
   ratingCount?: number
+  lastUpdatedStale?: boolean
 }
 
 const buildStatusConfig: Record<BuildStatus, { label: string; color: string; bg: string; border: string }> = {
   'published': { label: 'Published', color: 'var(--color-success)', bg: 'var(--color-success-light)', border: 'var(--color-success-border)' },
   'in-review': { label: 'In Review', color: 'var(--color-warning)', bg: 'var(--color-warning-light)', border: 'var(--color-warning-border)' },
   'rejected': { label: 'Rejected', color: 'var(--color-error)', bg: 'var(--color-error-light)', border: 'var(--color-error-border)' },
+  'draft': { label: 'Draft', color: 'var(--color-accent-9)', bg: 'var(--color-accent-1)', border: 'var(--color-accent-5)' },
 }
 
-function CardActions({ status }: { status: AppStatus }) {
+const BURST_COLORS = [
+  '#3b5bdb', '#6d9ef9', '#bfd7fe', '#3b63eb',
+  '#2f9e44', '#86EFAC',
+  '#FDE68A', '#f8f9fa',
+]
+const BURST_SHAPES = ['rect', 'rect', 'rect', 'circle', 'strip'] as const
+
+function CardConfetti({ active }: { active: boolean }) {
+  const particles = useRef(
+    Array.from({ length: 40 }, (_, i) => {
+      const angle = Math.random() * Math.PI * 2
+      const velocity = 60 + Math.random() * 100
+      return {
+        cx: Math.cos(angle) * velocity,
+        cy: Math.sin(angle) * velocity * 0.7,
+        cr: (Math.random() - 0.5) * 720,
+        size: 4 + Math.random() * 6,
+        color: BURST_COLORS[i % BURST_COLORS.length],
+        delay: Math.random() * 200,
+        shape: BURST_SHAPES[i % BURST_SHAPES.length],
+      }
+    })
+  ).current
+
+  if (!active) return null
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
+      {particles.map((p, i) => (
+        <div
+          key={i}
+          className="absolute"
+          style={{
+            top: '45%',
+            left: '50%',
+            width: p.shape === 'strip' ? p.size * 1.6 : p.size,
+            height: p.shape === 'circle' ? p.size : p.shape === 'strip' ? p.size * 0.3 : p.size * 0.55,
+            marginTop: -(p.size * 0.3),
+            marginLeft: -(p.size * 0.5),
+            borderRadius: p.shape === 'circle' ? '50%' : p.shape === 'strip' ? '1px' : '2px',
+            backgroundColor: p.color,
+            '--cx': `${p.cx}px`,
+            '--cy': `${p.cy}px`,
+            '--cr': `${p.cr}deg`,
+            animation: `confetti-burst-card 1.1s ${p.delay}ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards`,
+            opacity: 0,
+          } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  )
+}
+
+function CardActions({
+  status,
+  phase,
+  onInstall,
+  onUninstall,
+}: {
+  status: AppStatus
+  phase: CardPhase
+  onInstall?: () => void
+  onUninstall?: () => void
+}) {
+  if (phase === 'installing') {
+    return (
+      <div className="pt-[var(--space-sm)]">
+        <div
+          className="flex items-center justify-center gap-2 h-8 w-full rounded-[var(--radius-lg)] bg-[var(--color-accent-9)] text-white text-[length:var(--font-size-base)] font-medium"
+          style={{ animation: 'success-text-fade-up 200ms ease-out forwards' }}
+        >
+          <span className="inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          Installing…
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'install-success') {
+    return (
+      <div className="pt-[var(--space-sm)]">
+        <div
+          className="flex items-center justify-center gap-2 h-8 w-full rounded-[var(--radius-lg)] bg-[var(--color-success)] text-white text-[length:var(--font-size-base)] font-medium"
+          style={{ animation: 'success-text-fade-up 200ms ease-out forwards' }}
+        >
+          <Check size={14} strokeWidth={2.5} />
+          Installed successfully
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'uninstalling') {
+    return (
+      <div className="flex gap-[var(--space-sm)] pt-[var(--space-sm)]">
+        <div
+          className="flex items-center justify-center gap-2 h-8 w-full rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[var(--color-neutral-9)] text-[length:var(--font-size-base)] font-medium"
+          style={{ animation: 'success-text-fade-up 200ms ease-out forwards' }}
+        >
+          <span className="inline-block w-3.5 h-3.5 border-2 border-[var(--color-neutral-7)] border-t-transparent rounded-full animate-spin" />
+          Removing…
+        </div>
+      </div>
+    )
+  }
+
   switch (status) {
     case 'install':
       return (
         <div className="pt-[var(--space-sm)]">
-          <Button variant="primary" size="md" className="w-full">Install</Button>
+          <Button variant="primary" size="md" className="w-full" onClick={(e) => { e.stopPropagation(); onInstall?.() }}>
+            Install
+          </Button>
         </div>
       )
     case 'installed':
       return (
         <div className="flex gap-[var(--space-sm)] pt-[var(--space-sm)]">
-          <Button variant="danger" size="md" className="flex-1">Uninstall</Button>
-          <Button variant="primary" size="md" className="flex-1">Open</Button>
+          <Button variant="danger" size="md" className="flex-1" onClick={(e) => { e.stopPropagation(); onUninstall?.() }}>
+            Uninstall
+          </Button>
+          <Button variant="primary" size="md" className="flex-1" onClick={(e) => e.stopPropagation()}>
+            Open
+          </Button>
         </div>
       )
     case 'update':
       return (
         <div className="flex gap-[var(--space-sm)] pt-1">
-          <Button variant="danger" size="md" className="flex-1">Uninstall</Button>
-          <Button variant="secondary" size="md" className="flex-1">
+          <Button variant="danger" size="md" className="flex-1" onClick={(e) => { e.stopPropagation(); onUninstall?.() }}>
+            Uninstall
+          </Button>
+          <Button variant="secondary" size="md" className="flex-1" onClick={(e) => e.stopPropagation()}>
             <RefreshCw size={14} /> Update
           </Button>
         </div>
@@ -59,8 +175,8 @@ function CardActions({ status }: { status: AppStatus }) {
     case 'built':
       return (
         <div className="flex gap-[var(--space-sm)] pt-[var(--space-sm)]">
-          <Button variant="secondary" size="md" className="flex-1">Open</Button>
-          <Button variant="primary" size="md" className="flex-1">Edit</Button>
+          <Button variant="secondary" size="md" className="flex-1" onClick={(e) => e.stopPropagation()}>Open</Button>
+          <Button variant="primary" size="md" className="flex-1" onClick={(e) => e.stopPropagation()}>Edit</Button>
         </div>
       )
   }
@@ -70,23 +186,82 @@ export function AppCard({
   title, description, likes, downloads, status,
   color = 'var(--color-accent-9)', onClick, creator, lastUpdated, tags,
   image, screenshots, buildStatus, suggestedNote, rating, ratingCount,
+  lastUpdatedStale,
 }: AppCardProps) {
   const [hovered, setHovered] = useState(false)
+  const [cardStatus, setCardStatus] = useState(status)
+  const [phase, setPhase] = useState<CardPhase>('idle')
+
+  const handleInstall = useCallback(() => {
+    setPhase('installing')
+
+    setTimeout(() => {
+      setPhase('install-success')
+      setCardStatus('installed')
+    }, 1500)
+
+    setTimeout(() => {
+      setPhase('idle')
+    }, 3300)
+  }, [])
+
+  const handleUninstall = useCallback(() => {
+    setPhase('uninstalling')
+
+    setTimeout(() => {
+      setCardStatus('install')
+      setPhase('idle')
+    }, 800)
+  }, [])
+
+  const isProcessing = phase !== 'idle'
 
   return (
     <div
-      className="flex flex-col h-full rounded-[20px] border border-[var(--border-default)] bg-[var(--surface-primary)] overflow-hidden cursor-pointer transition-shadow duration-[var(--duration-fast)] hover:shadow-[var(--shadow-md)]"
-      onClick={onClick}
+      className={`flex flex-col h-full rounded-[20px] border bg-[var(--surface-primary)] overflow-hidden cursor-pointer transition-all duration-[var(--duration-normal)] relative ${
+        phase === 'uninstalling'
+          ? 'border-[var(--border-default)] opacity-70 scale-[0.99]'
+          : phase === 'install-success'
+          ? 'border-[var(--color-success-border)] shadow-[var(--shadow-md)]'
+          : phase === 'installing'
+          ? 'border-[var(--color-accent-5)] shadow-[0_0_0_2px_rgba(59,91,219,0.08)]'
+          : 'border-[var(--border-default)] hover:shadow-[var(--shadow-md)]'
+      }`}
+      onClick={isProcessing ? undefined : onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
+      <CardConfetti active={phase === 'install-success'} />
+
+      {/* Processing overlay */}
+      {phase === 'installing' && (
+        <div
+          className="absolute inset-0 z-[5] rounded-[20px] pointer-events-none"
+          style={{
+            background: 'linear-gradient(180deg, rgba(59,91,219,0.03) 0%, rgba(59,91,219,0.06) 100%)',
+            animation: 'success-overlay-in 0.3s ease forwards',
+          }}
+        />
+      )}
+
+      {/* Success glow */}
+      {phase === 'install-success' && (
+        <div
+          className="absolute inset-0 z-[5] rounded-[20px] pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 40%, rgba(47,158,68,0.08) 0%, transparent 70%)',
+            animation: 'success-overlay-in 0.3s ease forwards',
+          }}
+        />
+      )}
+
       {/* Top row: downloads + likes */}
       <div className="flex items-center justify-between px-5 pt-3 pb-[var(--space-sm)]">
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-2 px-3 py-1 h-8 rounded-[12px] border border-[var(--color-neutral-3)] text-[length:var(--font-size-body-2)] font-medium text-[var(--color-neutral-8)]">
             <Download size={16} strokeWidth={1.5} /> {downloads}
           </span>
-          {status === 'built' && buildStatus && (
+          {cardStatus === 'built' && buildStatus && (
             <span
               className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[length:var(--font-size-caption)] font-medium"
               style={{
@@ -179,7 +354,7 @@ export function AppCard({
         </p>
 
         {/* Suggested section (install cards) */}
-        {status === 'install' && (
+        {cardStatus === 'install' && (
           <div className="flex-1 mt-[var(--space-sm)] py-3">
             <span className="block w-full pb-2 text-[10px] font-medium text-[var(--color-neutral-8)] tracking-wide uppercase">
               Suggested
@@ -193,7 +368,7 @@ export function AppCard({
         )}
 
         {/* Categories section (installed / update / built cards) */}
-        {status !== 'install' && tags && tags.length > 0 && (
+        {cardStatus !== 'install' && tags && tags.length > 0 && (
           <div className="flex-1 mt-[var(--space-sm)] py-3">
             <span className="block w-full pb-2 text-[10px] font-medium text-[var(--color-neutral-8)] tracking-wide uppercase">
               Categories
@@ -214,15 +389,20 @@ export function AppCard({
         {/* Footer: Created By + Date */}
         <div className="flex items-center justify-between px-[var(--space-md)] py-[var(--space-sm)] rounded-[16px] bg-[color:var(--color-neutral-2)] text-[length:var(--font-size-caption)] text-[var(--color-neutral-9)]">
           <span>
-            Created By: <strong className={status === 'built' ? 'text-[color:var(--color-accent-9)]' : 'text-[var(--color-neutral-12)]'}>{creator || 'UpKeep'}</strong>
+            Created By: <strong className={cardStatus === 'built' ? 'text-[color:var(--color-accent-9)]' : 'text-[var(--color-neutral-12)]'}>{creator || 'UpKeep'}</strong>
           </span>
-          <span>{lastUpdated || ''}</span>
+          <span className={lastUpdatedStale ? 'text-[var(--color-error)] font-medium' : ''}>{lastUpdated || ''}</span>
         </div>
       </div>
 
       {/* Actions */}
       <div className="px-5 pb-5">
-        <CardActions status={status} />
+        <CardActions
+          status={cardStatus}
+          phase={phase}
+          onInstall={handleInstall}
+          onUninstall={handleUninstall}
+        />
       </div>
     </div>
   )
