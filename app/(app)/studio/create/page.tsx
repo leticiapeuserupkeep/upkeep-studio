@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 
 import * as Collapsible from '@radix-ui/react-collapsible'
 import * as Dialog from '@radix-ui/react-dialog'
@@ -60,9 +61,10 @@ const recommendedSteps = [
 ]
 
 const onboardingSteps = [
-  { target: 'chat-panel', title: 'Describe what you want', body: 'In plain English. No code needed.' },
-  { target: 'preview-panel', title: 'Live preview', body: 'See your app update in real time as you chat.' },
-  { target: 'publish-button', title: 'Publish instantly', body: 'When you\u2019re happy, publish to your team in one click.' },
+  { target: 'chat-input', title: 'Describe what you want', body: 'Tell the AI what app you need in plain English. No code required.', anchor: 'right' as const },
+  { target: 'preview-switcher', title: 'Live preview', body: 'See your app take shape in real time as you refine with the AI.', anchor: 'bottom' as const },
+  { target: 'settings-button', title: 'Configure settings', body: 'Set audience, permissions, and marketplace visibility before publishing.', anchor: 'bottom' as const },
+  { target: 'publish-button', title: 'Publish when ready', body: 'When you\'re happy with the result, publish to your team in one click.', anchor: 'bottom' as const },
 ]
 
 const thinkingSteps = [
@@ -263,7 +265,7 @@ function PromptView({
         </button>
       </header>
 
-      <main className="flex-1 flex flex-col items-center overflow-auto px-6 py-6 relative" style={{ isolation: 'isolate' }}>
+      <main className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden px-6 py-6 relative" style={{ isolation: 'isolate' }}>
         <div
           className="absolute rounded-full pointer-events-none"
           style={{
@@ -773,9 +775,6 @@ function PublishSuccessOverlay({ appTitle, onDismiss }: { appTitle: string; onDi
         backdropFilter: 'blur(6px)',
       }}
     >
-      {/* Center-burst confetti */}
-      <ConfettiBurst count={70} spread={320} duration={1.8} />
-
       <div className="flex flex-col items-center gap-5 relative z-10" onClick={(e) => e.stopPropagation()}>
         {/* Filled checkmark */}
         <div style={{ width: 80, height: 80 }}>
@@ -1008,7 +1007,7 @@ function BuilderView({
   const [appTags, setAppTags] = useState<string[]>(['dashboard', 'alerts', 'monitoring'])
   const [settingsDirty, setSettingsDirty] = useState(false)
   const [thinkingStep, setThinkingStep] = useState(-1)
-  const [showActivityLog, setShowActivityLog] = useState(false)
+  const [showActivityLog, setShowActivityLog] = useState(true)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [completionSignal, setCompletionSignal] = useState(false)
   const [showPublishSuccess, setShowPublishSuccess] = useState(false)
@@ -1102,6 +1101,7 @@ function BuilderView({
       setPublishStatus('published')
       hasPublishedOnce.current = true
       setShowPublishSuccess(true)
+      playTadaSound()
     }, 1800)
   }, [])
 
@@ -1127,18 +1127,14 @@ function BuilderView({
     if (chatInput.trim()) setSaveState('unsaved')
   }, [chatInput])
 
-  // Onboarding check
+  // Onboarding — show on every page load
   useEffect(() => {
-    const seen = localStorage.getItem('builder-onboarding-complete')
-    if (!seen) {
-      const timer = setTimeout(() => setShowOnboarding(true), 1200)
-      return () => clearTimeout(timer)
-    }
+    const timer = setTimeout(() => setShowOnboarding(true), 1200)
+    return () => clearTimeout(timer)
   }, [])
 
   const dismissOnboarding = useCallback(() => {
     setShowOnboarding(false)
-    localStorage.setItem('builder-onboarding-complete', 'true')
   }, [])
 
   const nextOnboardingStep = useCallback(() => {
@@ -1152,7 +1148,6 @@ function BuilderView({
   const restartOnboarding = useCallback(() => {
     setOnboardingStep(0)
     setShowOnboarding(true)
-    localStorage.removeItem('builder-onboarding-complete')
   }, [])
 
   useEffect(() => {
@@ -1248,7 +1243,7 @@ function BuilderView({
 
           {/* Segmented control — centered */}
           <div className="flex-1 flex justify-center">
-            <div className="flex items-center h-8 rounded-lg overflow-hidden" style={{ background: 'linear-gradient(90deg, rgba(0,0,51,0.06) 0%, rgba(0,0,51,0.06) 100%), #FFFFFF' }}>
+            <div id="preview-switcher" className="flex items-center h-8 rounded-lg overflow-hidden" style={{ background: 'linear-gradient(90deg, rgba(0,0,51,0.06) 0%, rgba(0,0,51,0.06) 100%), #FFFFFF' }}>
               <button
                 onClick={() => setPreviewTab('desktop')}
                 className={`flex items-center justify-center px-4 h-8 text-sm font-medium rounded-lg transition-all duration-[var(--duration-normal)] cursor-pointer ${
@@ -1295,6 +1290,7 @@ function BuilderView({
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <button
+                id="settings-button"
                 onClick={() => setSettingsOpen(true)}
                 className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                 aria-label="Settings"
@@ -1630,6 +1626,7 @@ function BuilderView({
 
           <div className="px-6 pb-6">
             <div
+              id="chat-input"
               className="w-full bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-2xl p-3 flex flex-col gap-3 transition-[border-color,box-shadow] duration-[var(--duration-normal)] focus-within:border-[var(--color-accent-8)] focus-within:shadow-[0_0_0_3px_rgba(59,91,219,0.12),0px_4px_16px_-8px_rgba(59,91,219,0.18),0px_3px_12px_-4px_rgba(59,91,219,0.12)]"
               style={{ boxShadow: '0px 2px 8px -4px rgba(0,0,0,0.06), 0px 1px 4px -2px rgba(0,0,51,0.04)' }}
             >
@@ -1706,17 +1703,6 @@ function BuilderView({
             </div>
           </div>
 
-          {/* Onboarding tooltip — Chat panel (#11) */}
-          {showOnboarding && onboardingStep === 0 && (
-            <OnboardingTooltip
-              step={onboardingSteps[0]}
-              current={1}
-              total={3}
-              onNext={nextOnboardingStep}
-              onDismiss={dismissOnboarding}
-              position="right"
-            />
-          )}
         </div>
 
         {/* ── Preview panel (always visible) ── */}
@@ -1727,17 +1713,6 @@ function BuilderView({
             <GeneratedAppPreview prompt={submittedPrompt} />
           )}
 
-          {/* Onboarding tooltip — Preview panel (#11) */}
-          {showOnboarding && onboardingStep === 1 && (
-            <OnboardingTooltip
-              step={onboardingSteps[1]}
-              current={2}
-              total={3}
-              onNext={nextOnboardingStep}
-              onDismiss={dismissOnboarding}
-              position="left"
-            />
-          )}
         </div>
 
         {/* ── Settings Drawer ── */}
@@ -2020,17 +1995,6 @@ function BuilderView({
           </>
         )}
 
-        {/* Onboarding tooltip — Publish button (#11) */}
-        {showOnboarding && onboardingStep === 2 && (
-          <OnboardingTooltip
-            step={onboardingSteps[2]}
-            current={3}
-            total={3}
-            onNext={nextOnboardingStep}
-            onDismiss={dismissOnboarding}
-            position="bottom-right"
-          />
-        )}
       </div>
 
       {/* Publish dropdown is now inline next to the button */}
@@ -2070,6 +2034,18 @@ function BuilderView({
       {showRatingPrompt && (
         <PublishRatingPrompt onDismiss={() => setShowRatingPrompt(false)} />
       )}
+
+      {/* Onboarding tooltip */}
+      {showOnboarding && (
+        <OnboardingTooltip
+          key={onboardingStep}
+          step={onboardingSteps[onboardingStep]}
+          current={onboardingStep + 1}
+          total={onboardingSteps.length}
+          onNext={nextOnboardingStep}
+          onDismiss={dismissOnboarding}
+        />
+      )}
     </div>
   )
 }
@@ -2079,46 +2055,151 @@ function BuilderView({
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 function OnboardingTooltip({
-  step, current, total, onNext, onDismiss, position,
+  step, current, total, onNext, onDismiss,
 }: {
   step: typeof onboardingSteps[number]
   current: number
   total: number
   onNext: () => void
   onDismiss: () => void
-  position: 'right' | 'left' | 'bottom-right'
 }) {
-  const posClass =
-    position === 'right' ? 'absolute right-0 top-1/2 -translate-y-1/2 translate-x-[calc(100%+12px)]'
-    : position === 'left' ? 'absolute left-0 top-1/2 -translate-y-1/2 -translate-x-[calc(100%+12px)]'
-    : 'absolute right-4 top-[68px]'
+  const [pos, setPos] = useState<{
+    top: number; left: number
+    arrowSide: 'top' | 'left' | 'none'
+    arrowOffset?: number
+  } | null>(null)
 
-  return (
-    <div
-      className={`${posClass} z-[var(--z-modal)] w-[260px] bg-[var(--color-neutral-12)] text-white rounded-2xl p-4 shadow-[var(--shadow-xl)] opacity-0`}
-      style={{ animation: 'fadeInUp 0.4s var(--ease-default) forwards' }}
-    >
-      <div className="flex items-start justify-between mb-1">
-        <span className="text-xs font-medium text-[var(--color-neutral-8)]">{current}/{total}</span>
-        <button onClick={onDismiss} className="text-[var(--color-neutral-8)] hover:text-white cursor-pointer transition-colors duration-[var(--duration-fast)]" aria-label="Dismiss">
-          <X size={14} />
-        </button>
+  useEffect(() => {
+    const calculate = () => {
+      const el = document.getElementById(step.target)
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      const tooltipW = 280
+      const tooltipH = 160
+      const gap = 12
+
+      if (step.anchor === 'right') {
+        setPos({
+          top: Math.max(gap, Math.min(r.top + r.height / 2 - tooltipH / 2, window.innerHeight - tooltipH - gap)),
+          left: r.right + gap,
+          arrowSide: 'left',
+        })
+      } else {
+        let left = r.left + r.width / 2 - tooltipW / 2
+        if (left + tooltipW > window.innerWidth - 16) left = window.innerWidth - tooltipW - 16
+        if (left < 16) left = 16
+        const arrowOffset = r.left + r.width / 2 - left
+        setPos({
+          top: r.bottom + gap,
+          left,
+          arrowSide: 'top',
+          arrowOffset,
+        })
+      }
+    }
+
+    const raf = requestAnimationFrame(calculate)
+    window.addEventListener('resize', calculate)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', calculate)
+    }
+  }, [step.target, step.anchor])
+
+  // Highlight ring on target element
+  useEffect(() => {
+    const el = document.getElementById(step.target)
+    if (!el || step.anchor === 'center') return
+    el.style.animation = 'onboarding-pulse 2s ease-in-out infinite'
+    el.style.borderRadius = el.style.borderRadius || '16px'
+    el.style.position = 'relative'
+    el.style.zIndex = '2'
+    return () => {
+      el.style.animation = ''
+      el.style.zIndex = ''
+    }
+  }, [step.target, step.anchor])
+
+  if (!pos) return null
+
+  return createPortal(
+    <>
+      {/* Soft backdrop */}
+      <div
+        className="fixed inset-0 z-[9997]"
+        style={{ backgroundColor: 'rgba(0,0,20,0.18)', animation: 'onboarding-backdrop-in 0.4s ease forwards' }}
+        onClick={onDismiss}
+      />
+      <div
+        className="fixed z-[9999] w-[280px] bg-[var(--color-neutral-12)] text-white rounded-2xl p-4 opacity-0"
+        style={{
+          top: pos.top,
+          left: pos.left,
+          animation: 'onboarding-tooltip-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+          animationDelay: '0.08s',
+          boxShadow: '0 20px 60px -12px rgba(0,0,0,0.4), 0 8px 24px -8px rgba(0,0,0,0.2)',
+        }}
+      >
+        {pos.arrowSide === 'left' && (
+          <div className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2">
+            <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[8px] border-r-[var(--color-neutral-12)]" />
+          </div>
+        )}
+        {pos.arrowSide === 'top' && (
+          <div className="absolute top-0 -translate-y-full" style={{ left: pos.arrowOffset ?? '50%', transform: 'translateX(-50%) translateY(-100%)' }}>
+            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-[var(--color-neutral-12)]" />
+          </div>
+        )}
+
+        {/* Step progress dots */}
+        <div className="flex items-center gap-1.5 mb-3">
+          {Array.from({ length: total }).map((_, i) => (
+            <div
+              key={i}
+              className="h-[3px] flex-1 rounded-full overflow-hidden"
+              style={{ backgroundColor: i < current ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)' }}
+            >
+              {i === current - 1 && (
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    transformOrigin: 'left',
+                    animation: 'onboarding-progress 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                    animationDelay: '0.2s',
+                  }}
+                />
+              )}
+              {i < current - 1 && (
+                <div className="h-full w-full rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.6)' }} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-start justify-between mb-1">
+          <span className="text-[11px] font-medium text-white/40">{current} of {total}</span>
+          <button onClick={onDismiss} className="text-white/40 hover:text-white cursor-pointer transition-colors duration-200" aria-label="Dismiss">
+            <X size={14} />
+          </button>
+        </div>
+        <h4 className="text-[14px] font-semibold mb-1 leading-tight">{step.title}</h4>
+        <p className="text-[12px] text-white/50 leading-relaxed mb-4">{step.body}</p>
+        <div className="flex items-center justify-between">
+          <button onClick={onDismiss} className="text-[11px] text-white/35 hover:text-white/70 cursor-pointer transition-colors duration-200">
+            Skip tour
+          </button>
+          <button
+            onClick={onNext}
+            className="flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-white text-[var(--color-neutral-12)] text-xs font-semibold hover:bg-white/90 active:scale-95 transition-all duration-200 cursor-pointer"
+          >
+            {current === total ? 'Got it' : 'Next'}
+            {current < total && <ArrowRight size={12} />}
+          </button>
+        </div>
       </div>
-      <h4 className="text-sm font-semibold mb-0.5">{step.title}</h4>
-      <p className="text-xs text-[var(--color-neutral-7)] leading-relaxed mb-3">{step.body}</p>
-      <div className="flex items-center justify-between">
-        <button onClick={onDismiss} className="text-xs text-[var(--color-neutral-8)] hover:text-white cursor-pointer transition-colors duration-[var(--duration-fast)]">
-          Don&apos;t show again
-        </button>
-        <button
-          onClick={onNext}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white text-[var(--color-neutral-12)] text-xs font-medium hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-        >
-          {current === total ? 'Done' : 'Next'}
-          {current < total && <ArrowRight size={12} />}
-        </button>
-      </div>
-    </div>
+    </>,
+    document.body
   )
 }
 

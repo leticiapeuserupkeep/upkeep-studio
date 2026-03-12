@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import * as Dialog from '@radix-ui/react-dialog'
 import {
   X, Heart, Download, Star, Users, CheckCircle2, Sparkles,
-  ChevronLeft, ChevronRight, ShieldCheck, Play, Database,
-  Eye, Pencil,
+  ChevronLeft, ChevronRight, ShieldCheck, Database,
+  Pencil,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 
@@ -235,34 +235,39 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
             </div>
 
             {/* Stats row */}
-            <div className="flex items-center justify-between px-[var(--space-2xl)] pb-[var(--space-lg)]">
-              <StatItem label="RATINGS" value={app.rating.toFixed(1)} sub={
-                <div className="flex items-center gap-1 mt-0.5">
+            <div className="flex items-start px-[var(--space-2xl)] pb-[var(--space-lg)] gap-[var(--space-lg)]">
+              <div className="flex items-center gap-[var(--space-sm)]">
+                <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-7)] uppercase tracking-wide">Ratings</span>
+                <div className="flex items-center gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={12} className={i < Math.round(app.rating) ? 'text-[var(--color-warning)] fill-[var(--color-warning)]' : 'text-[var(--color-neutral-5)]'} />
+                    <Star key={i} size={11} className={i < Math.round(app.rating) ? 'text-[var(--color-warning)] fill-[var(--color-warning)]' : 'text-[var(--color-neutral-5)]'} />
                   ))}
-                  <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] ml-0.5">({app.ratingCount})</span>
                 </div>
-              } />
-              <div className="w-px h-8 bg-[var(--border-default)]" />
-              <StatItem label="SIZE" value={app.size} />
-              <div className="w-px h-8 bg-[var(--border-default)]" />
-              <StatItem label="FAVORITES" value={`+${formatNumber(app.likes)}`} sub={
-                <Heart size={12} className="text-[var(--color-accent-9)] fill-[var(--color-accent-9)] mt-0.5" />
-              } />
-              <div className="w-px h-8 bg-[var(--border-default)]" />
-              <StatItem label="INSTALLATIONS" value={formatNumber(app.downloads)} sub={
-                <Download size={12} className="text-[var(--color-neutral-7)] mt-0.5" />
-              } />
-              <div className="w-px h-8 bg-[var(--border-default)]" />
-              <StatItem label="CREATOR" value="" sub={
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <div className="w-6 h-6 rounded-full bg-[var(--color-neutral-4)] flex items-center justify-center">
-                    <Users size={12} className="text-[var(--color-neutral-8)]" />
-                  </div>
-                  <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)]">{app.creator}</span>
+                <span className="text-[length:var(--font-size-sm)] font-bold text-[var(--color-neutral-12)]">{app.rating.toFixed(1)}</span>
+                <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)]">({app.ratingCount})</span>
+              </div>
+              <div className="w-px h-4 bg-[var(--border-default)] mt-0.5" />
+              <div className="flex items-center gap-[var(--space-xs)]">
+                <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-7)] uppercase tracking-wide">Size</span>
+                <span className="text-[length:var(--font-size-sm)] font-bold text-[var(--color-neutral-12)]">{app.size}</span>
+              </div>
+              <div className="w-px h-4 bg-[var(--border-default)] mt-0.5" />
+              <div className="flex items-center gap-[var(--space-xs)]">
+                <Heart size={12} className="text-[var(--color-accent-9)] fill-[var(--color-accent-9)]" />
+                <span className="text-[length:var(--font-size-sm)] font-bold text-[var(--color-neutral-12)]">{formatNumber(app.likes)}</span>
+              </div>
+              <div className="w-px h-4 bg-[var(--border-default)] mt-0.5" />
+              <div className="flex items-center gap-[var(--space-xs)]">
+                <Download size={12} className="text-[var(--color-neutral-7)]" />
+                <span className="text-[length:var(--font-size-sm)] font-bold text-[var(--color-neutral-12)]">{formatNumber(app.downloads)}</span>
+              </div>
+              <div className="w-px h-4 bg-[var(--border-default)] mt-0.5" />
+              <div className="flex items-center gap-[var(--space-xs)]">
+                <div className="w-5 h-5 rounded-full bg-[var(--color-neutral-4)] flex items-center justify-center">
+                  <Users size={10} className="text-[var(--color-neutral-8)]" />
                 </div>
-              } />
+                <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)]">{app.creator}</span>
+              </div>
             </div>
 
             <div className="h-px bg-[var(--border-subtle)] mx-[var(--space-2xl)]" />
@@ -284,60 +289,8 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
               </div>
             )}
 
-            {/* Permissions scope */}
-            {app.permissionScope && (
-              <div className="px-[var(--space-2xl)] pb-[var(--space-lg)]">
-                <h3 className="flex items-center gap-[var(--space-xs)] text-[length:var(--font-size-body-1)] font-bold text-[var(--color-neutral-12)] mb-[var(--space-sm)]">
-                  {app.permissionScope === 'read-only' ? <Eye size={16} className="text-[var(--color-neutral-8)]" /> : <Pencil size={16} className="text-[var(--color-neutral-8)]" />}
-                  Permissions
-                </h3>
-                <div className="flex items-center gap-[var(--space-sm)]">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] text-[length:var(--font-size-sm)] font-medium ${
-                    app.permissionScope === 'read-only'
-                      ? 'bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)]'
-                      : 'bg-[var(--color-warning-light)] text-[var(--color-warning)] border border-[var(--color-warning-border)]'
-                  }`}>
-                    {app.permissionScope === 'read-only' ? (
-                      <><Eye size={13} /> Read-only access</>
-                    ) : (
-                      <><Pencil size={13} /> Read &amp; write access</>
-                    )}
-                  </span>
-                </div>
-                <ul className="flex flex-col gap-[var(--space-xs)] mt-[var(--space-sm)]">
-                  {app.permissions.map((item) => (
-                    <li key={item} className="flex items-start gap-[var(--space-xs)] text-[length:var(--font-size-body-2)] text-[var(--color-neutral-9)]">
-                      <span className="mt-[5px] w-1.5 h-1.5 rounded-full bg-[var(--color-neutral-6)] shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {!app.permissionScope && <InfoSection title="Permissions & Data" items={app.permissions} />}
-
             <div className="h-px bg-[var(--border-subtle)] mx-[var(--space-2xl)]" />
 
-            {/* Demo Video placeholder */}
-            <div className="px-[var(--space-2xl)] py-[var(--space-lg)]">
-              <h3 className="text-[length:var(--font-size-body-1)] font-bold text-[var(--color-neutral-12)] mb-[var(--space-sm)]">
-                Demo Video
-              </h3>
-              <div
-                className="flex items-center justify-center h-[160px] rounded-[var(--radius-xl)] cursor-pointer transition-colors hover:opacity-90"
-                style={{ backgroundColor: `${accentColor}12` }}
-              >
-                <div className="flex flex-col items-center gap-[var(--space-sm)]">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: accentColor }}>
-                    <Play size={20} className="text-white ml-0.5" />
-                  </div>
-                  <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Watch demo video</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="h-px bg-[var(--border-subtle)] mx-[var(--space-2xl)]" />
 
             {/* Use Cases & How It Works */}
             <InfoSection title="Use Cases" items={app.useCases} />
@@ -406,12 +359,19 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
                 </div>
               </div>
             )}
+
           </div>
 
           {/* Fixed footer */}
           <div className="shrink-0 border-t border-[var(--border-subtle)] bg-[var(--surface-primary)]">
             {installPhase === 'idle' && (
-              <div className="flex items-center justify-end gap-[var(--space-sm)] px-[var(--space-2xl)] py-[var(--space-md)]">
+              <div className="flex items-center gap-[var(--space-sm)] px-[var(--space-2xl)] py-[var(--space-md)]">
+                {(app.status === 'installed' || app.status === 'update') && (
+                  <button className="text-[length:var(--font-size-body-2)] font-medium text-[var(--color-error)] hover:underline cursor-pointer transition-colors duration-[var(--duration-fast)]">
+                    Uninstall
+                  </button>
+                )}
+                <div className="flex-1" />
                 <Button variant="ghost" size="lg" onClick={() => onOpenChange(false)}>
                   Cancel
                 </Button>
@@ -419,19 +379,37 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
                   <Button variant="primary" size="lg" onClick={handleInstall}>Install</Button>
                 )}
                 {app.status === 'installed' && (
-                  <>
-                    <Button variant="danger" size="lg">Uninstall</Button>
-                    <Button variant="primary" size="lg" onClick={() => { onOpenChange(false); router.push('/studio/browse') }}>Open</Button>
-                  </>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="border-[var(--color-accent-5)] text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)]"
+                    onClick={() => { onOpenChange(false); router.push('/studio/browse') }}
+                  >
+                    Open
+                  </Button>
                 )}
                 {app.status === 'update' && (
-                  <>
-                    <Button variant="danger" size="lg">Uninstall</Button>
-                    <Button variant="primary" size="lg" onClick={handleInstall}>Update</Button>
-                  </>
+                  <Button variant="primary" size="lg" onClick={handleInstall}>Update</Button>
                 )}
                 {app.status === 'built' && (
-                  <Button variant="primary" size="lg" onClick={() => { onOpenChange(false); router.push('/studio/browse') }}>Open</Button>
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="!px-3 border-[var(--color-accent-5)] text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)]"
+                      aria-label="Edit"
+                    >
+                      <Pencil size={16} />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="border-[var(--color-accent-5)] text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)]"
+                      onClick={() => { onOpenChange(false); router.push('/studio/browse') }}
+                    >
+                      Open
+                    </Button>
+                  </>
                 )}
               </div>
             )}
@@ -473,22 +451,6 @@ export function AppDetailModal({ app, open, onOpenChange }: AppDetailModalProps)
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-  )
-}
-
-function StatItem({ label, value, sub }: { label: string; value: string; sub?: React.ReactNode }) {
-  return (
-    <div className="flex flex-col items-center text-center px-2">
-      <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-7)] tracking-wide uppercase">
-        {label}
-      </span>
-      {value && (
-        <span className="text-[length:var(--font-size-body-1)] font-bold text-[var(--color-neutral-12)]">
-          {value}
-        </span>
-      )}
-      {sub}
-    </div>
   )
 }
 

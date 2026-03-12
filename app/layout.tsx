@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'UpKeep Studio',
-  description: 'UpKeep Studio Platform',
+  title: 'UpKeep',
+  description: 'UpKeep Platform',
 }
 
 export default function RootLayout({

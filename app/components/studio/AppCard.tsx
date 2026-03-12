@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Download, Heart, RefreshCw, Star, Check } from 'lucide-react'
+import { Download, Heart, Star, Check, Pencil } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 
 type AppStatus = 'install' | 'installed' | 'update' | 'built'
 export type BuildStatus = 'published' | 'in-review' | 'rejected' | 'draft'
-type CardPhase = 'idle' | 'installing' | 'install-success' | 'uninstalling'
+type CardPhase = 'idle' | 'installing' | 'install-success'
 
 interface AppCardProps {
   title: string
@@ -92,12 +92,10 @@ function CardActions({
   status,
   phase,
   onInstall,
-  onUninstall,
 }: {
   status: AppStatus
   phase: CardPhase
   onInstall?: () => void
-  onUninstall?: () => void
 }) {
   if (phase === 'installing') {
     return (
@@ -127,20 +125,6 @@ function CardActions({
     )
   }
 
-  if (phase === 'uninstalling') {
-    return (
-      <div className="flex gap-[var(--space-sm)] pt-[var(--space-sm)]">
-        <div
-          className="flex items-center justify-center gap-2 h-8 w-full rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[var(--color-neutral-9)] text-[length:var(--font-size-base)] font-medium"
-          style={{ animation: 'success-text-fade-up 200ms ease-out forwards' }}
-        >
-          <span className="inline-block w-3.5 h-3.5 border-2 border-[var(--color-neutral-7)] border-t-transparent rounded-full animate-spin" />
-          Removing…
-        </div>
-      </div>
-    )
-  }
-
   switch (status) {
     case 'install':
       return (
@@ -152,31 +136,35 @@ function CardActions({
       )
     case 'installed':
       return (
-        <div className="flex gap-[var(--space-sm)] pt-[var(--space-sm)]">
-          <Button variant="danger" size="md" className="flex-1" onClick={(e) => { e.stopPropagation(); onUninstall?.() }}>
-            Uninstall
-          </Button>
-          <Button variant="primary" size="md" className="flex-1" onClick={(e) => e.stopPropagation()}>
+        <div className="pt-[var(--space-sm)]">
+          <Button variant="secondary" size="md" className="w-full border-[var(--color-accent-5)] text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)]" onClick={(e) => e.stopPropagation()}>
             Open
           </Button>
         </div>
       )
     case 'update':
       return (
-        <div className="flex gap-[var(--space-sm)] pt-1">
-          <Button variant="danger" size="md" className="flex-1" onClick={(e) => { e.stopPropagation(); onUninstall?.() }}>
-            Uninstall
-          </Button>
-          <Button variant="secondary" size="md" className="flex-1" onClick={(e) => e.stopPropagation()}>
-            <RefreshCw size={14} /> Update
+        <div className="pt-[var(--space-sm)]">
+          <Button variant="primary" size="md" className="w-full" onClick={(e) => e.stopPropagation()}>
+            Update
           </Button>
         </div>
       )
     case 'built':
       return (
         <div className="flex gap-[var(--space-sm)] pt-[var(--space-sm)]">
-          <Button variant="secondary" size="md" className="flex-1" onClick={(e) => e.stopPropagation()}>Open</Button>
-          <Button variant="primary" size="md" className="flex-1" onClick={(e) => e.stopPropagation()}>Edit</Button>
+          <Button
+            variant="secondary"
+            size="md"
+            className="w-8 h-8 !px-0 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Edit"
+          >
+            <Pencil size={14} />
+          </Button>
+          <Button variant="secondary" size="md" className="flex-1" onClick={(e) => e.stopPropagation()}>
+            Open
+          </Button>
         </div>
       )
   }
@@ -208,15 +196,6 @@ export function AppCard({
     }, 3300)
   }, [])
 
-  const handleUninstall = useCallback(() => {
-    setPhase('uninstalling')
-
-    setTimeout(() => {
-      setCardStatus('install')
-      setPhase('idle')
-    }, 800)
-  }, [])
-
   const handleLike = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     setHeartAnimating(true)
@@ -225,18 +204,17 @@ export function AppCard({
     setTimeout(() => setHeartAnimating(false), 500)
   }, [liked])
 
+  const isInstalled = cardStatus === 'installed' || cardStatus === 'update'
   const isProcessing = phase !== 'idle'
 
   return (
     <div
-      className={`flex flex-col h-full rounded-[20px] border bg-[var(--surface-primary)] overflow-hidden cursor-pointer transition-all duration-[var(--duration-normal)] relative ${
-        phase === 'uninstalling'
-          ? 'border-[var(--border-default)] opacity-70 scale-[0.99]'
-          : phase === 'install-success'
-          ? 'border-[var(--color-success-border)] shadow-[var(--shadow-md)]'
+      className={`flex flex-col h-full rounded-[20px] bg-[var(--surface-primary)] overflow-hidden cursor-pointer transition-all duration-[var(--duration-normal)] relative ${
+        phase === 'install-success'
+          ? 'border-2 border-[var(--color-success-border)] shadow-[var(--shadow-md)]'
           : phase === 'installing'
-          ? 'border-[var(--color-accent-5)] shadow-[0_0_0_2px_rgba(59,91,219,0.08)]'
-          : 'border-[var(--border-default)] hover:shadow-[var(--shadow-md)]'
+          ? 'border-2 border-[var(--color-accent-5)] shadow-[0_0_0_2px_rgba(59,91,219,0.08)]'
+          : 'border border-[var(--border-default)] hover:shadow-[var(--shadow-md)]'
       }`}
       onClick={isProcessing ? undefined : onClick}
       onMouseEnter={() => setHovered(true)}
@@ -269,7 +247,11 @@ export function AppCard({
       {/* Top row: downloads + likes */}
       <div className="flex items-center justify-between px-5 pt-3 pb-[var(--space-sm)]">
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-2 px-3 py-1 h-8 rounded-[12px] border border-[var(--color-neutral-3)] text-[length:var(--font-size-body-2)] font-medium text-[var(--color-neutral-8)]">
+          <span className={`inline-flex items-center gap-2 px-3 py-1 h-8 rounded-[12px] border text-[length:var(--font-size-body-2)] font-medium ${
+            isInstalled
+              ? 'border-[var(--color-accent-5)] bg-[var(--color-accent-1)] text-[var(--color-accent-9)]'
+              : 'border-[var(--color-neutral-3)] text-[var(--color-neutral-8)]'
+          }`}>
             <Download size={16} strokeWidth={1.5} /> {downloads}
           </span>
           {cardStatus === 'built' && buildStatus && (
@@ -425,7 +407,6 @@ export function AppCard({
           status={cardStatus}
           phase={phase}
           onInstall={handleInstall}
-          onUninstall={handleUninstall}
         />
       </div>
     </div>
