@@ -191,6 +191,9 @@ export function AppCard({
   const [hovered, setHovered] = useState(false)
   const [cardStatus, setCardStatus] = useState(status)
   const [phase, setPhase] = useState<CardPhase>('idle')
+  const [liked, setLiked] = useState(false)
+  const [likeCount, setLikeCount] = useState(likes)
+  const [heartAnimating, setHeartAnimating] = useState(false)
 
   const handleInstall = useCallback(() => {
     setPhase('installing')
@@ -213,6 +216,14 @@ export function AppCard({
       setPhase('idle')
     }, 800)
   }, [])
+
+  const handleLike = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    setHeartAnimating(true)
+    setLiked(prev => !prev)
+    setLikeCount(prev => liked ? prev - 1 : prev + 1)
+    setTimeout(() => setHeartAnimating(false), 500)
+  }, [liked])
 
   const isProcessing = phase !== 'idle'
 
@@ -274,10 +285,23 @@ export function AppCard({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[length:var(--font-size-caption)] font-medium text-[var(--color-neutral-9)]">{likes}</span>
-          <Heart size={24} strokeWidth={1.5} className="text-[var(--color-neutral-12)]" />
-        </div>
+        <button
+          onClick={handleLike}
+          className="flex items-center gap-1.5 cursor-pointer group/heart"
+        >
+          <span className={`text-[length:var(--font-size-caption)] font-medium transition-colors duration-[var(--duration-fast)] ${liked ? 'text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-9)]'}`}>
+            {likeCount}
+          </span>
+          <Heart
+            size={24}
+            strokeWidth={liked ? 0 : 1.5}
+            fill={liked ? 'var(--color-accent-9)' : 'none'}
+            className={`transition-colors duration-[var(--duration-fast)] ${
+              liked ? 'text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-7)] group-hover/heart:text-[var(--color-accent-5)]'
+            }`}
+            style={heartAnimating ? { animation: 'heart-bounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' } : undefined}
+          />
+        </button>
       </div>
 
       {/* Image area with hover swap */}

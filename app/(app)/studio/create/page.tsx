@@ -1102,7 +1102,6 @@ function BuilderView({
       setPublishStatus('published')
       hasPublishedOnce.current = true
       setShowPublishSuccess(true)
-      playTadaSound()
     }, 1800)
   }, [])
 
