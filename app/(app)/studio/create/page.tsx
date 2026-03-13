@@ -17,7 +17,7 @@ import {
   HelpCircle, Check, X, Monitor, AlertCircle,
   Users, Eye, Lock, Building2, Globe, Sparkles,
   Zap, Wrench, ClipboardList, Gauge, Package,
-  Bell, Upload, Image, Info, ChevronRight, Tag, Link2,
+  Bell, Upload, Image, Info, ChevronRight, Tag, Link2, Square,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 
@@ -58,6 +58,13 @@ const recommendedSteps = [
   { text: 'Work Order Metrics — open work orders, past due WOs, WO trends per asset', lines: 3 },
   { text: 'Meter Readings — current meter values, trends, thresholds/alerts', lines: 2 },
   { text: 'Warranty Tracking — warranty expiration dates, expired warranties', lines: 2 },
+]
+
+const settingsSuggestions = [
+  { text: 'Set who can access this app', action: 'audience' as const, icon: 'Lock' },
+  { text: 'Update the app name and description', action: 'details' as const, icon: 'FileText' },
+  { text: 'Choose a category and add tags', action: 'tags' as const, icon: 'Tag' },
+  { text: 'Configure publishing to marketplace', action: 'marketplace' as const, icon: 'Globe' },
 ]
 
 const onboardingSteps = [
@@ -1021,6 +1028,8 @@ function BuilderView({
   const [localPhase, setLocalPhase] = useState<AiPhase>(aiPhase === 'waiting' ? 'waiting' : aiPhase)
   const prevPhaseRef = useRef<AiPhase>(aiPhase)
   const responseCountRef = useRef(0)
+  const thinkingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastPromptRef = useRef(submittedPrompt)
 
   // Sync from parent — only for non-waiting phases
   useEffect(() => {
@@ -1070,6 +1079,7 @@ function BuilderView({
   const handleChatSend = useCallback(() => {
     if (!chatInput.trim() || localPhase === 'thinking' || localPhase === 'waiting') return
     const userMsg = chatInput.trim()
+    lastPromptRef.current = userMsg
     setChatInput('')
     setMessages(prev => [...prev, { role: 'user', content: userMsg }])
     setLocalPhase('thinking')
@@ -1078,7 +1088,8 @@ function BuilderView({
     if (publishStatus === 'published') setPublishStatus('dirty')
 
     const idx = responseCountRef.current
-    setTimeout(() => {
+    thinkingTimerRef.current = setTimeout(() => {
+      thinkingTimerRef.current = null
       responseCountRef.current += 1
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -1090,9 +1101,20 @@ function BuilderView({
         setSaveState('saved')
         setSavedAgo(0)
       }, 800)
-    }, 3500)
+    }, 8000)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatInput, setChatInput, localPhase])
+
+  const handleStop = useCallback(() => {
+    if (thinkingTimerRef.current) {
+      clearTimeout(thinkingTimerRef.current)
+      thinkingTimerRef.current = null
+    }
+    setChatInput(lastPromptRef.current)
+    setLocalPhase('responded')
+    setSaveState('saved')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setChatInput])
 
   const triggerPublish = useCallback(() => {
     setPublishStatus('publishing')
@@ -1132,7 +1154,8 @@ function BuilderView({
     setShowOnboarding(false)
     if (localPhase !== 'thinking' && localPhase !== 'responded') {
       setLocalPhase('thinking')
-      setTimeout(() => {
+      thinkingTimerRef.current = setTimeout(() => {
+        thinkingTimerRef.current = null
         responseCountRef.current += 1
         setMessages(prev => [...prev, {
           role: 'assistant',
@@ -1141,7 +1164,7 @@ function BuilderView({
         setLocalPhase('responded')
         setSaveState('saving')
         setTimeout(() => { setSaveState('saved'); setSavedAgo(0) }, 800)
-      }, 3500)
+      }, 8000)
     }
   }, [localPhase])
 
@@ -1460,6 +1483,7 @@ function BuilderView({
 
               const assistantIndex = messages.slice(0, idx + 1).filter(m => m.role === 'assistant').length - 1
               const isFirst = assistantIndex === 0
+              const isSecond = assistantIndex === 1
 
               return (
                 <div key={idx} className="flex flex-col gap-3">
@@ -1549,6 +1573,39 @@ function BuilderView({
                       </div>
                       <p className="text-sm leading-5 text-[var(--color-neutral-9)]">
                         You can select multiple, or tell me exactly what you need — I&apos;ll combine them.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Settings suggestions — after second AI response */}
+                  {/* Settings suggestions — after second AI response */}
+                  {isSecond && publishStatus === 'draft' && (
+                    <div
+                      className="rounded-xl border border-[var(--color-accent-5)] bg-[var(--color-accent-1)] overflow-hidden opacity-0"
+                      style={{ animation: 'fadeInUp 0.5s var(--ease-default) 0.2s forwards' }}
+                    >
+                      <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+                        <Settings size={15} className="text-[var(--color-accent-9)] shrink-0" />
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-accent-9)]">Want to publish your app?</h4>
+                      </div>
+                      <p className="text-sm leading-5 text-[var(--color-neutral-11)] px-4 pb-3">
+                        Configure your app settings to get the best visibility and control:
+                      </p>
+                      <div className="flex flex-col gap-0 px-2 pb-2">
+                        {settingsSuggestions.map((item, i) => (
+                          <button
+                            key={item.action}
+                            onClick={() => { setSettingsOpen(true) }}
+                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left hover:bg-[var(--color-accent-2)] transition-all cursor-pointer group opacity-0"
+                            style={{ animation: `fadeInUp 0.4s var(--ease-default) ${0.3 + i * 0.08}s forwards` }}
+                          >
+                            <span className="flex-1 text-sm leading-5 text-[var(--color-neutral-12)]">{item.text}</span>
+                            <ArrowRight size={14} className="text-[var(--color-accent-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)] shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs leading-5 text-[var(--color-neutral-8)] px-4 pb-3">
+                        You can always change these later in Settings.
                       </p>
                     </div>
                   )}
@@ -1693,19 +1750,31 @@ function BuilderView({
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Voice input">
-                    <Mic size={16} strokeWidth={1.5} className="text-[var(--color-neutral-12)]" />
-                  </button>
-                  <button
-                    onClick={handleChatSend}
-                    disabled={!chatInput.trim() || localPhase === 'thinking' || localPhase === 'waiting'}
-                    className={`flex items-center justify-center w-6 h-6 rounded-full transition-all duration-[var(--duration-normal)] ${
-                      chatInput.trim() && localPhase !== 'thinking' && localPhase !== 'waiting' ? 'bg-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-10)] hover:scale-110 cursor-pointer' : 'bg-[rgba(0,0,51,0.06)] cursor-default'
-                    }`}
-                    aria-label="Send"
-                  >
-                    <ArrowUp size={16} strokeWidth={1.5} className="text-white" />
-                  </button>
+                  {localPhase === 'thinking' ? (
+                    <button
+                      onClick={handleStop}
+                      className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-10)] hover:scale-110 cursor-pointer transition-all duration-[var(--duration-normal)]"
+                      aria-label="Stop generating"
+                    >
+                      <Square size={10} fill="white" className="text-white" />
+                    </button>
+                  ) : (
+                    <>
+                      <button className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Voice input">
+                        <Mic size={16} strokeWidth={1.5} className="text-[var(--color-neutral-12)]" />
+                      </button>
+                      <button
+                        onClick={handleChatSend}
+                        disabled={!chatInput.trim() || localPhase === 'waiting'}
+                        className={`flex items-center justify-center w-6 h-6 rounded-full transition-all duration-[var(--duration-normal)] ${
+                          chatInput.trim() && localPhase !== 'waiting' ? 'bg-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-10)] hover:scale-110 cursor-pointer' : 'bg-[rgba(0,0,51,0.06)] cursor-default'
+                        }`}
+                        aria-label="Send"
+                      >
+                        <ArrowUp size={16} strokeWidth={1.5} className="text-white" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -2087,9 +2156,10 @@ function OnboardingTooltip({
       const gap = 12
 
       if (step.anchor === 'right') {
+        const anchorLeft = Math.min(r.right + gap, r.left + r.width * 0.55) + 80 - 134
         setPos({
           top: Math.max(gap, Math.min(r.top + r.height / 2 - tooltipH / 2, window.innerHeight - tooltipH - gap)),
-          left: r.right + gap,
+          left: anchorLeft,
           arrowSide: 'left',
         })
       } else {
