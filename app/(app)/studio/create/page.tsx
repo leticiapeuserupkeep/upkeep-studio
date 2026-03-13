@@ -1009,6 +1009,7 @@ function BuilderView({
   const [appCategory, setAppCategory] = useState('Operations')
   const [appTags, setAppTags] = useState<string[]>(['dashboard', 'alerts', 'monitoring'])
   const [settingsDirty, setSettingsDirty] = useState(false)
+  const [settingsSaved, setSettingsSaved] = useState(false)
   const [thinkingStep, setThinkingStep] = useState(-1)
   const [showActivityLog, setShowActivityLog] = useState(true)
   const [soundEnabled, setSoundEnabled] = useState(true)
@@ -1577,7 +1578,7 @@ function BuilderView({
 
                   {/* Settings suggestions — after second AI response */}
                   {/* Settings suggestions — after second AI response */}
-                  {isSecond && publishStatus === 'draft' && (
+                  {isSecond && publishStatus === 'draft' && !settingsSaved && (
                     <div
                       className="rounded-xl border border-[var(--color-accent-5)] bg-[var(--color-accent-1)] overflow-hidden opacity-0"
                       style={{ animation: 'fadeInUp 0.5s var(--ease-default) 0.2s forwards' }}
@@ -2060,7 +2061,7 @@ function BuilderView({
                 )}
                 <button
                   disabled={!settingsDirty}
-                  onClick={() => { setSettingsOpen(false); setSettingsDirty(false); setSettingsFromPublish(false); setPostPublishCTAsDismissed(true) }}
+                  onClick={() => { setSettingsOpen(false); setSettingsDirty(false); setSettingsFromPublish(false); setPostPublishCTAsDismissed(true); setSettingsSaved(true) }}
                   className="flex items-center justify-center h-10 px-5 rounded-xl bg-[var(--color-accent-9)] text-sm font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                 >
                   Save changes
@@ -2140,7 +2141,7 @@ function OnboardingTooltip({
 }) {
   const [pos, setPos] = useState<{
     top: number; left: number
-    arrowSide: 'top' | 'left' | 'none'
+    arrowSide: 'top' | 'left' | 'right' | 'none'
     arrowOffset?: number
   } | null>(null)
 
@@ -2150,35 +2151,60 @@ function OnboardingTooltip({
       if (!el) return
       const r = el.getBoundingClientRect()
       const tooltipW = 280
-      const tooltipH = 160
-      const gap = 12
+      const tooltipH = 172
+      const gap = 14
+      const vw = window.innerWidth
+      const vh = window.innerHeight
 
       if (step.anchor === 'right') {
-        const anchorLeft = Math.min(r.right + gap, r.left + r.width * 0.55) + 80 - 134
-        setPos({
-          top: Math.max(gap, Math.min(r.top + r.height / 2 - tooltipH / 2, window.innerHeight - tooltipH - gap)),
-          left: anchorLeft,
-          arrowSide: 'left',
-        })
+        const spaceRight = vw - r.right - gap
+        const spaceLeft = r.left - gap
+
+        if (spaceRight >= tooltipW + 16) {
+          const top = Math.max(gap, Math.min(r.top + r.height / 2 - tooltipH / 2, vh - tooltipH - gap))
+          const arrowY = r.top + r.height / 2 - top
+          setPos({ top, left: r.right + gap, arrowSide: 'left', arrowOffset: arrowY })
+        } else if (spaceLeft >= tooltipW + 16) {
+          const top = Math.max(gap, Math.min(r.top + r.height / 2 - tooltipH / 2, vh - tooltipH - gap))
+          const arrowY = r.top + r.height / 2 - top
+          setPos({ top, left: r.left - gap - tooltipW, arrowSide: 'right', arrowOffset: arrowY })
+        } else {
+          let left = r.left + r.width / 2 - tooltipW / 2
+          if (left + tooltipW > vw - 16) left = vw - tooltipW - 16
+          if (left < 16) left = 16
+          const arrowX = r.left + r.width / 2 - left
+          setPos({ top: r.top - gap - tooltipH, left, arrowSide: 'top', arrowOffset: arrowX })
+        }
       } else {
         let left = r.left + r.width / 2 - tooltipW / 2
-        if (left + tooltipW > window.innerWidth - 16) left = window.innerWidth - tooltipW - 16
+        if (left + tooltipW > vw - 16) left = vw - tooltipW - 16
         if (left < 16) left = 16
         const arrowOffset = r.left + r.width / 2 - left
-        setPos({
-          top: r.bottom + gap,
-          left,
-          arrowSide: 'top',
-          arrowOffset,
-        })
+        setPos({ top: r.bottom + gap, left, arrowSide: 'top', arrowOffset })
       }
     }
 
     const raf = requestAnimationFrame(calculate)
+
+    const el = document.getElementById(step.target)
+    const ro = new ResizeObserver(calculate)
+    if (el) ro.observe(el)
+    if (el?.parentElement) ro.observe(el.parentElement)
+
     window.addEventListener('resize', calculate)
+    window.addEventListener('scroll', calculate, true)
+
+    const sidebarHandler = () => setTimeout(calculate, 350)
+    window.addEventListener('collapse-sidebar', sidebarHandler)
+    window.addEventListener('toggle-sidebar', sidebarHandler)
+
     return () => {
       cancelAnimationFrame(raf)
+      ro.disconnect()
       window.removeEventListener('resize', calculate)
+      window.removeEventListener('scroll', calculate, true)
+      window.removeEventListener('collapse-sidebar', sidebarHandler)
+      window.removeEventListener('toggle-sidebar', sidebarHandler)
     }
   }, [step.target, step.anchor])
 
@@ -2217,8 +2243,13 @@ function OnboardingTooltip({
         }}
       >
         {pos.arrowSide === 'left' && (
-          <div className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2">
+          <div className="absolute left-0 -translate-x-full" style={{ top: pos.arrowOffset ?? '50%', transform: `translateX(-100%) translateY(-50%)` }}>
             <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[8px] border-r-[var(--color-neutral-12)]" />
+          </div>
+        )}
+        {pos.arrowSide === 'right' && (
+          <div className="absolute right-0 translate-x-full" style={{ top: pos.arrowOffset ?? '50%', transform: `translateX(100%) translateY(-50%)` }}>
+            <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[8px] border-l-[var(--color-neutral-12)]" />
           </div>
         )}
         {pos.arrowSide === 'top' && (
