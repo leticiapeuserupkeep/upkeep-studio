@@ -123,7 +123,6 @@ export default function CreateAppPage() {
     setTimeout(() => {
       setView('building')
       setAiPhase('waiting')
-      window.dispatchEvent(new CustomEvent('collapse-sidebar'))
     }, 350)
   }, [prompt])
 
@@ -149,7 +148,6 @@ export default function CreateAppPage() {
     setTimeout(() => {
       setView('building')
       setAiPhase('waiting')
-      window.dispatchEvent(new CustomEvent('collapse-sidebar'))
     }, 350)
   }, [selectedTemplate])
 
@@ -2062,7 +2060,7 @@ function BuilderView({
                 )}
                 <button
                   disabled={!settingsDirty}
-                  onClick={() => { setSettingsOpen(false); setSettingsDirty(false); setSettingsFromPublish(false) }}
+                  onClick={() => { setSettingsOpen(false); setSettingsDirty(false); setSettingsFromPublish(false); setPostPublishCTAsDismissed(true) }}
                   className="flex items-center justify-center h-10 px-5 rounded-xl bg-[var(--color-accent-9)] text-sm font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                 >
                   Save changes
