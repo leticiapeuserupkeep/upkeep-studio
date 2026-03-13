@@ -106,7 +106,7 @@ export default function RuntimeDetailPage() {
   const [meterDeleted, setMeterDeleted] = useState(false)
   const [meterSyncOn, setMeterSyncOn] = useState(true)
   const [selectedDay, setSelectedDay] = useState<DailyRuntime | null>(null)
-  const [showChartHint, setShowChartHint] = useState(false)
+  const [showChartHint, setShowChartHint] = useState(true)
   const [isReset, setIsReset] = useState(false)
 
   useEffect(() => {
@@ -115,14 +115,7 @@ export default function RuntimeDetailPage() {
     return () => window.removeEventListener('open-edit-runtime', handler)
   }, [])
 
-  useEffect(() => {
-    const key = 'runtime-detail-visits'
-    const visits = parseInt(localStorage.getItem(key) ?? '0', 10)
-    if (visits < 3) {
-      setShowChartHint(true)
-      localStorage.setItem(key, String(visits + 1))
-    }
-  }, [])
+  
 
   const sensor = runtimeSensors.find((s) => s.id === sensorId)
 

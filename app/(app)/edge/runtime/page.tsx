@@ -6,6 +6,7 @@ import {
   Timer, TrendingUp, TrendingDown, Clock, Activity,
   Zap, Search, ChevronDown, Calendar, XCircle, ArrowUpDown, Radio,
   Pencil, RotateCcw, X, Download, Bookmark, SlidersHorizontal, MapPin, Box,
+  CheckSquare, Square,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import { RuntimeCard } from '@/app/components/edge/RuntimeCard'
@@ -13,18 +14,18 @@ import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
 import { runtimeSensors } from '@/app/lib/edge-data'
 import type { SensorStatus } from '@/app/lib/models'
 
-type PeriodFilter = '7d' | '14d' | '30d' | 'custom'
+type PeriodFilter = '8h' | '12h' | '24h' | 'custom'
 type StatusFilter = 'all' | SensorStatus
 type SortBy = 'hours_desc' | 'hours_asc' | 'name' | 'delta'
 
 const rangePresets: { key: Exclude<PeriodFilter, 'custom'>; label: string }[] = [
-  { key: '7d', label: 'Past 7 Days' },
-  { key: '14d', label: 'Past 14 Days' },
-  { key: '30d', label: 'Past 30 Days' },
+  { key: '8h', label: 'Past 8 Hours' },
+  { key: '12h', label: 'Past 12 Hours' },
+  { key: '24h', label: 'Past 24 Hours' },
 ]
 
 export default function RuntimePage() {
-  const [period, setPeriod] = useState<PeriodFilter>('30d')
+  const [period, setPeriod] = useState<PeriodFilter>('24h')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [sortBy, setSortBy] = useState<SortBy>('hours_desc')
   const [searchQuery, setSearchQuery] = useState('')
@@ -106,6 +107,17 @@ export default function RuntimePage() {
   const disconnectedCount = runtimeSensors.filter((s) => s.status === 'disconnected').length
   const mostActiveSensor = [...runtimeSensors].sort((a, b) => b.totalHours - a.totalHours)[0]
   const avgDowntime = Math.round((100 - avgUptime) * 10) / 10
+
+  const allSelected = filtered.length > 0 && filtered.every(s => selectedIds.has(s.id))
+  const someSelected = selectedIds.size > 0
+
+  function selectAll() {
+    setSelectedIds(new Set(filtered.map(s => s.id)))
+  }
+
+  function deselectAll() {
+    setSelectedIds(new Set())
+  }
 
   const sensorCountBar = (
     <div className="flex justify-center w-full bg-white border-y border-[var(--border-default)]">
@@ -373,15 +385,24 @@ export default function RuntimePage() {
           </span>
           <div className="w-px h-5 bg-white/20" />
           <button
+            onClick={allSelected ? deselectAll : selectAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-white/10 hover:bg-white/20 text-[length:14px] font-medium cursor-pointer transition-colors duration-[var(--duration-fast)]"
+          >
+            {allSelected ? (
+              <><CheckSquare size={14} /> Deselect all</>
+            ) : (
+              <><Square size={14} /> Select all</>
+            )}
+          </button>
+          <button
             onClick={() => { setEditSensorId([...selectedIds][0]); setShowEditModal(true) }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-white/10 hover:bg-white/20 text-[length:14px] font-medium cursor-pointer transition-colors duration-[var(--duration-fast)]"
           >
             <Pencil size={14} />
             Edit
           </button>
-          {/* Reset button hidden */}
           <button
-            onClick={() => setSelectedIds(new Set())}
+            onClick={deselectAll}
             className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-white/15 cursor-pointer transition-colors duration-[var(--duration-fast)] ml-1"
             aria-label="Clear selection"
           >
