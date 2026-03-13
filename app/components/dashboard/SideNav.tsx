@@ -60,7 +60,7 @@ const sections: NavSection[] = [
       { label: 'Browse Apps', icon: Gem, href: '/studio/browse' },
       { label: 'Installed Apps', icon: Download, href: '/studio/installed' },
       { label: 'Apps I Built', icon: Command, href: '/studio/built' },
-      { label: 'Subscriptions', icon: Wallet },
+      { label: 'Billing & Usage', icon: Receipt, href: '/billing' },
     ],
   },
   {

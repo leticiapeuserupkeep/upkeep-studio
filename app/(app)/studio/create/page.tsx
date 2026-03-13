@@ -75,7 +75,7 @@ const thinkingSteps = [
 ]
 
 type ViewState = 'prompt' | 'transitioning' | 'building'
-type AiPhase = 'thinking' | 'responded'
+type AiPhase = 'waiting' | 'thinking' | 'responded'
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile'
 type SaveState = 'saved' | 'saving' | 'unsaved'
 type PublishStatus = 'draft' | 'publishing' | 'published' | 'dirty'
@@ -115,9 +115,8 @@ export default function CreateAppPage() {
 
     setTimeout(() => {
       setView('building')
-      setAiPhase('thinking')
+      setAiPhase('waiting')
       window.dispatchEvent(new CustomEvent('collapse-sidebar'))
-      setTimeout(() => setAiPhase('responded'), 3500)
     }, 350)
   }, [prompt])
 
@@ -142,9 +141,8 @@ export default function CreateAppPage() {
 
     setTimeout(() => {
       setView('building')
-      setAiPhase('thinking')
+      setAiPhase('waiting')
       window.dispatchEvent(new CustomEvent('collapse-sidebar'))
-      setTimeout(() => setAiPhase('responded'), 3500)
     }, 350)
   }, [selectedTemplate])
 
@@ -993,7 +991,7 @@ function BuilderView({
   const [publishOpen, setPublishOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsFromPublish, setSettingsFromPublish] = useState(false)
-  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(true)
   const [onboardingStep, setOnboardingStep] = useState(0)
   const [publishAudience, setPublishAudience] = useState<AudienceOption>('company')
   const [publishStatus, setPublishStatus] = useState<PublishStatus>('draft')
@@ -1020,17 +1018,20 @@ function BuilderView({
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
     { role: 'user', content: submittedPrompt },
   ])
-  const [localPhase, setLocalPhase] = useState<AiPhase>(aiPhase)
+  const [localPhase, setLocalPhase] = useState<AiPhase>(aiPhase === 'waiting' ? 'waiting' : aiPhase)
   const prevPhaseRef = useRef<AiPhase>(aiPhase)
   const responseCountRef = useRef(0)
 
-  // Sync the initial thinking→responded transition from parent
+  // Sync from parent — only for non-waiting phases
   useEffect(() => {
     if (aiPhase === 'responded' && responseCountRef.current === 0) {
       setLocalPhase('responded')
       responseCountRef.current = 1
     }
-  }, [aiPhase])
+    if (aiPhase === 'thinking' && localPhase === 'waiting') {
+      setLocalPhase('thinking')
+    }
+  }, [aiPhase, localPhase])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -1067,7 +1068,7 @@ function BuilderView({
   ]
 
   const handleChatSend = useCallback(() => {
-    if (!chatInput.trim() || localPhase === 'thinking') return
+    if (!chatInput.trim() || localPhase === 'thinking' || localPhase === 'waiting') return
     const userMsg = chatInput.trim()
     setChatInput('')
     setMessages(prev => [...prev, { role: 'user', content: userMsg }])
@@ -1127,15 +1128,22 @@ function BuilderView({
     if (chatInput.trim()) setSaveState('unsaved')
   }, [chatInput])
 
-  // Onboarding — show on every page load
-  useEffect(() => {
-    const timer = setTimeout(() => setShowOnboarding(true), 1200)
-    return () => clearTimeout(timer)
-  }, [])
-
   const dismissOnboarding = useCallback(() => {
     setShowOnboarding(false)
-  }, [])
+    if (localPhase !== 'thinking' && localPhase !== 'responded') {
+      setLocalPhase('thinking')
+      setTimeout(() => {
+        responseCountRef.current += 1
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: "Here's what I created for you:",
+        }])
+        setLocalPhase('responded')
+        setSaveState('saving')
+        setTimeout(() => { setSaveState('saved'); setSavedAgo(0) }, 800)
+      }, 3500)
+    }
+  }, [localPhase])
 
   const nextOnboardingStep = useCallback(() => {
     if (onboardingStep < onboardingSteps.length - 1) {
@@ -1690,9 +1698,9 @@ function BuilderView({
                   </button>
                   <button
                     onClick={handleChatSend}
-                    disabled={!chatInput.trim() || localPhase === 'thinking'}
+                    disabled={!chatInput.trim() || localPhase === 'thinking' || localPhase === 'waiting'}
                     className={`flex items-center justify-center w-6 h-6 rounded-full transition-all duration-[var(--duration-normal)] ${
-                      chatInput.trim() && localPhase !== 'thinking' ? 'bg-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-10)] hover:scale-110 cursor-pointer' : 'bg-[rgba(0,0,51,0.06)] cursor-default'
+                      chatInput.trim() && localPhase !== 'thinking' && localPhase !== 'waiting' ? 'bg-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-10)] hover:scale-110 cursor-pointer' : 'bg-[rgba(0,0,51,0.06)] cursor-default'
                     }`}
                     aria-label="Send"
                   >
@@ -1707,7 +1715,7 @@ function BuilderView({
 
         {/* ── Preview panel (always visible) ── */}
         <div id="preview-panel" className="flex-1 bg-[var(--color-neutral-2)] border-l border-[var(--border-default)] p-8 flex flex-col gap-4 overflow-auto relative">
-          {localPhase === 'thinking' ? (
+          {localPhase === 'thinking' || localPhase === 'waiting' ? (
             <BuilderSkeletons />
           ) : (
             <GeneratedAppPreview prompt={submittedPrompt} />

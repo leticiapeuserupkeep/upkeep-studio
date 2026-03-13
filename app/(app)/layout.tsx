@@ -13,6 +13,7 @@ import { sites } from '@/app/lib/mock-data'
 import type { Role } from '@/app/lib/models'
 
 function getPageTitle(pathname: string): string {
+  if (pathname.startsWith('/billing')) return 'Billing & Usage'
   if (pathname.startsWith('/studio/create')) return 'New App'
   if (pathname.startsWith('/studio/browse')) return 'Studio'
   if (pathname.startsWith('/studio')) return 'Studio'
@@ -47,6 +48,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const title = getPageTitle(pathname)
   const isCreateApp = pathname === '/studio/create'
+  const isBilling = pathname.startsWith('/billing')
   const isStudioBrowse = pathname.startsWith('/studio/browse')
   const isStudioInstalled = pathname.startsWith('/studio/installed')
   const isStudioBuilt = pathname.startsWith('/studio/built')
@@ -86,7 +88,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <SideNav collapsed={sidebarCollapsed} />
 
       <div className="flex flex-col flex-1 min-w-0 min-h-screen">
-        {!isCreateApp && (
+        {!isCreateApp && !isBilling && (
           <TopBar
             title={title}
             role={role}
