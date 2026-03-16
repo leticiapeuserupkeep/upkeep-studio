@@ -16,6 +16,7 @@ interface TopBarProps {
   onToggleSidebar: () => void
   sites: string[]
   actions?: ReactNode
+  afterTitle?: ReactNode
   minimal?: boolean
   backHref?: string
 }
@@ -32,7 +33,7 @@ const roleLabels: Record<Role, string> = {
 export function TopBar({
   title, role, site, timeRange,
   onRoleChange, onSiteChange, onTimeRangeChange, onToggleSidebar,
-  sites, actions, minimal = false, backHref,
+  sites, actions, afterTitle, minimal = false, backHref,
 }: TopBarProps) {
   return (
       <header className="sticky top-0 z-[var(--z-sticky)] flex items-center gap-[var(--space-sm)] h-[52px] px-[var(--space-md)] bg-[var(--surface-primary)]">
@@ -57,6 +58,8 @@ export function TopBar({
         <h1 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)] whitespace-nowrap">
           {title}
         </h1>
+
+        {afterTitle}
 
         {!minimal && (
           <div className="flex items-center rounded-[var(--radius-lg)] border border-[var(--border-default)] overflow-hidden ml-[var(--space-sm)]">

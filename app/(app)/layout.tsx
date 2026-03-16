@@ -3,16 +3,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil, LayoutGrid, MoreHorizontal, ChevronDown } from 'lucide-react'
 import { SideNav } from '@/app/components/dashboard/SideNav'
 import { TopBar } from '@/app/components/dashboard/TopBar'
 import { Button } from '@/app/components/ui/Button'
+import { IconButton } from '@/app/components/ui/IconButton'
 import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
 import { DashboardProvider } from '@/app/lib/dashboard/dashboard-context'
 import { sites } from '@/app/lib/mock-data'
 import type { Role } from '@/app/lib/models'
 
 function getPageTitle(pathname: string): string {
+  if (pathname.startsWith('/work-orders')) return 'Work Orders'
+  if (pathname.startsWith('/exports')) return 'Exports'
   if (pathname.startsWith('/billing')) return 'Billing & Usage'
   if (pathname.startsWith('/studio/create')) return 'New App'
   if (pathname.startsWith('/studio/browse')) return 'Studio'
@@ -56,6 +59,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isEdge = pathname.startsWith('/edge/')
   const isRuntimeList = pathname === '/edge/runtime'
   const isRuntimeDetail = /^\/edge\/runtime\/[^/]+/.test(pathname)
+  const isWorkOrders = pathname.startsWith('/work-orders')
 
   function getActions() {
     if (isStudioSection) {
@@ -80,6 +84,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </Button>
       )
     }
+    if (isWorkOrders) {
+      return (
+        <>
+          <Button variant="primary" size="md">
+            <Plus size={14} />
+            New Work Order
+          </Button>
+          <IconButton label="More actions" variant="secondary" size="md">
+            <MoreHorizontal size={16} />
+          </IconButton>
+        </>
+      )
+    }
     return undefined
   }
 
@@ -99,8 +116,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             onTimeRangeChange={setTimeRange}
             onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
             sites={sites}
-            minimal={isEdge || isStudioSection}
+            minimal={isEdge || isStudioSection || pathname.startsWith('/exports') || isWorkOrders}
             backHref={isRuntimeDetail ? '/edge/runtime' : undefined}
+            afterTitle={isWorkOrders ? (
+              <button className="inline-flex items-center gap-1.5 ml-2 px-2.5 py-1 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-secondary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] cursor-pointer hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)]">
+                <LayoutGrid size={14} className="text-[var(--color-neutral-7)]" />
+                Table
+                <ChevronDown size={12} className="text-[var(--color-neutral-7)]" />
+              </button>
+            ) : undefined}
             actions={getActions()}
           />
         )}

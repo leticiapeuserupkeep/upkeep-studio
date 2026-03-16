@@ -45,7 +45,7 @@ const sections: NavSection[] = [
     title: 'CORE',
     badge: 'NEW',
     items: [
-      { label: 'Work Orders', icon: ClipboardList },
+      { label: 'Work Orders', icon: ClipboardList, href: '/work-orders' },
       { label: 'Preventive Maintenance', icon: CalendarClock },
       { label: 'Intelligence', icon: Sparkles, dot: true },
       { label: 'Scheduler', icon: CalendarClock },
@@ -79,6 +79,7 @@ const sections: NavSection[] = [
       { label: 'Checklists', icon: ListChecks },
       { label: 'Files', icon: FileText },
       { label: 'Import & Export', icon: FileDown },
+      { label: 'Exports', icon: FileDown, href: '/exports' },
     ],
   },
   {
