@@ -67,13 +67,6 @@ const settingsSuggestions = [
   { text: 'Configure publishing to marketplace', action: 'marketplace' as const, icon: 'Globe' },
 ]
 
-const onboardingSteps = [
-  { target: 'chat-input', title: 'Describe what you want', body: 'Tell the AI what app you need in plain English. No code required.', anchor: 'right' as const },
-  { target: 'preview-switcher', title: 'Live preview', body: 'See your app take shape in real time as you refine with the AI.', anchor: 'bottom' as const },
-  { target: 'settings-button', title: 'Configure settings', body: 'Set audience, permissions, and marketplace visibility before publishing.', anchor: 'bottom' as const },
-  { target: 'publish-button', title: 'Publish when ready', body: 'When you\'re happy with the result, publish to your team in one click.', anchor: 'bottom' as const },
-]
-
 const thinkingSteps = [
   { label: 'Understanding your request', detail: 'Parsing intent and scope' },
   { label: 'Analyzing your UpKeep data', detail: 'Reading work orders, assets, and meters' },
@@ -260,12 +253,6 @@ function PromptView({
         </button>
         <h1 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)] whitespace-nowrap">New App</h1>
         <div className="flex-1" />
-        <button
-          className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-          aria-label="Settings"
-        >
-          <Settings size={20} strokeWidth={1.5} className="text-[color:var(--color-neutral-7)]" />
-        </button>
       </header>
 
       <main className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden px-6 py-6 relative" style={{ isolation: 'isolate' }}>
@@ -996,8 +983,6 @@ function BuilderView({
   const [publishOpen, setPublishOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsFromPublish, setSettingsFromPublish] = useState(false)
-  const [showOnboarding, setShowOnboarding] = useState(true)
-  const [onboardingStep, setOnboardingStep] = useState(0)
   const [publishAudience, setPublishAudience] = useState<AudienceOption>('company')
   const [publishStatus, setPublishStatus] = useState<PublishStatus>('draft')
   const [appTitle, setAppTitle] = useState('Data Overview Dashboard')
@@ -1149,8 +1134,7 @@ function BuilderView({
     if (chatInput.trim()) setSaveState('unsaved')
   }, [chatInput])
 
-  const dismissOnboarding = useCallback(() => {
-    setShowOnboarding(false)
+  useEffect(() => {
     if (localPhase !== 'thinking' && localPhase !== 'responded') {
       setLocalPhase('thinking')
       thinkingTimerRef.current = setTimeout(() => {
@@ -1165,19 +1149,7 @@ function BuilderView({
         setTimeout(() => { setSaveState('saved'); setSavedAgo(0) }, 800)
       }, 8000)
     }
-  }, [localPhase])
-
-  const nextOnboardingStep = useCallback(() => {
-    if (onboardingStep < onboardingSteps.length - 1) {
-      setOnboardingStep((prev) => prev + 1)
-    } else {
-      dismissOnboarding()
-    }
-  }, [onboardingStep, dismissOnboarding])
-
-  const restartOnboarding = useCallback(() => {
-    setOnboardingStep(0)
-    setShowOnboarding(true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -2111,202 +2083,7 @@ function BuilderView({
         <PublishRatingPrompt onDismiss={() => setShowRatingPrompt(false)} />
       )}
 
-      {/* Onboarding tooltip */}
-      {showOnboarding && (
-        <OnboardingTooltip
-          key={onboardingStep}
-          step={onboardingSteps[onboardingStep]}
-          current={onboardingStep + 1}
-          total={onboardingSteps.length}
-          onNext={nextOnboardingStep}
-          onDismiss={dismissOnboarding}
-        />
-      )}
     </div>
-  )
-}
-
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   Onboarding Tooltip (#11)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-
-function OnboardingTooltip({
-  step, current, total, onNext, onDismiss,
-}: {
-  step: typeof onboardingSteps[number]
-  current: number
-  total: number
-  onNext: () => void
-  onDismiss: () => void
-}) {
-  const [pos, setPos] = useState<{
-    top: number; left: number
-    arrowSide: 'top' | 'left' | 'right' | 'none'
-    arrowOffset?: number
-  } | null>(null)
-
-  useEffect(() => {
-    const calculate = () => {
-      const el = document.getElementById(step.target)
-      if (!el) return
-      const r = el.getBoundingClientRect()
-      const tooltipW = 280
-      const tooltipH = 172
-      const gap = 14
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-
-      if (step.anchor === 'right') {
-        const spaceRight = vw - r.right - gap
-        const spaceLeft = r.left - gap
-
-        if (spaceRight >= tooltipW + 16) {
-          const top = Math.max(gap, Math.min(r.top + r.height / 2 - tooltipH / 2, vh - tooltipH - gap))
-          const arrowY = r.top + r.height / 2 - top
-          setPos({ top, left: r.right + gap, arrowSide: 'left', arrowOffset: arrowY })
-        } else if (spaceLeft >= tooltipW + 16) {
-          const top = Math.max(gap, Math.min(r.top + r.height / 2 - tooltipH / 2, vh - tooltipH - gap))
-          const arrowY = r.top + r.height / 2 - top
-          setPos({ top, left: r.left - gap - tooltipW, arrowSide: 'right', arrowOffset: arrowY })
-        } else {
-          let left = r.left + r.width / 2 - tooltipW / 2
-          if (left + tooltipW > vw - 16) left = vw - tooltipW - 16
-          if (left < 16) left = 16
-          const arrowX = r.left + r.width / 2 - left
-          setPos({ top: r.top - gap - tooltipH, left, arrowSide: 'top', arrowOffset: arrowX })
-        }
-      } else {
-        let left = r.left + r.width / 2 - tooltipW / 2
-        if (left + tooltipW > vw - 16) left = vw - tooltipW - 16
-        if (left < 16) left = 16
-        const arrowOffset = r.left + r.width / 2 - left
-        setPos({ top: r.bottom + gap, left, arrowSide: 'top', arrowOffset })
-      }
-    }
-
-    const raf = requestAnimationFrame(calculate)
-
-    const el = document.getElementById(step.target)
-    const ro = new ResizeObserver(calculate)
-    if (el) ro.observe(el)
-    if (el?.parentElement) ro.observe(el.parentElement)
-
-    window.addEventListener('resize', calculate)
-    window.addEventListener('scroll', calculate, true)
-
-    const sidebarHandler = () => setTimeout(calculate, 350)
-    window.addEventListener('collapse-sidebar', sidebarHandler)
-    window.addEventListener('toggle-sidebar', sidebarHandler)
-
-    return () => {
-      cancelAnimationFrame(raf)
-      ro.disconnect()
-      window.removeEventListener('resize', calculate)
-      window.removeEventListener('scroll', calculate, true)
-      window.removeEventListener('collapse-sidebar', sidebarHandler)
-      window.removeEventListener('toggle-sidebar', sidebarHandler)
-    }
-  }, [step.target, step.anchor])
-
-  // Highlight ring on target element
-  useEffect(() => {
-    const el = document.getElementById(step.target)
-    if (!el) return
-    el.style.animation = 'onboarding-pulse 2s ease-in-out infinite'
-    el.style.borderRadius = el.style.borderRadius || '16px'
-    el.style.position = 'relative'
-    el.style.zIndex = '2'
-    return () => {
-      el.style.animation = ''
-      el.style.zIndex = ''
-    }
-  }, [step.target, step.anchor])
-
-  if (!pos) return null
-
-  return createPortal(
-    <>
-      {/* Soft backdrop */}
-      <div
-        className="fixed inset-0 z-[9997]"
-        style={{ backgroundColor: 'rgba(0,0,20,0.18)', animation: 'onboarding-backdrop-in 0.4s ease forwards' }}
-        onClick={onDismiss}
-      />
-      <div
-        className="fixed z-[9999] w-[280px] bg-[var(--color-neutral-12)] text-white rounded-2xl p-4 opacity-0"
-        style={{
-          top: pos.top,
-          left: pos.left,
-          animation: 'onboarding-tooltip-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-          animationDelay: '0.08s',
-          boxShadow: '0 20px 60px -12px rgba(0,0,0,0.4), 0 8px 24px -8px rgba(0,0,0,0.2)',
-        }}
-      >
-        {pos.arrowSide === 'left' && (
-          <div className="absolute left-0 -translate-x-full" style={{ top: pos.arrowOffset ?? '50%', transform: `translateX(-100%) translateY(-50%)` }}>
-            <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[8px] border-r-[var(--color-neutral-12)]" />
-          </div>
-        )}
-        {pos.arrowSide === 'right' && (
-          <div className="absolute right-0 translate-x-full" style={{ top: pos.arrowOffset ?? '50%', transform: `translateX(100%) translateY(-50%)` }}>
-            <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[8px] border-l-[var(--color-neutral-12)]" />
-          </div>
-        )}
-        {pos.arrowSide === 'top' && (
-          <div className="absolute top-0 -translate-y-full" style={{ left: pos.arrowOffset ?? '50%', transform: 'translateX(-50%) translateY(-100%)' }}>
-            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-[var(--color-neutral-12)]" />
-          </div>
-        )}
-
-        {/* Step progress dots */}
-        <div className="flex items-center gap-1.5 mb-3">
-          {Array.from({ length: total }).map((_, i) => (
-            <div
-              key={i}
-              className="h-[3px] flex-1 rounded-full overflow-hidden"
-              style={{ backgroundColor: i < current ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)' }}
-            >
-              {i === current - 1 && (
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.9)',
-                    transformOrigin: 'left',
-                    animation: 'onboarding-progress 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                    animationDelay: '0.2s',
-                  }}
-                />
-              )}
-              {i < current - 1 && (
-                <div className="h-full w-full rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.6)' }} />
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-start justify-between mb-1">
-          <span className="text-[11px] font-medium text-white/40">{current} of {total}</span>
-          <button onClick={onDismiss} className="text-white/40 hover:text-white cursor-pointer transition-colors duration-200" aria-label="Dismiss">
-            <X size={14} />
-          </button>
-        </div>
-        <h4 className="text-[14px] font-semibold mb-1 leading-tight">{step.title}</h4>
-        <p className="text-[12px] text-white/50 leading-relaxed mb-4">{step.body}</p>
-        <div className="flex items-center justify-between">
-          <button onClick={onDismiss} className="text-[11px] text-white/35 hover:text-white/70 cursor-pointer transition-colors duration-200">
-            Skip tour
-          </button>
-          <button
-            onClick={onNext}
-            className="flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-white text-[var(--color-neutral-12)] text-xs font-semibold hover:bg-white/90 active:scale-95 transition-all duration-200 cursor-pointer"
-          >
-            {current === total ? 'Got it' : 'Next'}
-            {current < total && <ArrowRight size={12} />}
-          </button>
-        </div>
-      </div>
-    </>,
-    document.body
   )
 }
 
