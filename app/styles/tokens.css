@@ -41,9 +41,17 @@
   --color-info-light: #e7f5ff;
   --color-info-border: #a5d8ff;
 
+  /* ── Interactive States ── */
+  --color-error-hover: #c92a2a;
+  --color-error-active: #641723;
+  --color-success-hover: #2b8a3e;
+  --color-success-active: #193b2d;
+
   /* ── Surfaces ── */
   --surface-primary: var(--color-neutral-1);
   --surface-secondary: var(--color-neutral-2);
+  --surface-sidebar: #F0F0F3;
+  --surface-canvas: #F9F9FB;
   --surface-sunken: var(--color-neutral-3);
   --surface-raised: var(--color-neutral-1);
   --surface-overlay: rgba(0, 0, 0, 0.5);
@@ -179,6 +187,13 @@
   --color-accent-2: #1e2d50;
   --color-accent-3: #253d6e;
   --color-accent-9: #5b7ef5;
+  --color-accent-10: #6d8ef7;
+  --color-accent-12: #3b5cc8;
+
+  --color-error-hover: #e64545;
+  --color-error-active: #8a2020;
+  --color-success-hover: #37b24d;
+  --color-success-active: #1e5631;
 
   --color-error-light: #2d1515;
   --color-success-light: #152d1a;

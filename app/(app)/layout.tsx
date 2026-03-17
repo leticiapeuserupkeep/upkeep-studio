@@ -101,7 +101,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--surface-secondary)]">
+    <div className="flex min-h-screen bg-[var(--surface-canvas)]">
       <SideNav collapsed={sidebarCollapsed} />
 
       <div className="flex flex-col flex-1 min-w-0 min-h-screen">
@@ -128,11 +128,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             actions={getActions()}
           />
         )}
+        <div id="table-toolbar-portal" />
         {isEdge && !isCreateApp && (
           <div data-orientation="horizontal" role="separator" className="h-px bg-[var(--border-default)]" />
         )}
-        <div id="runtime-sensor-bar-portal" />
-        <div id="runtime-kpi-portal" />
+        {isEdge && <div id="runtime-sensor-bar-portal" />}
+        {isEdge && <div id="runtime-kpi-portal" />}
         {isCreateApp ? (
           children
         ) : (

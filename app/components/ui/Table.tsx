@@ -29,7 +29,7 @@ export function TableToolbar({
   children,
 }: TableToolbarProps) {
   return (
-    <div className="flex items-center justify-between px-5 h-[52px] border-b border-[var(--border-default)]">
+    <div className="flex items-center justify-between px-5 h-[52px] border-b border-[var(--border-default)] bg-[var(--surface-primary)]">
       <span className="text-[12px] leading-4 font-medium text-[var(--color-neutral-12)] tracking-[0.01em] shrink-0">
         {itemCountLabel}
       </span>
@@ -98,7 +98,7 @@ export function TableRow({ children, className = '', ...props }: React.HTMLAttri
 export function TableHead({ children, className = '', ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
-      className={`text-left text-[13px] leading-4 font-bold text-[var(--color-neutral-12)] tracking-[0.01em] py-3 px-6 border-b border-[var(--border-default)] ${className}`}
+      className={`text-left text-[13px] leading-4 font-bold text-[var(--color-neutral-12)] tracking-[0.01em] h-12 px-6 border-b border-[var(--border-default)] whitespace-nowrap align-middle ${className}`}
       {...props}
     >
       {children}

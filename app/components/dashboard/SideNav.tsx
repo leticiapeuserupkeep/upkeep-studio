@@ -168,13 +168,13 @@ export function SideNav({ collapsed }: SideNavProps) {
   return (
     <Tooltip.Provider delayDuration={300}>
       <aside
-        className={`flex flex-col min-h-screen h-screen sticky top-0 border-r border-[var(--border-default)] bg-[var(--surface-secondary)] transition-[width] duration-[var(--duration-slow)] ease-[var(--ease-default)] shrink-0 ${
+        className={`flex flex-col min-h-screen h-screen sticky top-0 border-r border-[var(--border-default)] bg-[var(--surface-sidebar)] transition-[width] duration-[var(--duration-slow)] ease-[var(--ease-default)] shrink-0 ${
           collapsed ? 'w-16' : 'w-[280px]'
         }`}
       >
         {/* Header */}
         <div
-          className={`flex items-center h-14 shrink-0 border-b border-[var(--border-default)] ${
+          className={`flex items-center h-[60px] shrink-0 border-b border-[var(--border-default)] ${
             collapsed ? 'justify-center px-0' : 'justify-between px-[var(--space-md)]'
           }`}
         >

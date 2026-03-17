@@ -38,7 +38,7 @@ export function PartsRisk({ parts }: PartsRiskProps) {
           </TableHeader>
           <TableBody>
             {parts.map((part) => {
-              const bestVendor = part.vendors.sort((a, b) => a.lastPrice - b.lastPrice)[0]
+              const bestVendor = part.vendors.toSorted((a, b) => a.lastPrice - b.lastPrice)[0]
               return (
                 <TableRow key={part.id}>
                   <TableCell>

@@ -360,11 +360,6 @@ function FilterTags({ filters }: { filters: FilterTag[] }) {
       )}
       {showTooltip && hidden.length > 0 && mounted && createPortal(
         <>
-          {/* Subtle backdrop */}
-          <div
-            className="fixed inset-0 z-[9998] pointer-events-none"
-            style={{ animation: 'filter-backdrop-in 0.2s ease-out forwards' }}
-          />
           {/* Tooltip */}
           <div
             className="fixed z-[9999] pointer-events-none"
@@ -508,6 +503,11 @@ function RowActionMenu({ status, isSubRow }: { status: ExportStatus; isSubRow?: 
 
 export default function ExportsPage() {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+  const [toolbarPortal, setToolbarPortal] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    setToolbarPortal(document.getElementById('table-toolbar-portal'))
+  }, [])
 
   function toggleRow(id: string) {
     setExpandedRows(prev => {
@@ -521,17 +521,20 @@ export default function ExportsPage() {
   return (
     <Tooltip.Provider delayDuration={300}>
     <div className="flex flex-col flex-1 w-full">
+      {toolbarPortal && createPortal(
+        <TableToolbar
+          itemCountLabel={`${mockExports.length} of ${mockExports.length} items`}
+          sortLabel="Sort: Created"
+          showColumns={false}
+        />,
+        toolbarPortal
+      )}
       <main className="flex-1 overflow-y-auto">
         <div className="w-full px-[var(--space-2xl)] py-[var(--space-xl)]">
           <div
             className="bg-[var(--surface-primary)] rounded-[var(--widget-radius)] border border-[var(--widget-border)] overflow-hidden opacity-0"
             style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.05s forwards' }}
           >
-            <TableToolbar
-              itemCountLabel={`${mockExports.length} of ${mockExports.length} items`}
-              sortLabel="Sort: Created"
-              showColumns={false}
-            />
             <Table>
               <TableHeader>
                 <tr>

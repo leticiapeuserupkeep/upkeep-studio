@@ -36,7 +36,7 @@ export function TopBar({
   sites, actions, afterTitle, minimal = false, backHref,
 }: TopBarProps) {
   return (
-      <header className="sticky top-0 z-[var(--z-sticky)] flex items-center gap-[var(--space-sm)] h-[52px] px-[var(--space-md)] bg-[var(--surface-primary)]">
+      <header className="sticky top-0 z-[var(--z-sticky)] flex items-center gap-[var(--space-sm)] h-[60px] px-[var(--space-md)] bg-[var(--surface-primary)] border-b border-[rgba(33,37,41,0.15)]">
         <button
           onClick={onToggleSidebar}
           className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"

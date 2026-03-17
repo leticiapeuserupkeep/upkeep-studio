@@ -490,6 +490,11 @@ export default function WorkOrdersPage() {
   const [showToast, setShowToast] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [showExportModal, setShowExportModal] = useState(false)
+  const [toolbarPortal, setToolbarPortal] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    setToolbarPortal(document.getElementById('table-toolbar-portal'))
+  }, [])
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -525,6 +530,16 @@ export default function WorkOrdersPage() {
 
   return (
     <div className="flex flex-col flex-1 w-full relative">
+      {toolbarPortal && createPortal(
+        <TableToolbar
+          itemCountLabel={`${filtered.length} of ${workOrders.length} items`}
+          sortLabel="Sort: Work Order Title"
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          searchPlaceholder="Search"
+        />,
+        toolbarPortal
+      )}
       <main className="flex-1 overflow-y-auto">
         <div className="w-full px-[var(--space-2xl)] py-[var(--space-xl)]">
           {/* ── Filters ── */}
@@ -576,13 +591,6 @@ export default function WorkOrdersPage() {
               animation: 'fadeInUp 0.4s var(--ease-default) 0.06s forwards',
             }}
           >
-            <TableToolbar
-              itemCountLabel={`${filtered.length} of ${workOrders.length} items`}
-              sortLabel="Sort: Work Order Title"
-              searchValue={searchValue}
-              onSearchChange={setSearchValue}
-              searchPlaceholder="Search"
-            />
             <Table>
               <TableHeader>
                 <tr>
@@ -674,9 +682,9 @@ export default function WorkOrdersPage() {
       {/* ── Bulk Actions ── */}
       {selectedCount > 0 && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 z-[var(--z-toast)] toast-animate bottom-6"
+          className="absolute bottom-6 inset-x-0 flex justify-center z-[var(--z-toast)] toast-animate pointer-events-none"
         >
-          <div className="flex items-center gap-4 px-4 py-2.5 rounded-[var(--radius-xl)] bg-[var(--color-neutral-12)] text-white shadow-[var(--shadow-xl)]">
+          <div className="flex items-center gap-4 px-4 py-2.5 rounded-[var(--radius-xl)] bg-[var(--color-neutral-12)] text-white shadow-[var(--shadow-xl)] pointer-events-auto">
             <span className="text-[length:var(--font-size-sm)] font-semibold whitespace-nowrap">
               {selectedCount} selected
             </span>

@@ -21,25 +21,25 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<IconButtonVariant, string> = {
   primary:
-    'bg-[#3E63DD] text-white hover:bg-[#3A5BC7] active:bg-[#1F2D5C] disabled:bg-[#F0F0F3] disabled:text-[#8B8D98]',
+    'bg-[var(--color-accent-9)] text-white hover:bg-[var(--color-accent-10)] active:bg-[var(--color-accent-12)] disabled:bg-[var(--color-neutral-3)] disabled:text-[var(--color-neutral-8)]',
   secondary:
-    'bg-[#F0F0F3] border border-[#E0E1E6] text-[#1C2024] hover:bg-[#E0E1E6] hover:border-[#D9D9E0] active:bg-[#CDCED6] active:border-[#CDCED6] disabled:bg-[#F0F0F3] disabled:border-transparent disabled:text-[#8B8D98]',
+    'bg-[var(--color-neutral-3)] border border-[var(--border-default)] text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-4)] hover:border-[var(--color-neutral-5)] active:bg-[var(--color-neutral-6)] active:border-[var(--color-neutral-6)] disabled:bg-[var(--color-neutral-3)] disabled:border-transparent disabled:text-[var(--color-neutral-8)]',
   outline:
-    'border border-[#E0E1E6] text-[#1C2024] hover:border-[#D9D9E0] active:border-[#CDCED6] disabled:text-[#B9BBC6]',
+    'border border-[var(--border-default)] text-[var(--color-neutral-11)] hover:border-[var(--color-neutral-5)] active:border-[var(--color-neutral-6)] disabled:text-[var(--color-neutral-7)]',
   subtle:
-    'bg-[#EDF2FE] text-[#1C2024] hover:bg-[#E1E9FF] active:bg-[#D2DEFF] disabled:bg-[#FCFCFD] disabled:text-[#8B8D98]',
+    'bg-[var(--color-accent-1)] text-[var(--color-neutral-11)] hover:bg-[var(--color-accent-2)] active:bg-[var(--color-accent-3)] disabled:bg-[var(--color-neutral-2)] disabled:text-[var(--color-neutral-8)]',
   ghost:
-    'text-[#3A5BC7] hover:text-[#1F2D5C] active:text-[#1F2D5C] disabled:text-[#B9BBC6]',
+    'text-[var(--color-accent-10)] hover:text-[var(--color-accent-12)] active:text-[var(--color-accent-12)] disabled:text-[var(--color-neutral-7)]',
   danger:
-    'bg-[#E5484D] text-white hover:bg-[#DC3E42] active:bg-[#641723] disabled:bg-[#F0F0F3] disabled:text-[#8B8D98]',
+    'bg-[var(--color-error)] text-white hover:bg-[var(--color-error-hover)] active:bg-[var(--color-error-active)] disabled:bg-[var(--color-neutral-3)] disabled:text-[var(--color-neutral-8)]',
   success:
-    'bg-[#30A46C] text-white hover:bg-[#2B9A66] active:bg-[#193B2D] disabled:bg-[#F0F0F3] disabled:text-[#8B8D98]',
+    'bg-[var(--color-success)] text-white hover:bg-[var(--color-success-hover)] active:bg-[var(--color-success-active)] disabled:bg-[var(--color-neutral-3)] disabled:text-[var(--color-neutral-8)]',
 }
 
 const sizeStyles: Record<IconButtonSize, string> = {
-  sm: 'w-6 h-6 rounded-[4px]',
-  md: 'w-8 h-8 rounded-[8px]',
-  lg: 'w-10 h-10 rounded-[12px]',
+  sm: 'w-6 h-6 rounded-[var(--radius-sm)]',
+  md: 'w-8 h-8 rounded-[var(--radius-lg)]',
+  lg: 'w-10 h-10 rounded-[var(--radius-xl)]',
 }
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(

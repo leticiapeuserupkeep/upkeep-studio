@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Search, ChevronDown, ArrowUpDown, X } from 'lucide-react'
+import { ChevronDown, ArrowUpDown } from 'lucide-react'
 import { AppCard } from '@/app/components/studio/AppCard'
+import { SearchInput } from '@/app/components/ui/SearchInput'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/app/components/ui/DropdownMenu'
 import type { BuildStatus } from '@/app/components/studio/AppCard'
 
 const categories = [
@@ -79,8 +81,7 @@ export default function AppsIBuiltPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [category, setCategory] = useState('All Categories')
   const [sortBy, setSortBy] = useState('most-recent')
-  const [categoryOpen, setCategoryOpen] = useState(false)
-  const [sortOpen, setSortOpen] = useState(false)
+  
 
   const filtered = useMemo(() => {
     let result = builtApps
@@ -116,85 +117,55 @@ export default function AppsIBuiltPage() {
 
         {/* Filters row */}
         <div className="flex items-center gap-3 mb-8">
-          {/* Search */}
-          <div className="flex items-center gap-[var(--space-xs)] flex-1 max-w-[360px] px-3 py-2 border border-[var(--border-default)] rounded-[var(--radius-lg)] bg-[var(--surface-primary)]">
-            <Search size={16} className="text-[color:var(--color-neutral-8)] shrink-0" />
-            <input
-              type="text"
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 text-[length:var(--font-size-body-2)] outline-none bg-transparent placeholder:text-[color:var(--color-neutral-7)]"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="text-[var(--color-neutral-7)] hover:text-[var(--color-neutral-9)] cursor-pointer"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
+          <SearchInput
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            className="flex-1 max-w-[360px]"
+          />
 
           {/* Category dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => { setCategoryOpen(!categoryOpen); setSortOpen(false) }}
-              className="flex items-center gap-2 px-3 py-2 border border-[var(--border-default)] rounded-[var(--radius-lg)] bg-[var(--surface-primary)] text-[length:var(--font-size-body-2)] font-medium text-[var(--color-neutral-11)] cursor-pointer hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)]"
-            >
-              {category}
-              <ChevronDown size={14} className={`text-[var(--color-neutral-8)] transition-transform duration-[var(--duration-fast)] ${categoryOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {categoryOpen && (
-              <>
-                <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setCategoryOpen(false)} />
-                <div className="absolute left-0 top-full mt-1 z-[var(--z-modal)] min-w-[200px] rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] py-1 dropdown-animate">
-                  {categories.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => { setCategory(c); setCategoryOpen(false) }}
-                      className={`w-full px-4 py-2 text-left text-[length:var(--font-size-body-2)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${
-                        category === c ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)] font-medium' : 'text-[var(--color-neutral-11)]'
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 px-3 py-2 border border-[var(--border-default)] rounded-[var(--radius-lg)] bg-[var(--surface-primary)] text-[length:var(--font-size-body-2)] font-medium text-[var(--color-neutral-11)] cursor-pointer hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)]">
+                {category}
+                <ChevronDown size={14} className="text-[var(--color-neutral-8)]" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent minWidth="200px">
+              {categories.map((c) => (
+                <DropdownMenuItem
+                  key={c}
+                  onSelect={() => setCategory(c)}
+                  className={category === c ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)] font-medium' : ''}
+                >
+                  {c}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <div className="flex-1" />
 
           {/* Sort dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => { setSortOpen(!sortOpen); setCategoryOpen(false) }}
-              className="flex items-center gap-2 px-3 py-2 border border-[var(--border-default)] rounded-[var(--radius-lg)] bg-[var(--surface-primary)] text-[length:var(--font-size-body-2)] text-[var(--color-neutral-9)] cursor-pointer hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)]"
-            >
-              Sort By: <span className="font-medium text-[var(--color-neutral-11)]">{sortOptions.find((s) => s.value === sortBy)?.label}</span>
-              <ArrowUpDown size={14} className="text-[var(--color-neutral-8)]" />
-            </button>
-            {sortOpen && (
-              <>
-                <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setSortOpen(false)} />
-                <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] min-w-[180px] rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] py-1 dropdown-animate">
-                  {sortOptions.map((s) => (
-                    <button
-                      key={s.value}
-                      onClick={() => { setSortBy(s.value); setSortOpen(false) }}
-                      className={`w-full px-4 py-2 text-left text-[length:var(--font-size-body-2)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${
-                        sortBy === s.value ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)] font-medium' : 'text-[var(--color-neutral-11)]'
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 px-3 py-2 border border-[var(--border-default)] rounded-[var(--radius-lg)] bg-[var(--surface-primary)] text-[length:var(--font-size-body-2)] text-[var(--color-neutral-9)] cursor-pointer hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)]">
+                Sort By: <span className="font-medium text-[var(--color-neutral-11)]">{sortOptions.find((s) => s.value === sortBy)?.label}</span>
+                <ArrowUpDown size={14} className="text-[var(--color-neutral-8)]" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {sortOptions.map((s) => (
+                <DropdownMenuItem
+                  key={s.value}
+                  onSelect={() => setSortBy(s.value)}
+                  className={sortBy === s.value ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)] font-medium' : ''}
+                >
+                  {s.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Grid */}

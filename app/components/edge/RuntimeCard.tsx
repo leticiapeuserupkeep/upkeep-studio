@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import * as Switch from '@radix-ui/react-switch'
 import { MapPin, Gauge, EllipsisVertical, Pencil, TrendingUp, TrendingDown } from 'lucide-react'
 import { Badge } from '@/app/components/ui/Badge'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/app/components/ui/DropdownMenu'
 import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
 import { SyncMeterModal } from '@/app/components/edge/SyncMeterModal'
+import { useAnimatedValue } from '@/app/lib/hooks/use-animated-value'
 import type { RuntimeSensor } from '@/app/lib/models'
 
 interface RuntimeCardProps {
@@ -34,35 +36,10 @@ const statusConfig = {
 
 const RESET_DURATION = 1800
 
-function useAnimatedValue(target: number, duration: number, trigger: boolean) {
-  const [value, setValue] = useState(target)
-  const startRef = useRef<{ from: number; start: number } | null>(null)
-  const rafRef = useRef<number>(0)
-
-  useEffect(() => {
-    if (!trigger) { setValue(target); return }
-    const from = target
-    startRef.current = { from, start: performance.now() }
-
-    const tick = (now: number) => {
-      if (!startRef.current) return
-      const elapsed = now - startRef.current.start
-      const t = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - t, 3)
-      setValue(startRef.current.from * (1 - eased))
-      if (t < 1) rafRef.current = requestAnimationFrame(tick)
-    }
-    rafRef.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [trigger, duration, target])
-
-  return value
-}
-
 export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit, reset = false }: RuntimeCardProps) {
   const [showMeterModal, setShowMeterModal] = useState(false)
   const [showSyncMeterModal, setShowSyncMeterModal] = useState(false)
-  const [showCardMenu, setShowCardMenu] = useState(false)
+  
   const [localReset, setLocalReset] = useState(false)
   const isReset = localReset || reset
 
@@ -114,36 +91,28 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit, 
             <Badge severity={isReset ? 'neutral' : statusInfo.severity} dot>
               {isReset ? 'Disconnected' : statusInfo.label}
             </Badge>
-            <div className="relative">
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  setShowCardMenu((v) => !v)
-                }}
-                className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-default)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-              >
-                <EllipsisVertical size={16} className="text-[var(--color-neutral-9)]" />
-              </button>
-              {showCardMenu && (
-                <>
-                  <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={(e) => { e.preventDefault(); setShowCardMenu(false) }} />
-                  <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] w-[140px] rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] py-1 dropdown-animate">
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setShowCardMenu(false)
-                        if (onEdit) onEdit()
-                        else setShowMeterModal(true)
-                      }}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-left text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
-                    >
-                      <Pencil size={14} className="text-[var(--color-neutral-8)]" />
-                      Edit
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  onClick={(e) => e.preventDefault()}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-default)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                >
+                  <EllipsisVertical size={16} className="text-[var(--color-neutral-9)]" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" minWidth="140px">
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    if (onEdit) onEdit()
+                    else setShowMeterModal(true)
+                  }}
+                >
+                  <Pencil size={14} className="text-[var(--color-neutral-8)]" />
+                  Edit
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Row 2: Content */}

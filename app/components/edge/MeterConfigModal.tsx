@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Switch from '@radix-ui/react-switch'
-import { X, ChevronDown, Info, CheckCircle2 } from 'lucide-react'
+import { ChevronDown, Info, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
+import { Modal, ModalHeader } from '@/app/components/ui/Modal'
 
 interface MeterConfigModalProps {
   open: boolean
@@ -91,21 +92,9 @@ export function MeterConfigModal({
   }, [showResetToast])
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay data-dialog-overlay className="fixed inset-0 z-[var(--z-overlay)] bg-black/40" />
-        <Dialog.Content data-dialog-content className="fixed left-1/2 top-1/2 z-[var(--z-modal)] w-full max-w-[520px] max-h-[85vh] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] focus:outline-none flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-[var(--space-xl)] pt-[var(--space-xl)] pb-[var(--space-md)] bg-[var(--surface-primary)]">
-            <Dialog.Title className="text-[length:var(--font-size-lg)] font-bold text-[var(--color-neutral-12)]">
-              Edit Runtime
-            </Dialog.Title>
-            <Dialog.Close asChild>
-              <button className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Close">
-                <X size={18} className="text-[var(--color-neutral-7)]" />
-              </button>
-            </Dialog.Close>
-          </div>
+    <>
+    <Modal open={open} onOpenChange={onOpenChange} maxWidth="520px">
+      <ModalHeader title="Edit Runtime" />
 
           {/* Tabs */}
           <div className="flex px-[var(--space-xl)] border-b border-[var(--border-subtle)]">
@@ -374,19 +363,17 @@ export function MeterConfigModal({
               </Button>
             </div>
           )}
-        </Dialog.Content>
-      </Dialog.Portal>
+    </Modal>
 
-      {/* Reset Toast */}
-      {showResetToast && (
-        <div className="fixed bottom-6 left-1/2 z-[var(--z-toast)] flex items-center gap-2 px-4 py-3 rounded-[var(--radius-lg)] bg-[var(--color-neutral-12)] text-white shadow-[var(--shadow-lg)] toast-animate">
-          <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-          <span className="text-[length:var(--font-size-sm)] font-medium">
-            Configuration reset to defaults
-          </span>
-        </div>
-      )}
-    </Dialog.Root>
+    {showResetToast && (
+      <div className="fixed bottom-6 left-1/2 z-[var(--z-toast)] flex items-center gap-2 px-4 py-3 rounded-[var(--radius-lg)] bg-[var(--color-neutral-12)] text-white shadow-[var(--shadow-lg)] toast-animate">
+        <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+        <span className="text-[length:var(--font-size-sm)] font-medium">
+          Configuration reset to defaults
+        </span>
+      </div>
+    )}
+    </>
   )
 }
 

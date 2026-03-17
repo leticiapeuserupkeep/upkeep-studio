@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -17,6 +17,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { RuntimeBarChart } from '@/app/components/edge/RuntimeBarChart'
 import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
 import { SyncMeterModal } from '@/app/components/edge/SyncMeterModal'
+import { useAnimatedValue } from '@/app/lib/hooks/use-animated-value'
 import { runtimeSensors } from '@/app/lib/edge-data'
 import type { RuntimeSensor, DailyRuntime } from '@/app/lib/models'
 
@@ -53,31 +54,6 @@ function getDeltaPercent(current: number, previous: number): number {
 }
 
 const RESET_DURATION = 1800
-
-function useAnimatedValue(target: number, duration: number, trigger: boolean) {
-  const [value, setValue] = useState(target)
-  const rafRef = useRef<number>(0)
-  const startRef = useRef<{ from: number; start: number } | null>(null)
-
-  useEffect(() => {
-    if (!trigger) { setValue(target); return }
-    const from = target
-    startRef.current = { from, start: performance.now() }
-
-    const tick = (now: number) => {
-      if (!startRef.current) return
-      const elapsed = now - startRef.current.start
-      const t = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - t, 3)
-      setValue(startRef.current.from * (1 - eased))
-      if (t < 1) rafRef.current = requestAnimationFrame(tick)
-    }
-    rafRef.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [trigger, duration, target])
-
-  return value
-}
 
 type RangePreset = '7d' | '14d' | '30d' | 'custom'
 
