@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  Search, ArrowUpDown, Columns3, SlidersHorizontal,
+  SlidersHorizontal,
   ChevronDown, X, Circle, CircleDot, Ban, CheckCircle2,
   Check, Minus, MoreHorizontal, Download, Archive, Trash2,
   Flag, MapPin, Box, User, Loader, Info,
@@ -12,91 +12,49 @@ import type { LucideIcon } from 'lucide-react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Switch from '@radix-ui/react-switch'
 import Link from 'next/link'
-import { Table, TableHeader, TableBody, TableHead, TableCell } from '@/app/components/ui/Table'
+import { Table, TableToolbar, TableHeader, TableBody, TableHead, TableCell } from '@/app/components/ui/Table'
 import { Button } from '@/app/components/ui/Button'
 import { IconButton } from '@/app/components/ui/IconButton'
 
 /* ── Types ── */
 
 type WOStatus = 'Open' | 'In Progress' | 'On Hold' | 'Complete'
+type WOPriority = 'None' | 'Low' | 'Medium' | 'High'
+type WOCategory = 'Preventative' | 'Electrical' | 'Safety' | 'Upgrade' | 'Damage' | 'Inspection'
 
 interface WorkOrderItem {
   id: string
   woNumber: string
   title: string
-  status: WOStatus
   description: string
-  flagged?: boolean
+  dueDate?: string
+  startDate?: string
+  status: WOStatus
+  priority: WOPriority
+  category: WOCategory
+  hasAlert?: boolean
 }
 
 /* ── Mock Data ── */
 
 const workOrders: WorkOrderItem[] = [
-  {
-    id: 'wo-008',
-    woNumber: '008',
-    title: 'Forklift Maintenance Request',
-    status: 'Open',
-    description:
-      'Forklift A-2 is currently out of service due to a malfunction in its hydraulic system requiring immediate maintenance attention.',
-  },
-  {
-    id: 'wo-007',
-    woNumber: '007',
-    title: 'Electrical System Inspection',
-    status: 'Open',
-    description:
-      'The electrical system in the conveyor belt requires inspection and maintenance to prevent unexpected downtime and safety hazards.',
-  },
-  {
-    id: 'wo-006',
-    woNumber: '006',
-    title: 'Routine Safety Check',
-    status: 'Open',
-    description:
-      'Routine safety checks are scheduled for all equipment to ensure compliance with safety regulations and operational standards.',
-  },
-  {
-    id: 'wo-005',
-    woNumber: '005',
-    title: 'Hydraulic Fluid Replacement',
-    status: 'In Progress',
-    description:
-      'The battery for the pallet jack needs replacement to maintain optimal performance and prevent potential safety issues during operation.',
-  },
-  {
-    id: 'wo-004',
-    woNumber: '004',
-    title: 'Repair Forklift A-2',
-    status: 'In Progress',
-    description:
-      'Forklift A-2 has stopped functioning due to a motor issue. This forklift is critical for daily warehouse operations and logistics.',
-  },
-  {
-    id: 'wo-003',
-    woNumber: '003',
-    title: 'Battery Replacement Request',
-    status: 'On Hold',
-    description:
-      'A wiring issue has been reported in the dock lift, which needs urgent repair to avoid safety hazards and operational delays.',
-    flagged: true,
-  },
-  {
-    id: 'wo-002',
-    woNumber: '002',
-    title: 'Dock lift wiring issue',
-    status: 'Complete',
-    description:
-      'The inspection of the electrical system is due next week to ensure all components are functioning properly and meet compliance.',
-  },
-  {
-    id: 'wo-001',
-    woNumber: '001',
-    title: 'Test Work Order',
-    status: 'Complete',
-    description:
-      'The maintenance request for the hydraulic fluid replacement is pending approval from the facility manager before work can begin.',
-  },
+  { id: 'wo-102', woNumber: '102', title: 'Compressed air dryer annual service', description: 'Quarterly condenser coil cleaning and refrigerant check for compressed air dryer system', dueDate: '03/12/26 - 09:00 AM', status: 'Open', priority: 'Low', category: 'Preventative', hasAlert: true },
+  { id: 'wo-101', woNumber: '101', title: 'Floor scrubber FS-02 squeegee replacement', description: 'Replace worn squeegee blades on floor scrubber unit FS-02 in warehouse zone B', dueDate: '03/05/26 - 09:00 AM', status: 'Open', priority: 'Low', category: 'Preventative', hasAlert: true },
+  { id: 'wo-089', woNumber: '089', title: 'Binding Machine D blade replacement', description: 'Binding machine cutting blade replacement and alignment calibration', dueDate: '03/14/26 - 09:00 AM', status: 'Open', priority: 'Low', category: 'Preventative', hasAlert: true },
+  { id: 'wo-062', woNumber: '062', title: 'R&D Lab electrical panel inspection', description: 'Annual thermographic scan and connection torque verification for lab electrical panels', status: 'Open', priority: 'Low', category: 'Electrical' },
+  { id: 'wo-061', woNumber: '061', title: 'Fire suppression panel testing', description: 'Annual fire alarm system inspection and functional test of all pull stations and detectors', status: 'Open', priority: 'Low', category: 'Safety' },
+  { id: 'wo-060', woNumber: '060', title: 'Upgrade lighting in warehouse B', description: 'Replace existing fluorescent fixtures with LED panels in warehouse section B', status: 'Open', priority: 'Low', category: 'Upgrade' },
+  { id: 'wo-059', woNumber: '059', title: 'Forklift FL-204 battery replacement', description: 'Battery pack showing degraded capacity, needs full replacement for continued operation', status: 'Open', priority: 'Low', category: 'Damage' },
+  { id: 'wo-058', woNumber: '058', title: 'Chicago office roof leak repair', description: 'Water intrusion detected near northwest stairwell, investigate source and apply repair', status: 'Open', priority: 'Low', category: 'Damage' },
+  { id: 'wo-057', woNumber: '057', title: 'Compressor CR-01 vibration analysis', description: 'Cold Room Compressor CR-01 exhibiting abnormal vibration during startup cycle', status: 'Open', priority: 'Low', category: 'Damage' },
+  { id: 'wo-056', woNumber: '056', title: 'Emergency generator load bank test', description: 'Perform monthly load bank test and fuel system inspection on emergency generator', status: 'Open', priority: 'Low', category: 'Inspection' },
+  { id: 'wo-055', woNumber: '055', title: 'Quarterly HVAC filter replacement', description: 'Replace all air filters on HVAC units across floors 1-3 of the main office building', status: 'Open', priority: 'Low', category: 'Preventative' },
+  { id: 'wo-054', woNumber: '054', title: 'Conveyor belt CB-12 tracking issue', description: 'Belt is tracking to the left causing product spillage at transfer point', status: 'Open', priority: 'Low', category: 'Damage' },
+  { id: 'wo-053', woNumber: '053', title: 'Warehouse dock door 7 inspection', description: 'Annual inspection of overhead dock door springs, cables, and safety mechanisms', status: 'Open', priority: 'Low', category: 'Inspection' },
+  { id: 'wo-052', woNumber: '052', title: 'HVAC Unit AHU-03 vibration report', description: 'Unusual vibration detected during routine monitoring, requires diagnostic assessment', status: 'Open', priority: 'Low', category: 'Damage' },
+  { id: 'wo-051', woNumber: '051', title: 'Fire extinguisher inspection round', description: 'Monthly visual inspection of all portable fire extinguishers across facility', status: 'Open', priority: 'Low', category: 'Safety' },
+  { id: 'wo-050', woNumber: '050', title: 'Parking lot lighting repair', description: 'Several parking lot lights reported out in employee lot, check ballasts and replace', status: 'Open', priority: 'Low', category: 'Electrical' },
+  { id: 'wo-049', woNumber: '049', title: 'Roof drain cleaning schedule', description: 'Seasonal roof drain and gutter cleaning to prevent water pooling and damage', status: 'Open', priority: 'Low', category: 'Preventative' },
 ]
 
 /* ── Status Config ── */
@@ -108,6 +66,13 @@ const statusConfig: Record<WOStatus, { icon: LucideIcon; color: string }> = {
   Complete: { icon: CheckCircle2, color: 'text-[var(--color-success)]' },
 }
 
+const priorityConfig: Record<WOPriority, { color: string; flagColor: string }> = {
+  None: { color: 'text-[var(--color-neutral-8)]', flagColor: 'text-[var(--color-neutral-6)]' },
+  Low: { color: 'text-[var(--color-neutral-11)]', flagColor: 'text-[var(--color-success)]' },
+  Medium: { color: 'text-[var(--color-neutral-11)]', flagColor: 'text-[var(--color-warning)]' },
+  High: { color: 'text-[var(--color-neutral-11)]', flagColor: 'text-[var(--color-error)]' },
+}
+
 /* ── Sub-components ── */
 
 function StatusIndicator({ status }: { status: WOStatus }) {
@@ -116,6 +81,16 @@ function StatusIndicator({ status }: { status: WOStatus }) {
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
       <Icon size={14} className={color} />
       <span>{status}</span>
+    </span>
+  )
+}
+
+function PriorityIndicator({ priority }: { priority: WOPriority }) {
+  const { color, flagColor } = priorityConfig[priority]
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <Flag size={14} className={`${flagColor} fill-current`} />
+      <span className={color}>{priority}</span>
     </span>
   )
 }
@@ -159,11 +134,13 @@ function FilterChip({
   active,
   icon,
   hasDropdown,
+  onRemove,
 }: {
   children: React.ReactNode
   active?: boolean
   icon?: React.ReactNode
   hasDropdown?: boolean
+  onRemove?: () => void
 }) {
   return (
     <button
@@ -177,6 +154,13 @@ function FilterChip({
       {icon}
       {children}
       {hasDropdown && <ChevronDown size={12} />}
+      {onRemove && (
+        <X
+          size={12}
+          className="ml-0.5 opacity-60 hover:opacity-100"
+          onClick={(e) => { e.stopPropagation(); onRemove() }}
+        />
+      )}
     </button>
   )
 }
@@ -534,7 +518,8 @@ export default function WorkOrdersPage() {
         (wo) =>
           wo.title.toLowerCase().includes(searchValue.toLowerCase()) ||
           wo.woNumber.includes(searchValue) ||
-          wo.description.toLowerCase().includes(searchValue.toLowerCase()),
+          wo.description.toLowerCase().includes(searchValue.toLowerCase()) ||
+          wo.category.toLowerCase().includes(searchValue.toLowerCase()),
       )
     : workOrders
 
@@ -542,48 +527,6 @@ export default function WorkOrdersPage() {
     <div className="flex flex-col flex-1 w-full relative">
       <main className="flex-1 overflow-y-auto">
         <div className="w-full px-[var(--space-2xl)] py-[var(--space-xl)]">
-          {/* ── Toolbar ── */}
-          <div
-            className="flex items-center justify-between mb-3 opacity-0"
-            style={{
-              animation: 'fadeInUp 0.35s var(--ease-default) 0.02s forwards',
-            }}
-          >
-            <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
-              {filtered.length} of {workOrders.length} items
-            </span>
-            <div className="flex items-center gap-[var(--space-lg)]">
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] hover:text-[var(--color-neutral-11)] transition-colors cursor-pointer"
-              >
-                <ArrowUpDown size={14} className="text-[var(--color-neutral-7)]" />
-                Sort: Work Order Title
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] hover:text-[var(--color-neutral-11)] transition-colors cursor-pointer"
-              >
-                <Columns3 size={14} className="text-[var(--color-neutral-7)]" />
-                Columns
-              </button>
-              <div className="flex items-center gap-[var(--space-xs)] px-2.5 py-1.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] w-[200px]">
-                <Search
-                  size={14}
-                  className="text-[var(--color-neutral-7)] shrink-0"
-                />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  className="flex-1 text-[length:var(--font-size-sm)] bg-transparent outline-none text-[var(--color-neutral-11)] placeholder:text-[var(--color-neutral-7)]"
-                  aria-label="Search work orders"
-                />
-              </div>
-            </div>
-          </div>
-
           {/* ── Filters ── */}
           <div
             className="flex items-center gap-2 mb-4 flex-wrap opacity-0"
@@ -592,13 +535,13 @@ export default function WorkOrdersPage() {
             }}
           >
             <FilterChip active icon={<SlidersHorizontal size={13} />}>
-              Filters (2)
+              Filters (3)
             </FilterChip>
-            <FilterChip active hasDropdown>
-              Status: Open +2
+            <FilterChip active icon={<Circle size={13} />} onRemove={() => {}}>
+              Status: Open
             </FilterChip>
-            <FilterChip hasDropdown icon={<Flag size={13} />}>
-              Priority
+            <FilterChip active icon={<Flag size={13} />} onRemove={() => {}}>
+              Priority: Low
             </FilterChip>
             <FilterChip hasDropdown icon={<MapPin size={13} />}>
               Location
@@ -616,7 +559,7 @@ export default function WorkOrdersPage() {
               type="button"
               className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-11)] transition-colors cursor-pointer"
             >
-              Reset
+              Reset Filters
             </button>
             <button
               type="button"
@@ -624,42 +567,45 @@ export default function WorkOrdersPage() {
             >
               Save View
             </button>
-            <button
-              type="button"
-              className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] hover:text-[var(--color-neutral-11)] transition-colors cursor-pointer"
-            >
-              Saved Views
-            </button>
           </div>
 
           {/* ── Table Card ── */}
           <div
-            className="bg-[var(--surface-primary)] rounded-[var(--widget-radius)] border border-[var(--widget-border)] shadow-[var(--widget-shadow)] overflow-hidden opacity-0"
+            className="bg-[var(--surface-primary)] rounded-[var(--widget-radius)] border border-[var(--widget-border)] overflow-hidden opacity-0"
             style={{
               animation: 'fadeInUp 0.4s var(--ease-default) 0.06s forwards',
             }}
           >
-            <Table className="[&>table]:table-fixed">
-              <colgroup>
-                <col style={{ width: 48 }} />
-                <col style={{ width: 84 }} />
-                <col style={{ width: '30%' }} />
-                <col style={{ width: 120 }} />
-                <col />
-              </colgroup>
+            <TableToolbar
+              itemCountLabel={`${filtered.length} of ${workOrders.length} items`}
+              sortLabel="Sort: Work Order Title"
+              searchValue={searchValue}
+              onSearchChange={setSearchValue}
+              searchPlaceholder="Search"
+            />
+            <Table>
               <TableHeader>
                 <tr>
-                  <th className="py-3 pl-4 pr-2 border-b border-[var(--border-default)]">
+                  <th className="py-3 pl-6 pr-2 border-b border-[var(--border-default)] w-[52px]">
                     <RowCheckbox
                       checked={allSelected}
                       indeterminate={someSelected}
                       onChange={toggleAll}
                     />
                   </th>
-                  <TableHead>WO #</TableHead>
+                  <TableHead className="w-[80px]">
+                    <span className="inline-flex items-center gap-1">
+                      WO #
+                      <ChevronDown size={12} className="text-[var(--color-neutral-7)]" />
+                    </span>
+                  </TableHead>
                   <TableHead>Work Order Title</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Description</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Start Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Category</TableHead>
                 </tr>
               </TableHeader>
               <TableBody>
@@ -677,7 +623,7 @@ export default function WorkOrdersPage() {
                         animation: `fadeInUp 0.3s var(--ease-default) ${0.08 + i * 0.025}s forwards`,
                       }}
                     >
-                      <td className="py-2.5 pl-4 pr-2">
+                      <td className="py-4 pl-6 pr-2">
                         <RowCheckbox
                           checked={isSelected}
                           onChange={() => toggleSelect(wo.id)}
@@ -685,28 +631,36 @@ export default function WorkOrdersPage() {
                       </td>
                       <TableCell>
                         <span className="inline-flex items-center gap-1.5">
-                          <span
-                            className={`font-medium tabular-nums ${
-                              isSelected
-                                ? 'text-[var(--color-accent-9)]'
-                                : 'text-[var(--color-neutral-11)]'
-                            }`}
-                          >
+                          <span className="font-medium tabular-nums text-[var(--color-accent-9)]">
                             {wo.woNumber}
                           </span>
-                          {wo.flagged && (
-                            <span className="w-2 h-2 rounded-full bg-[var(--color-error)] shrink-0" />
+                          {wo.hasAlert && (
+                            <span className="w-4 h-4 rounded-full bg-[var(--color-warning)] flex items-center justify-center shrink-0">
+                              <Info size={10} className="text-white" />
+                            </span>
                           )}
                         </span>
                       </TableCell>
-                      <TableCell className="font-medium text-[var(--color-neutral-12)] truncate">
+                      <TableCell className="text-[var(--color-neutral-12)] whitespace-nowrap max-w-[200px] truncate">
                         {wo.title}
+                      </TableCell>
+                      <TableCell className="text-[var(--color-neutral-8)] max-w-[220px] truncate">
+                        {wo.description}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-[var(--color-neutral-8)]">
+                        {wo.dueDate || ''}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-[var(--color-neutral-8)]">
+                        {wo.startDate || ''}
                       </TableCell>
                       <TableCell>
                         <StatusIndicator status={wo.status} />
                       </TableCell>
-                      <TableCell className="truncate text-[var(--color-neutral-8)]">
-                        {wo.description}
+                      <TableCell>
+                        <PriorityIndicator priority={wo.priority} />
+                      </TableCell>
+                      <TableCell>
+                        {wo.category}
                       </TableCell>
                     </tr>
                   )

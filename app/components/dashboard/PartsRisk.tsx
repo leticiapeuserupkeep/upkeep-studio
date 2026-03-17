@@ -42,7 +42,7 @@ export function PartsRisk({ parts }: PartsRiskProps) {
               return (
                 <TableRow key={part.id}>
                   <TableCell>
-                    <span className="font-medium">{part.name}</span>
+                    {part.name}
                   </TableCell>
                   <TableCell>
                     <span className={part.onHand < part.minRequired ? 'text-[var(--color-error)] font-semibold' : ''}>

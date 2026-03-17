@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronRight, MoreHorizontal, Download, X, Link2, CircleDot, Flag, MapPin, User, Tag, CheckCircle2, Clock, Loader2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import * as Tooltip from '@radix-ui/react-tooltip'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/components/ui/Table'
+import { Table, TableToolbar, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/components/ui/Table'
 import { Badge } from '@/app/components/ui/Badge'
 import { IconButton } from '@/app/components/ui/IconButton'
 
@@ -492,7 +492,7 @@ function RowActionMenu({ status, isSubRow }: { status: ExportStatus; isSubRow?: 
     <>
       <IconButton
         ref={btnRef}
-        variant="secondary"
+        variant="ghost"
         size="sm"
         label="Actions"
         onClick={(e) => { e.stopPropagation(); setOpen(o => !o) }}
@@ -524,14 +524,19 @@ export default function ExportsPage() {
       <main className="flex-1 overflow-y-auto">
         <div className="w-full px-[var(--space-2xl)] py-[var(--space-xl)]">
           <div
-            className="bg-[var(--surface-primary)] rounded-[var(--widget-radius)] border border-[var(--widget-border)] shadow-[var(--widget-shadow)] overflow-hidden opacity-0"
+            className="bg-[var(--surface-primary)] rounded-[var(--widget-radius)] border border-[var(--widget-border)] overflow-hidden opacity-0"
             style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.05s forwards' }}
           >
+            <TableToolbar
+              itemCountLabel={`${mockExports.length} of ${mockExports.length} items`}
+              sortLabel="Sort: Created"
+              showColumns={false}
+            />
             <Table>
               <TableHeader>
                 <tr>
                   <TableHead className="w-10 !px-0" />
-                  <TableHead className="!pl-2">Work Orders</TableHead>
+                  <TableHead className="!pl-1">Work Orders</TableHead>
                   <TableHead className="w-16">Format</TableHead>
                   <TableHead>Filters</TableHead>
                   <TableHead>Created</TableHead>
@@ -559,12 +564,12 @@ export default function ExportsPage() {
                       >
                         <TableCell className="w-10 !pl-2 !pr-0 text-center">
                           {isExpandable && (
-                            <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[var(--color-neutral-8)] transition-transform duration-[var(--duration-fast)]">
+                            <IconButton variant="ghost" size="sm" label="Toggle details">
                               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                            </span>
+                            </IconButton>
                           )}
                         </TableCell>
-                        <TableCell className="font-medium text-[var(--color-neutral-12)] whitespace-nowrap !pl-2">
+                        <TableCell className="text-[var(--color-neutral-12)] whitespace-nowrap !pl-1">
                           <span className="inline-flex items-center gap-2">
                             {row.workOrderCount} WOs
                             {showFileCount && (
@@ -576,7 +581,7 @@ export default function ExportsPage() {
                         </TableCell>
                         <TableCell className="w-16"><FormatBadge format={row.format} /></TableCell>
                         <TableCell><FilterTags filters={row.filters} /></TableCell>
-                        <TableCell className="whitespace-nowrap">{row.created}</TableCell>
+                        <TableCell className="whitespace-nowrap text-[var(--color-neutral-8)]">{row.created}</TableCell>
                         <TableCell className={`w-20 text-right whitespace-nowrap ${noSize ? 'text-[var(--color-neutral-7)]' : ''}`}>{row.totalSize}</TableCell>
                         <TableCell><StatusBadge status={row.status} duration={row.duration} progress={row.progress} /></TableCell>
                         <TableCell className="w-12 text-center">

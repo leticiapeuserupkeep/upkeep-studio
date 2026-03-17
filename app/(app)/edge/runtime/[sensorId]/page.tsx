@@ -747,10 +747,10 @@ function DayReadingsTable({ day, threshold, avgDailyHours }: { day: DailyRuntime
               {readings.map((r, i) => (
                 <TableRow key={i}>
                   <TableCell>
-                    <span className="font-medium text-[var(--color-neutral-11)]">{r.time}</span>
+                    {r.time}
                   </TableCell>
                   <TableCell>
-                    <span className={r.running ? 'text-[var(--color-neutral-11)] font-medium' : 'text-[var(--color-neutral-7)]'}>
+                    <span className={r.running ? '' : 'text-[var(--color-neutral-7)]'}>
                       {r.amps} A
                     </span>
                   </TableCell>
