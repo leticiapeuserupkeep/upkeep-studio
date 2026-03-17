@@ -135,7 +135,7 @@ function CollapsedIcon({ item, active, label }: { item: NavItem; active: boolean
         <span
           className={`relative flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] cursor-pointer transition-all duration-[var(--duration-normal)] ease-[var(--ease-default)] ${
             active
-              ? 'bg-[var(--color-neutral-4)] text-[var(--color-neutral-12)]'
+              ? 'bg-[var(--color-neutral-5)] text-[var(--color-neutral-12)]'
               : 'text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] hover:text-[var(--color-neutral-12)]'
           }`}
           aria-label={label}
@@ -247,7 +247,7 @@ export function SideNav({ collapsed }: SideNavProps) {
                         const active = isActive(pathname, item.href)
                         const classes = `flex items-center gap-2 w-full px-2 h-8 rounded-[var(--radius-sm)] cursor-pointer transition-colors duration-[var(--duration-fast)] ease-[var(--ease-default)] ${
                           active
-                            ? 'bg-[var(--color-neutral-4)] font-semibold text-[var(--color-neutral-12)]'
+                            ? 'bg-[var(--color-neutral-5)] font-semibold text-[var(--color-neutral-12)]'
                             : 'font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-4)]'
                         }`
 

@@ -128,10 +128,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             actions={getActions()}
           />
         )}
-        <div id="table-toolbar-portal" />
-        {isEdge && !isCreateApp && (
-          <div data-orientation="horizontal" role="separator" className="h-px bg-[var(--border-default)]" />
-        )}
+        {(isWorkOrders || pathname.startsWith('/exports')) && <div id="table-toolbar-portal" />}
+        
         {isEdge && <div id="runtime-sensor-bar-portal" />}
         {isEdge && <div id="runtime-kpi-portal" />}
         {isCreateApp ? (
