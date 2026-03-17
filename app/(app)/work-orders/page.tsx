@@ -643,9 +643,7 @@ export default function WorkOrdersPage() {
                             {wo.woNumber}
                           </span>
                           {wo.hasAlert && (
-                            <span className="w-4 h-4 rounded-full bg-[var(--color-warning)] flex items-center justify-center shrink-0">
-                              <Info size={10} className="text-white" />
-                            </span>
+                            <Circle size={8} className="text-[var(--color-error)] fill-[var(--color-error)] shrink-0" />
                           )}
                         </span>
                       </TableCell>
