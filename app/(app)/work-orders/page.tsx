@@ -14,6 +14,7 @@ import * as Switch from '@radix-ui/react-switch'
 import Link from 'next/link'
 import { Table, TableHeader, TableBody, TableHead, TableCell } from '@/app/components/ui/Table'
 import { Button } from '@/app/components/ui/Button'
+import { IconButton } from '@/app/components/ui/IconButton'
 
 /* ── Types ── */
 
@@ -137,10 +138,10 @@ function RowCheckbox({
         e.stopPropagation()
         onChange()
       }}
-      className={`w-[18px] h-[18px] rounded-[4px] border flex items-center justify-center cursor-pointer transition-all duration-[var(--duration-fast)] select-none ${
+      className={`w-[18px] h-[18px] rounded-[var(--radius-sm)] border flex items-center justify-center cursor-pointer transition-all duration-[var(--duration-fast)] select-none ${
         checked || indeterminate
           ? 'bg-[var(--color-accent-9)] border-[var(--color-accent-9)]'
-          : 'border-[var(--color-neutral-5)] bg-white hover:border-[var(--color-neutral-7)]'
+          : 'border-[var(--color-neutral-5)] bg-[var(--surface-primary)] hover:border-[var(--color-neutral-7)]'
       }`}
     >
       {checked && !indeterminate && (
@@ -325,7 +326,7 @@ function ExportModal({
         />
         <Dialog.Content
           data-dialog-content
-          className="fixed left-1/2 top-1/2 z-[var(--z-modal)] w-full max-w-[640px] max-h-[85vh] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] focus:outline-none flex flex-col overflow-hidden"
+          className="fixed left-1/2 top-1/2 z-[var(--z-modal)] w-full max-w-[640px] max-h-[85vh] rounded-[var(--radius-2xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] focus:outline-none flex flex-col overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-[var(--space-xl)] pt-[var(--space-xl)] pb-[var(--space-md)]">
@@ -333,12 +334,9 @@ function ExportModal({
               Export Work Orders
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button
-                className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-                aria-label="Close"
-              >
-                <X size={18} className="text-[var(--color-neutral-7)]" />
-              </button>
+              <IconButton variant="ghost" size="md" label="Close">
+                <X size={18} />
+              </IconButton>
             </Dialog.Close>
           </div>
 
@@ -378,7 +376,7 @@ function ExportModal({
                       }`}
                     >
                       <span
-                        className={`text-[10px] font-bold ${
+                        className={`text-[length:var(--font-size-xs)] font-bold ${
                           f === 'csv'
                             ? 'text-[var(--color-success)]'
                             : 'text-[var(--color-error)]'
@@ -775,14 +773,9 @@ export default function WorkOrdersPage() {
                 </Link>
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowToast(false)}
-              className="shrink-0 p-1 rounded-[var(--radius-sm)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer"
-              aria-label="Dismiss"
-            >
-              <X size={14} className="text-[var(--color-neutral-7)]" />
-            </button>
+            <IconButton variant="ghost" size="sm" label="Dismiss" onClick={() => setShowToast(false)}>
+              <X size={14} />
+            </IconButton>
             <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--color-accent-2)] overflow-hidden">
               <div className="h-full w-1/4 bg-[var(--color-accent-9)] rounded-full progress-bar-animate" />
             </div>

@@ -2,9 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback, Fragment } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, ChevronRight, MoreHorizontal, Download, X, Link2, CircleDot, Flag, MapPin, User, Tag } from 'lucide-react'
+import { ChevronDown, ChevronRight, MoreHorizontal, Download, X, Link2, CircleDot, Flag, MapPin, User, Tag, CheckCircle2, Clock, Loader2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import * as Tooltip from '@radix-ui/react-tooltip'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/components/ui/Table'
+import { Badge } from '@/app/components/ui/Badge'
+import { IconButton } from '@/app/components/ui/IconButton'
 
 /* ── Types ── */
 
@@ -242,53 +245,63 @@ function pluralize(n: number, singular: string) {
 
 /* ── Status Badge ── */
 
-const statusStyles: Record<ExportStatus, string> = {
-  Completed: 'bg-[var(--color-success-light)] text-[var(--color-success)]',
-  Exporting: 'bg-[var(--color-info-light)] text-[var(--color-info)]',
-  Pending: 'bg-[var(--color-warning-light)] text-[var(--color-warning)]',
+const statusSeverityMap: Record<ExportStatus, 'success' | 'info' | 'warning'> = {
+  Completed: 'success',
+  Exporting: 'info',
+  Pending: 'warning',
 }
 
-function StatusBadge({ status, duration, progress }: {
+const statusIconMap: Record<ExportStatus, typeof CheckCircle2> = {
+  Completed: CheckCircle2,
+  Exporting: Loader2,
+  Pending: Clock,
+}
+
+function formatDurationLabel(duration: string) {
+  return `Completed in ${duration.replace('h', ' hs').replace('m', ' min').replace('s', ' sec')}`
+}
+
+function StatusBadge({ status, duration }: {
   status: ExportStatus
   duration?: string
   progress?: number
 }) {
-  if (status === 'Exporting') {
+  const Icon = statusIconMap[status]
+
+  const badge = (
+    <Badge severity={statusSeverityMap[status]}>
+      <Icon size={12} className={status === 'Exporting' ? 'animate-spin' : ''} />
+      {status === 'Exporting' ? 'In Progress' : status}
+    </Badge>
+  )
+
+  if (status === 'Completed' && duration) {
     return (
-      <div className="flex items-center gap-2 min-w-[100px]">
-        <div className="flex-1 h-1.5 rounded-full bg-[var(--color-info-border)] overflow-hidden">
-          <div
-            className="h-full rounded-full bg-[var(--color-info)] transition-[width] duration-500 ease-out"
-            style={{ width: `${progress ?? 0}%` }}
-          />
-        </div>
-        <span className="text-[11px] font-medium text-[var(--color-info)] whitespace-nowrap tabular-nums shrink-0">
-          {progress ?? 0}%
-        </span>
-      </div>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <span className="inline-flex cursor-default">{badge}</span>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content
+            side="top"
+            sideOffset={6}
+            className="px-2.5 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-neutral-12)] text-white text-[length:var(--font-size-xs)] shadow-[var(--shadow-lg)] z-[var(--z-toast)]"
+          >
+            {formatDurationLabel(duration)}
+            <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
     )
   }
 
-  return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-      <span className={`inline-flex items-center px-2 py-0.5 rounded-[var(--radius-sm)] text-[length:var(--font-size-xs)] font-medium leading-none ${statusStyles[status]}`}>
-        {status}
-      </span>
-      {status === 'Completed' && duration && (
-        <span className="text-[11px] text-[var(--color-neutral-8)] font-normal">(in {duration})</span>
-      )}
-    </span>
-  )
+  return badge
 }
 
 /* ── Format Badge (blue) ── */
 
 function FormatBadge({ format }: { format: string }) {
-  return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-[var(--radius-sm)] bg-[var(--color-info-light)] text-[var(--color-info)] text-[length:var(--font-size-xs)] font-semibold leading-none border border-[var(--color-info-border)]">
-      {format}
-    </span>
-  )
+  return <Badge severity="info" className="font-semibold">{format}</Badge>
 }
 
 /* ── Filter Tags ── */
@@ -329,19 +342,16 @@ function FilterTags({ filters }: { filters: FilterTag[] }) {
       {visible.map((f, i) => {
         const Icon = filterIconMap[f.label]
         return (
-          <span
-            key={i}
-            className="inline-flex items-center gap-1 shrink-0 px-2 h-5 rounded-lg border border-[#E0E1E6] text-[12px] font-medium text-[#1C2024]"
-          >
-            {Icon && <Icon size={12} className="text-[#1C2024] shrink-0" />}
+          <Badge key={i} severity="neutral" variant="outline" className="shrink-0">
+            {Icon && <Icon size={12} className="shrink-0" />}
             {f.value}
-          </span>
+          </Badge>
         )
       })}
       {hidden.length > 0 && (
         <span
           ref={pillRef}
-          className="inline-flex items-center shrink-0 px-2 py-0.5 rounded-[var(--radius-full)] border border-[var(--color-neutral-5)] bg-[var(--color-neutral-1)] text-[var(--color-neutral-9)] text-[11px] font-medium cursor-default leading-none"
+          className="inline-flex items-center shrink-0 px-2 py-0.5 rounded-[var(--radius-full)] border border-[var(--color-neutral-5)] bg-[var(--color-neutral-1)] text-[var(--color-neutral-9)] text-[length:var(--font-size-xs)] font-medium cursor-default leading-none"
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
         >
@@ -368,21 +378,18 @@ function FilterTags({ filters }: { filters: FilterTag[] }) {
             {/* Arrow pointing up */}
             <div className="flex justify-center mb-[-1px]">
               <div className="w-3 h-1.5 overflow-hidden">
-                <div className="w-2.5 h-2.5 bg-white border border-[#F0F0F3] rotate-45 transform origin-bottom-left translate-x-[3px] translate-y-[2px]" />
+                <div className="w-2.5 h-2.5 bg-[var(--surface-primary)] border border-[var(--border-subtle)] rotate-45 transform origin-bottom-left translate-x-[3px] translate-y-[2px]" />
               </div>
             </div>
-            <div className="bg-white border border-[#F0F0F3] rounded-lg shadow-[0px_1px_8px_rgba(0,0,0,0.25)] px-4 py-3">
+            <div className="bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-lg shadow-[var(--shadow-lg)] px-4 py-3">
               <div className="flex flex-wrap items-center gap-2">
                 {hidden.map((f, i) => {
                   const Icon = filterIconMap[f.label]
                   return (
-                    <span
-                      key={i}
-                      className="inline-flex items-center gap-1 px-2 h-5 rounded-lg border border-[#E0E1E6] text-[12px] font-medium text-[#1C2024]"
-                    >
-                      {Icon && <Icon size={12} className="text-[#1C2024] shrink-0" />}
+                    <Badge key={i} severity="neutral" variant="outline">
+                      {Icon && <Icon size={12} className="shrink-0" />}
                       {f.value}
-                    </span>
+                    </Badge>
                   )
                 })}
               </div>
@@ -483,14 +490,15 @@ function RowActionMenu({ status, isSubRow }: { status: ExportStatus; isSubRow?: 
 
   return (
     <>
-      <button
+      <IconButton
         ref={btnRef}
+        variant="secondary"
+        size="sm"
+        label="Actions"
         onClick={(e) => { e.stopPropagation(); setOpen(o => !o) }}
-        className="inline-flex items-center justify-center w-7 h-7 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-3)] hover:text-[var(--color-neutral-11)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-        aria-label="Actions"
       >
         <MoreHorizontal size={14} />
-      </button>
+      </IconButton>
       {menuEl}
     </>
   )
@@ -511,6 +519,7 @@ export default function ExportsPage() {
   }
 
   return (
+    <Tooltip.Provider delayDuration={300}>
     <div className="flex flex-col flex-1 w-full">
       <main className="flex-1 overflow-y-auto">
         <div className="w-full px-[var(--space-2xl)] py-[var(--space-xl)]">
@@ -521,7 +530,8 @@ export default function ExportsPage() {
             <Table>
               <TableHeader>
                 <tr>
-                  <TableHead>Type</TableHead>
+                  <TableHead className="w-10 !px-0" />
+                  <TableHead className="!pl-2">Work Orders</TableHead>
                   <TableHead className="w-16">Format</TableHead>
                   <TableHead>Filters</TableHead>
                   <TableHead>Created</TableHead>
@@ -538,9 +548,7 @@ export default function ExportsPage() {
                   const isNotComplete = row.status !== 'Completed'
                   const noSize = row.totalSize === '—'
 
-                  const typeLabel = isNotComplete && noSize
-                    ? pluralize(row.workOrderCount, 'Work Order')
-                    : `${pluralize(row.workOrderCount, 'Work Order')} — ${pluralize(fileCount, 'file')}`
+                  const showFileCount = !(isNotComplete && noSize) && !(fileCount === 1 && row.workOrderCount === 1)
 
                   return (
                     <Fragment key={row.id}>
@@ -549,14 +557,21 @@ export default function ExportsPage() {
                         style={{ animation: `fadeInUp 0.35s var(--ease-default) ${0.06 + i * 0.025}s forwards` } as React.CSSProperties}
                         onClick={isExpandable ? () => toggleRow(row.id) : undefined}
                       >
-                        <TableCell className="font-medium text-[var(--color-neutral-12)] whitespace-nowrap">
-                          <span className="inline-flex items-center gap-1.5">
-                            {isExpandable && (
-                              <span className="inline-flex items-center justify-center w-4 h-4 rounded text-[var(--color-neutral-8)] transition-transform duration-[var(--duration-fast)]">
-                                {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                              </span>
+                        <TableCell className="w-10 !pl-2 !pr-0 text-center">
+                          {isExpandable && (
+                            <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[var(--color-neutral-8)] transition-transform duration-[var(--duration-fast)]">
+                              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium text-[var(--color-neutral-12)] whitespace-nowrap !pl-2">
+                          <span className="inline-flex items-center gap-2">
+                            {row.workOrderCount} WOs
+                            {showFileCount && (
+                              <Badge severity="neutral" variant="subtle">
+                                {pluralize(fileCount, 'file')}
+                              </Badge>
                             )}
-                            {typeLabel}
                           </span>
                         </TableCell>
                         <TableCell className="w-16"><FormatBadge format={row.format} /></TableCell>
@@ -575,7 +590,8 @@ export default function ExportsPage() {
                           className="bg-[var(--color-neutral-2)] opacity-0"
                           style={{ animation: `fadeInUp 0.25s var(--ease-default) ${j * 0.04}s forwards` } as React.CSSProperties}
                         >
-                          <TableCell className="pl-7 text-[var(--color-neutral-9)] truncate max-w-[280px]" colSpan={3}>{sub.name}</TableCell>
+                          <TableCell className="w-10 !px-0" />
+                          <TableCell className="text-[var(--color-neutral-9)] truncate max-w-[280px]" colSpan={3}>{sub.name}</TableCell>
                           <TableCell />
                           <TableCell className="w-20 text-right whitespace-nowrap text-[var(--color-neutral-9)]">{sub.size}</TableCell>
                           <TableCell><StatusBadge status={sub.status} /></TableCell>
@@ -593,5 +609,6 @@ export default function ExportsPage() {
         </div>
       </main>
     </div>
+    </Tooltip.Provider>
   )
 }
