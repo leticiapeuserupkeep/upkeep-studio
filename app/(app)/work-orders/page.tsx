@@ -682,7 +682,8 @@ export default function WorkOrdersPage() {
       {/* ── Bulk Actions ── */}
       {selectedCount > 0 && (
         <div
-          className="absolute bottom-6 inset-x-0 flex justify-center z-[var(--z-toast)] toast-animate pointer-events-none"
+          className="fixed bottom-6 z-[var(--z-toast)] toast-animate pointer-events-none"
+          style={{ left: 'calc(280px + (100vw - 280px) / 2)', transform: 'translateX(-50%)' }}
         >
           <div className="flex items-center gap-4 px-4 py-2.5 rounded-[var(--radius-xl)] bg-[var(--color-neutral-12)] text-white shadow-[var(--shadow-xl)] pointer-events-auto">
             <span className="text-[length:var(--font-size-sm)] font-semibold whitespace-nowrap">
