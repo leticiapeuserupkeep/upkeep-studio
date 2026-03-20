@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, Fragment } from 'react'
+import { useState, useRef, useEffect, Fragment } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, ChevronRight, MoreHorizontal, Download, X, Link2, CircleDot, Flag, MapPin, User, Tag, CheckCircle2, Clock, Loader2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Download, Link2, X, Check, CircleDot, Flag, MapPin, User, Tag, CheckCircle2, Clock, Loader2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { Table, TableToolbar, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/components/ui/Table'
@@ -45,11 +45,69 @@ interface ExportRow {
 const mockExports: ExportRow[] = [
   {
     id: 'exp-001',
+    workOrderCount: 12,
+    format: 'PDF',
+    status: 'Pending',
+    created: 'Mar 11, 2:48 PM',
+    completed: '—',
+    totalSize: '—',
+    filters: [
+      { label: 'Status', value: 'Open' },
+      { label: 'Priority', value: 'High' },
+    ],
+  },
+  {
+    id: 'exp-002',
+    workOrderCount: 3,
+    format: 'PDF',
+    status: 'Pending',
+    created: 'Mar 11, 2:46 PM',
+    completed: '—',
+    totalSize: '—',
+    filters: [{ label: 'Status', value: 'Open' }],
+  },
+  {
+    id: 'exp-003',
+    workOrderCount: 1,
+    format: 'PDF',
+    status: 'Exporting',
+    created: 'Mar 11, 2:44 PM',
+    completed: '—',
+    elapsed: '4m 23s',
+    progress: 62,
+    totalSize: '1.4 MB',
+    filters: [
+      { label: 'Priority', value: 'Medium' },
+      { label: 'Location', value: 'Plant South' },
+    ],
+  },
+  {
+    id: 'exp-004',
+    workOrderCount: 45,
+    format: 'PDF',
+    status: 'Exporting',
+    created: 'Mar 11, 2:42 PM',
+    completed: '—',
+    elapsed: '6m 10s',
+    progress: 84,
+    totalSize: '2.8 MB',
+    filters: [
+      { label: 'Priority', value: 'Low' },
+      { label: 'Location', value: 'Warehouse' },
+    ],
+    subRows: [
+      { id: 'sub-004a', name: 'Batch A — WO-1301, WO-1302... (+13)', status: 'Exporting', size: '—' },
+      { id: 'sub-004b', name: 'Batch B — WO-1315, WO-1316... (+13)', status: 'Exporting', size: '—' },
+      { id: 'sub-004c', name: 'Batch C — WO-1329, WO-1330... (+13)', status: 'Pending', size: '—' },
+    ],
+  },
+  {
+    id: 'exp-005',
     workOrderCount: 171,
     format: 'PDF',
     status: 'Completed',
-    created: 'Mar 11, 2:44 PM',
-    completed: 'Mar 11, 2:45 PM',
+    created: 'Mar 11, 2:30 PM',
+    completed: 'Mar 11, 2:32 PM',
     duration: '2h 12m',
     totalSize: '8.3 MB',
     filters: [
@@ -59,15 +117,15 @@ const mockExports: ExportRow[] = [
       { label: 'Assigned', value: 'Team A' },
     ],
     subRows: [
-      { id: 'sub-001a', name: 'ReMY70tQ04, J7P4TYRqWi, iMtj0gYcYn... (+37)', status: 'Completed', size: '1.6 MB' },
-      { id: 'sub-001b', name: 'WZpSnWhzUv, sbvZWpJLxT, YvBSXAEeeV... (+37)', status: 'Completed', size: '1.6 MB' },
-      { id: 'sub-001c', name: '66Kd1THVJp, Crz2C4DMqZ, CJe3DbKWsq... (+37)', status: 'Completed', size: '1.6 MB' },
-      { id: 'sub-001d', name: 'X9ZhGiIwXV, dB4HPb8as3, dBrRQN4q2v... (+37)', status: 'Completed', size: '1.9 MB' },
-      { id: 'sub-001e', name: 'pjtugY26hR, gxa8dGGVwi, l9hA1dQ2xE... (+8)', status: 'Completed', size: '795.1 KB' },
+      { id: 'sub-005a', name: 'ReMY70tQ04, J7P4TYRqWi, iMtj0gYcYn... (+37)', status: 'Completed', size: '1.6 MB' },
+      { id: 'sub-005b', name: 'WZpSnWhzUv, sbvZWpJLxT, YvBSXAEeeV... (+37)', status: 'Completed', size: '1.6 MB' },
+      { id: 'sub-005c', name: '66Kd1THVJp, Crz2C4DMqZ, CJe3DbKWsq... (+37)', status: 'Completed', size: '1.6 MB' },
+      { id: 'sub-005d', name: 'X9ZhGiIwXV, dB4HPb8as3, dBrRQN4q2v... (+37)', status: 'Completed', size: '1.9 MB' },
+      { id: 'sub-005e', name: 'pjtugY26hR, gxa8dGGVwi, l9hA1dQ2xE... (+8)', status: 'Completed', size: '795.1 KB' },
     ],
   },
   {
-    id: 'exp-002',
+    id: 'exp-006',
     workOrderCount: 21,
     format: 'PDF',
     status: 'Completed',
@@ -81,34 +139,7 @@ const mockExports: ExportRow[] = [
     ],
   },
   {
-    id: 'exp-003',
-    workOrderCount: 1,
-    format: 'PDF',
-    status: 'Exporting',
-    created: 'Mar 11, 1:36 PM',
-    completed: '—',
-    elapsed: '4m 23s',
-    progress: 62,
-    totalSize: '1.4 MB',
-    filters: [{ label: 'Status', value: 'Open' }],
-  },
-  {
-    id: 'exp-004',
-    workOrderCount: 1,
-    format: 'PDF',
-    status: 'Exporting',
-    created: 'Mar 11, 1:34 PM',
-    completed: '—',
-    elapsed: '6m 10s',
-    progress: 84,
-    totalSize: '2.8 MB',
-    filters: [
-      { label: 'Priority', value: 'Low' },
-      { label: 'Location', value: 'Warehouse' },
-    ],
-  },
-  {
-    id: 'exp-005',
+    id: 'exp-007',
     workOrderCount: 45,
     format: 'PDF',
     status: 'Completed',
@@ -122,39 +153,56 @@ const mockExports: ExportRow[] = [
       { label: 'Category', value: 'Electrical' },
     ],
     subRows: [
-      { id: 'sub-005a', name: 'Batch A — WO-1201, WO-1202... (+13)', status: 'Completed', size: '1.8 MB' },
-      { id: 'sub-005b', name: 'Batch B — WO-1215, WO-1216... (+13)', status: 'Completed', size: '1.7 MB' },
-      { id: 'sub-005c', name: 'Batch C — WO-1229, WO-1230... (+13)', status: 'Completed', size: '1.7 MB' },
+      { id: 'sub-007a', name: 'Batch A — WO-1201, WO-1202... (+13)', status: 'Completed', size: '1.8 MB' },
+      { id: 'sub-007b', name: 'Batch B — WO-1215, WO-1216... (+13)', status: 'Completed', size: '1.7 MB' },
+      { id: 'sub-007c', name: 'Batch C — WO-1229, WO-1230... (+13)', status: 'Completed', size: '1.7 MB' },
     ],
-  },
-  {
-    id: 'exp-006',
-    workOrderCount: 1,
-    format: 'PDF',
-    status: 'Pending',
-    created: 'Mar 11, 1:24 PM',
-    completed: '—',
-    totalSize: '—',
-    filters: [{ label: 'Status', value: 'Open' }],
-  },
-  {
-    id: 'exp-007',
-    workOrderCount: 1,
-    format: 'PDF',
-    status: 'Pending',
-    created: 'Mar 11, 1:23 PM',
-    completed: '—',
-    totalSize: '—',
-    filters: [],
   },
   {
     id: 'exp-008',
     workOrderCount: 1,
     format: 'PDF',
-    status: 'Pending',
-    created: 'Mar 11, 1:22 PM',
-    completed: '—',
-    totalSize: '—',
+    status: 'Completed',
+    created: 'Mar 11, 1:24 PM',
+    completed: 'Mar 11, 1:25 PM',
+    duration: '32s',
+    totalSize: '480 KB',
+    filters: [{ label: 'Status', value: 'Open' }],
+  },
+  {
+    id: 'exp-009',
+    workOrderCount: 8,
+    format: 'PDF',
+    status: 'Completed',
+    created: 'Mar 11, 1:07 PM',
+    completed: 'Mar 11, 1:08 PM',
+    duration: '1m 45s',
+    totalSize: '1.2 MB',
+    filters: [{ label: 'Status', value: 'In Progress' }],
+  },
+  {
+    id: 'exp-010',
+    workOrderCount: 5,
+    format: 'PDF',
+    status: 'Completed',
+    created: 'Mar 11, 1:03 PM',
+    completed: 'Mar 11, 1:04 PM',
+    duration: '55s',
+    totalSize: '890 KB',
+    filters: [
+      { label: 'Location', value: 'Warehouse' },
+      { label: 'Priority', value: 'Critical' },
+    ],
+  },
+  {
+    id: 'exp-011',
+    workOrderCount: 14,
+    format: 'PDF',
+    status: 'Completed',
+    created: 'Mar 11, 1:00 PM',
+    completed: 'Mar 11, 1:02 PM',
+    duration: '2m 10s',
+    totalSize: '1.8 MB',
     filters: [
       { label: 'Priority', value: 'Medium' },
       { label: 'Location', value: 'Plant South' },
@@ -163,77 +211,26 @@ const mockExports: ExportRow[] = [
     ],
   },
   {
-    id: 'exp-009',
-    workOrderCount: 1,
-    format: 'PDF',
-    status: 'Pending',
-    created: 'Mar 11, 1:07 PM',
-    completed: '—',
-    totalSize: '—',
-    filters: [{ label: 'Status', value: 'In Progress' }],
-  },
-  {
-    id: 'exp-010',
-    workOrderCount: 1,
-    format: 'PDF',
-    status: 'Pending',
-    created: 'Mar 11, 1:03 PM',
-    completed: '—',
-    totalSize: '—',
-    filters: [
-      { label: 'Location', value: 'Warehouse' },
-      { label: 'Priority', value: 'Critical' },
-    ],
-  },
-  {
-    id: 'exp-011',
-    workOrderCount: 1,
-    format: 'PDF',
-    status: 'Pending',
-    created: 'Mar 11, 1:00 PM',
-    completed: '—',
-    totalSize: '—',
-    filters: [],
-  },
-  {
     id: 'exp-012',
-    workOrderCount: 1,
+    workOrderCount: 3,
     format: 'PDF',
-    status: 'Pending',
+    status: 'Completed',
     created: 'Mar 11, 12:58 PM',
-    completed: '—',
-    totalSize: '—',
+    completed: 'Mar 11, 12:59 PM',
+    duration: '28s',
+    totalSize: '340 KB',
     filters: [{ label: 'Status', value: 'Open' }],
   },
   {
     id: 'exp-013',
     workOrderCount: 1,
     format: 'PDF',
-    status: 'Pending',
+    status: 'Completed',
     created: 'Mar 11, 12:51 PM',
-    completed: '—',
-    totalSize: '—',
-    filters: [],
-  },
-  {
-    id: 'exp-014',
-    workOrderCount: 1,
-    format: 'PDF',
-    status: 'Pending',
-    created: 'Mar 11, 12:46 PM',
-    completed: '—',
-    totalSize: '—',
+    completed: 'Mar 11, 12:52 PM',
+    duration: '18s',
+    totalSize: '210 KB',
     filters: [{ label: 'Priority', value: 'Low' }],
-  },
-  {
-    id: 'exp-015',
-    workOrderCount: 1,
-    format: 'PDF',
-    status: 'Pending',
-    created: 'Mar 11, 12:38 PM',
-    completed: '—',
-    totalSize: '—',
-    filters: [],
   },
 ]
 
@@ -400,103 +397,111 @@ function FilterTags({ filters }: { filters: FilterTag[] }) {
 /* ── Row Action Menu (portal-based) ── */
 
 function RowActionMenu({ status, isSubRow }: { status: ExportStatus; isSubRow?: boolean }) {
-  const [open, setOpen] = useState(false)
-  const btnRef = useRef<HTMLButtonElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
-
-  const close = useCallback(() => setOpen(false), [])
-
+  const [copied, setCopied] = useState(false)
   const isCompleted = status === 'Completed'
-  const showDownload = isCompleted
   const showCancel = !isCompleted && !isSubRow
 
-  useEffect(() => {
-    if (!open || !btnRef.current) return
-    const r = btnRef.current.getBoundingClientRect()
-    setPos({ top: r.bottom + 4, left: r.right - 160 })
-  }, [open])
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
-  useEffect(() => {
-    if (!open) return
-    function handleClick(e: MouseEvent) {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current && !btnRef.current.contains(e.target as Node)
-      ) close()
-    }
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') close()
-    }
-    function handleScroll() { close() }
-    document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleKey)
-    window.addEventListener('scroll', handleScroll, true)
-    return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('keydown', handleKey)
-      window.removeEventListener('scroll', handleScroll, true)
-    }
-  }, [open, close])
+  if (isCompleted) {
+    return (
+      <div className="flex items-center justify-end gap-1.5">
+        <Tooltip.Root open={copied || undefined}>
+          <Tooltip.Trigger asChild>
+            <IconButton
+              variant="secondary"
+              size="sm"
+              label="Copy link"
+              onClick={handleCopyLink}
+            >
+              {copied ? (
+                <Check size={14} className="text-[var(--color-success)]" />
+              ) : (
+                <Link2 size={14} />
+              )}
+            </IconButton>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="top"
+              sideOffset={6}
+              className="px-2.5 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-neutral-12)] text-white text-xs font-medium shadow-[var(--shadow-lg)] animate-in fade-in-0 zoom-in-95"
+            >
+              {copied ? 'Copied!' : 'Copy link'}
+              <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" width={10} height={5} />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <IconButton
+              variant="secondary"
+              size="sm"
+              label="Download PDF"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Download size={14} />
+            </IconButton>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="top"
+              sideOffset={6}
+              className="px-2.5 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-neutral-12)] text-white text-xs font-medium shadow-[var(--shadow-lg)] animate-in fade-in-0 zoom-in-95"
+            >
+              Download PDF
+              <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" width={10} height={5} />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </div>
+    )
+  }
 
-  const menuEl = open && mounted ? createPortal(
-    <div
-      ref={menuRef}
-      className="fixed z-[9999] w-[160px] rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] py-1 dropdown-animate"
-      style={{ top: pos.top, left: pos.left }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {showDownload && (
-        <>
-          <button
-            onClick={() => close()}
-            className="flex items-center gap-2.5 w-full px-3 py-1.5 text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-          >
-            <Download size={14} className="text-[var(--color-neutral-8)]" />
-            Download
-          </button>
-          <button
-            onClick={() => close()}
-            className="flex items-center gap-2.5 w-full px-3 py-1.5 text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-          >
-            <Link2 size={14} className="text-[var(--color-neutral-8)]" />
-            Copy link
-          </button>
-        </>
-      )}
-      {showCancel && (
-        <>
-          {showDownload && <div className="h-px bg-[var(--border-subtle)] mx-2 my-1" />}
-          <button
-            onClick={() => close()}
-            className="flex items-center gap-2.5 w-full px-3 py-1.5 text-[length:var(--font-size-sm)] text-[var(--color-error)] hover:bg-[var(--color-error-light)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-          >
-            <X size={14} />
-            Cancel export
-          </button>
-        </>
-      )}
-    </div>,
-    document.body,
-  ) : null
+  if (showCancel) {
+    return (
+      <div className="flex items-center justify-end gap-1.5">
+        <IconButton
+          variant="secondary"
+          size="sm"
+          label="Copy link"
+          disabled
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Link2 size={14} />
+        </IconButton>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <IconButton
+              variant="secondary"
+              size="sm"
+              label="Cancel export"
+              className="!text-[var(--color-error)] hover:bg-[var(--color-error-light)] hover:border-[var(--color-error)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <X size={14} />
+            </IconButton>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="top"
+              sideOffset={6}
+              className="px-2.5 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-neutral-12)] text-white text-xs font-medium shadow-[var(--shadow-lg)] animate-in fade-in-0 zoom-in-95"
+            >
+              Cancel export
+              <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" width={10} height={5} />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </div>
+    )
+  }
 
-  return (
-    <>
-      <IconButton
-        ref={btnRef}
-        variant="ghost"
-        size="sm"
-        label="Actions"
-        onClick={(e) => { e.stopPropagation(); setOpen(o => !o) }}
-      >
-        <MoreHorizontal size={14} />
-      </IconButton>
-      {menuEl}
-    </>
-  )
+  return null
 }
 
 /* ── Main Page ── */
@@ -587,7 +592,7 @@ export default function ExportsPage() {
                         <TableCell className="whitespace-nowrap text-[var(--color-neutral-8)]">{row.created}</TableCell>
                         <TableCell className={`w-20 text-right whitespace-nowrap ${noSize ? 'text-[var(--color-neutral-7)]' : ''}`}>{row.totalSize}</TableCell>
                         <TableCell><StatusBadge status={row.status} duration={row.duration} progress={row.progress} /></TableCell>
-                        <TableCell className="w-12 text-center">
+                        <TableCell className="text-right">
                           <RowActionMenu status={row.status} />
                         </TableCell>
                       </TableRow>
@@ -603,7 +608,7 @@ export default function ExportsPage() {
                           <TableCell />
                           <TableCell className="w-20 text-right whitespace-nowrap text-[var(--color-neutral-9)]">{sub.size}</TableCell>
                           <TableCell><StatusBadge status={sub.status} /></TableCell>
-                          <TableCell className="w-12 text-center">
+                          <TableCell className="text-right">
                             <RowActionMenu status={sub.status} isSubRow />
                           </TableCell>
                         </TableRow>
