@@ -11,7 +11,7 @@ import * as Tooltip from '@radix-ui/react-tooltip'
 import {
   ClipboardList, Wrench, CalendarClock, Inbox,
   Sparkles, BarChart3, Gauge, Wifi,
-  Box, MapPin, Users, ListChecks, FileText, FileDown,
+  Box, MapPin, Users, ListChecks, FileText, FileDown, Files,
   Car, Map, FileSearch, Ticket, AlertTriangle, Plug,
   Rocket, Receipt, Building2,
   Gem, Download, Command, Wand2, Wallet,
@@ -77,9 +77,8 @@ const sections: NavSection[] = [
       { label: 'Locations', icon: MapPin },
       { label: 'People & Teams', icon: Users },
       { label: 'Checklists', icon: ListChecks },
-      { label: 'Files', icon: FileText },
-      { label: 'Import & Export', icon: FileDown },
-      { label: 'Exports', icon: FileDown, href: '/exports' },
+      { label: 'File Management', icon: Files, href: '/exports' },
+      { label: 'Import & Export', icon: FileDown, href: '/exports' },
     ],
   },
   {
@@ -120,10 +119,12 @@ const footerIcons = [
   { icon: Settings, label: 'Settings' },
 ]
 
-function isActive(pathname: string, href?: string): boolean {
+function isActive(pathname: string, href?: string, label?: string): boolean {
   if (!href) return false
   if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/'
   if (href === '/studio/browse') return pathname === '/studio' || pathname.startsWith('/studio/browse')
+  if (label === 'File Management') return pathname.startsWith('/exports') || pathname.startsWith('/files')
+  if (label === 'Import & Export') return false
   return pathname === href || pathname.startsWith(href + '/')
 }
 
@@ -221,7 +222,7 @@ export function SideNav({ collapsed }: SideNavProps) {
                       <CollapsedIcon
                         key={item.label}
                         item={item}
-                        active={isActive(pathname, item.href)}
+                        active={isActive(pathname, item.href, item.label)}
                         label={item.label}
                       />
                     ))}
@@ -244,7 +245,7 @@ export function SideNav({ collapsed }: SideNavProps) {
                     </Collapsible.Trigger>
                     <Collapsible.Content className="nav-collapsible-content overflow-hidden">
                       {section.items.map((item) => {
-                        const active = isActive(pathname, item.href)
+                        const active = isActive(pathname, item.href, item.label)
                         const classes = `flex items-center gap-2 w-full px-2 h-8 rounded-[var(--radius-sm)] cursor-pointer transition-colors duration-[var(--duration-fast)] ease-[var(--ease-default)] ${
                           active
                             ? 'bg-[var(--color-neutral-4)] font-semibold text-[var(--color-neutral-12)]'

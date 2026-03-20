@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Pencil, LayoutGrid, MoreHorizontal, ChevronDown } from 'lucide-react'
+import { Plus, Pencil, LayoutGrid, MoreHorizontal, ChevronDown, FileDown, FileText, Upload } from 'lucide-react'
 import { SideNav } from '@/app/components/dashboard/SideNav'
 import { TopBar } from '@/app/components/dashboard/TopBar'
 import { Button } from '@/app/components/ui/Button'
@@ -15,7 +15,8 @@ import type { Role } from '@/app/lib/models'
 
 function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/work-orders')) return 'Work Orders'
-  if (pathname.startsWith('/exports')) return 'Exports'
+  if (pathname.startsWith('/files')) return 'File Management'
+  if (pathname.startsWith('/exports')) return 'File Management'
   if (pathname.startsWith('/billing')) return 'Billing & Usage'
   if (pathname.startsWith('/studio/create')) return 'New App'
   if (pathname.startsWith('/studio/browse')) return 'Studio'
@@ -84,6 +85,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </Button>
       )
     }
+    if (pathname.startsWith('/files')) {
+      return (
+        <Button variant="primary" size="md" className="gap-1.5">
+          <Upload size={14} />
+          Add Files
+        </Button>
+      )
+    }
     if (isWorkOrders) {
       return (
         <>
@@ -116,7 +125,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             onTimeRangeChange={setTimeRange}
             onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
             sites={sites}
-            minimal={isEdge || isStudioSection || pathname.startsWith('/exports') || isWorkOrders}
+            minimal={isEdge || isStudioSection || pathname.startsWith('/exports') || pathname.startsWith('/files') || isWorkOrders}
             backHref={isRuntimeDetail ? '/edge/runtime' : undefined}
             afterTitle={isWorkOrders ? (
               <button className="inline-flex items-center gap-1.5 ml-2 px-2.5 py-1 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-secondary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] cursor-pointer hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)]">
@@ -124,6 +133,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 Table
                 <ChevronDown size={12} className="text-[var(--color-neutral-7)]" />
               </button>
+            ) : (pathname.startsWith('/exports') || pathname.startsWith('/files')) ? (
+              <div className="flex items-center gap-0 ml-4 self-stretch">
+                {[
+                  { label: 'Exports', href: '/exports', icon: FileDown },
+                  { label: 'Files', href: '/files', icon: FileText },
+                ].map((tab) => {
+                  const isActive = pathname.startsWith(tab.href)
+                  return (
+                    <Link
+                      key={tab.href}
+                      href={tab.href}
+                      className={`inline-flex items-center gap-1.5 px-3 h-full text-[length:var(--font-size-sm)] font-medium transition-colors duration-[var(--duration-fast)] border-b-2 ${
+                        isActive
+                          ? 'text-[var(--color-accent-9)] border-[var(--color-accent-9)]'
+                          : 'text-[var(--color-neutral-8)] border-transparent hover:text-[var(--color-neutral-11)]'
+                      }`}
+                    >
+                      {tab.label}
+                    </Link>
+                  )
+                })}
+              </div>
             ) : undefined}
             actions={getActions()}
           />
@@ -133,6 +164,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )}
         <div id="runtime-sensor-bar-portal" />
         <div id="runtime-kpi-portal" />
+        <div id="page-toolbar-portal" />
         {isCreateApp ? (
           children
         ) : (

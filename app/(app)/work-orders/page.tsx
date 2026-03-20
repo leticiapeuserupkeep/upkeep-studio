@@ -634,7 +634,7 @@ export default function WorkOrdersPage() {
 
           {/* ── Table Card ── */}
           <div
-            className="bg-[var(--surface-primary)] rounded-[var(--widget-radius)] border border-[var(--widget-border)] shadow-[var(--widget-shadow)] overflow-hidden opacity-0"
+            className="bg-[var(--surface-primary)] rounded-[var(--widget-radius)] border border-[var(--widget-border)] overflow-hidden opacity-0"
             style={{
               animation: 'fadeInUp 0.4s var(--ease-default) 0.06s forwards',
             }}

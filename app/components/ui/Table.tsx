@@ -24,7 +24,7 @@ export function TableRow({ children, className = '', ...props }: React.HTMLAttri
 export function TableHead({ children, className = '', ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
-      className={`text-left text-[length:var(--font-size-xs)] font-semibold text-[var(--color-neutral-8)] uppercase tracking-wider py-3 px-5 border-b border-[var(--border-default)] ${className}`}
+      className={`text-left text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-12)] py-3 px-5 border-b border-[var(--border-default)] ${className}`}
       {...props}
     >
       {children}
