@@ -33,9 +33,12 @@ interface ExportSubRow {
   workOrders?: WorkOrderItem[]
 }
 
+type ExportItemType = 'Work Orders' | 'Assets' | 'Locations' | 'Parts' | 'Meters'
+
 interface ExportRow {
   id: string
   workOrderCount: number
+  itemType: ExportItemType
   format: string
   status: ExportStatus
   created: string
@@ -55,6 +58,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-001',
     workOrderCount: 12,
+    itemType: 'Work Orders',
     format: 'PDF',
     status: 'Pending',
     created: 'Mar 11, 2:48 PM',
@@ -68,6 +72,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-002',
     workOrderCount: 3,
+    itemType: 'Assets',
     format: 'PDF',
     status: 'Pending',
     created: 'Mar 11, 2:46 PM',
@@ -78,6 +83,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-003',
     workOrderCount: 1,
+    itemType: 'Parts',
     format: 'PDF',
     status: 'Exporting',
     created: 'Mar 11, 2:44 PM',
@@ -93,6 +99,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-004',
     workOrderCount: 45,
+    itemType: 'Work Orders',
     format: 'PDF',
     status: 'Exporting',
     created: 'Mar 11, 2:42 PM',
@@ -161,6 +168,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-005',
     workOrderCount: 171,
+    itemType: 'Work Orders',
     format: 'PDF',
     status: 'Completed',
     created: 'Mar 11, 2:30 PM',
@@ -185,6 +193,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-006',
     workOrderCount: 21,
+    itemType: 'Locations',
     format: 'PDF',
     status: 'Completed',
     created: 'Mar 11, 1:36 PM',
@@ -200,6 +209,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-007',
     workOrderCount: 45,
+    itemType: 'Work Orders',
     format: 'PDF',
     status: 'Completed',
     created: 'Mar 11, 1:33 PM',
@@ -269,6 +279,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-008',
     workOrderCount: 1,
+    itemType: 'Meters',
     format: 'PDF',
     status: 'Completed',
     created: 'Mar 11, 1:24 PM',
@@ -281,6 +292,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-009',
     workOrderCount: 8,
+    itemType: 'Assets',
     format: 'PDF',
     status: 'Completed',
     created: 'Mar 11, 1:07 PM',
@@ -293,6 +305,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-010',
     workOrderCount: 5,
+    itemType: 'Parts',
     format: 'PDF',
     status: 'Completed',
     created: 'Mar 11, 1:03 PM',
@@ -308,6 +321,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-011',
     workOrderCount: 14,
+    itemType: 'Work Orders',
     format: 'PDF',
     status: 'Completed',
     created: 'Mar 11, 1:00 PM',
@@ -325,6 +339,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-012',
     workOrderCount: 3,
+    itemType: 'Locations',
     format: 'PDF',
     status: 'Expired',
     created: 'Feb 25, 12:58 PM',
@@ -337,6 +352,7 @@ const mockExports: ExportRow[] = [
   {
     id: 'exp-013',
     workOrderCount: 1,
+    itemType: 'Assets',
     format: 'PDF',
     status: 'Expired',
     created: 'Feb 20, 12:51 PM',
@@ -809,7 +825,7 @@ export default function ExportsPage() {
                         </TableCell>
                         <TableCell className="font-medium text-[var(--color-neutral-12)] whitespace-nowrap !pl-2">
                           <span className="inline-flex items-center gap-2">
-                            {row.workOrderCount} Items
+                            {row.workOrderCount} {row.itemType}
                             {showFileCount && (
                               <Badge severity="neutral" variant="subtle">
                                 {pluralize(fileCount, 'file')}
