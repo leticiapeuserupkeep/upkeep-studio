@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, ChevronDown, ArrowUpDown, X, MessageSquare, Loader, RefreshCw, Sparkles, ArrowRight } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import { AppCard } from '@/app/components/studio/AppCard'
@@ -481,6 +482,7 @@ function SkeletonCard() {
 }
 
 export default function BrowseAppsPage() {
+  const router = useRouter()
   const { role } = useDashboardContext()
   const [activeTab, setActiveTab] = useState('All')
   const [loading, setLoading] = useState(false)
@@ -770,7 +772,7 @@ export default function BrowseAppsPage() {
           <button
             key={tab.label}
             onClick={() => handleTabChange(tab.label)}
-            className={`px-4 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+            className={`px-4 py-1.5 rounded-full text-[length:var(--font-size-sm)] font-medium whitespace-nowrap transition-colors duration-[var(--duration-fast)] cursor-pointer ${
               activeTab === tab.label
                 ? 'bg-[color:var(--color-accent-9)] text-white'
                 : 'bg-[var(--surface-primary)] border border-[var(--border-default)] text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)]'
@@ -790,7 +792,7 @@ export default function BrowseAppsPage() {
           </>
         ) : (
           <div key={activeTab} className="fade-animate">
-            <h2 className="text-[20px] font-bold text-[var(--color-neutral-12)]">{activeTab}</h2>
+            <h2 className="text-[length:var(--font-size-xl)] font-bold text-[var(--color-neutral-12)]">{activeTab}</h2>
             <p className="text-[length:var(--font-size-body-2)] text-[color:var(--color-neutral-8)] mt-1">
               {activeTabData?.subtitle || 'Browse the full app library'}
             </p>
@@ -808,7 +810,12 @@ export default function BrowseAppsPage() {
                 className="card-animate h-full"
                 style={{ animationDelay: `${i * 80}ms` }}
               >
-                <AppCard {...app} onClick={() => { setSelectedApp(app); setModalOpen(true) }} />
+                <AppCard
+                  {...app}
+                  onClick={() => { setSelectedApp(app); setModalOpen(true) }}
+                  onReuse={() => router.push(`/studio/create?from=${encodeURIComponent(app.title)}&prompt=${encodeURIComponent(app.description)}`)}
+                  reuseLabel="Use as starting point"
+                />
               </div>
             ))
         }
@@ -845,10 +852,10 @@ export default function BrowseAppsPage() {
               onClick={() => { handleTabChange('Recommended'); setBannerDismissed(true) }}
             >
               <Sparkles size={15} className="text-[var(--color-accent-7)] banner-sparkle shrink-0" />
-              <span className="text-[13px] font-semibold text-[var(--color-accent-12)] whitespace-nowrap">
+              <span className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-accent-12)] whitespace-nowrap">
                 {uninstalledPopularCount} app{uninstalledPopularCount > 1 ? 's' : ''} popular with {roleLabels[role]}
               </span>
-              <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--color-accent-7)] text-white text-[12px] font-semibold whitespace-nowrap transition-colors duration-[var(--duration-fast)] hover:bg-[var(--color-accent-8)]">
+              <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--color-accent-7)] text-white text-[length:var(--font-size-sm)] font-semibold whitespace-nowrap transition-colors duration-[var(--duration-fast)] hover:bg-[var(--color-accent-8)]">
                 View <ArrowRight size={12} />
               </span>
               <button

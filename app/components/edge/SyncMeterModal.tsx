@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import * as Switch from '@radix-ui/react-switch'
+import { Switch } from '@/app/components/ui'
 import { ChevronDown, Check } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/app/components/ui/Modal'
@@ -138,13 +138,11 @@ export function SyncMeterModal({ open, onOpenChange, sensorName, totalRuntime }:
           <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] cursor-pointer select-none">
             Enable meter syncing
           </label>
-          <Switch.Root
+          <Switch
             checked={enabled}
             onCheckedChange={setEnabled}
-            className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-[var(--duration-fast)] data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
-          >
-            <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-[var(--duration-fast)] translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
-          </Switch.Root>
+            size="md"
+          />
         </div>
       </ModalBody>
 

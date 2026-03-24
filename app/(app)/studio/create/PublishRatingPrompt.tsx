@@ -55,12 +55,12 @@ export function PublishRatingPrompt({ onDismiss }: { onDismiss: () => void }) {
         {submitted ? (
           <div className="flex flex-col items-center gap-1 px-4 py-2">
             <span className="text-base">🙏</span>
-            <p className="text-sm font-medium text-[var(--color-neutral-12)]">Thanks for your feedback!</p>
+            <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Thanks for your feedback!</p>
           </div>
         ) : (
           <>
             <div className="flex items-start justify-between gap-6 mb-5">
-              <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)] leading-snug">
+              <h3 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)] leading-snug">
                 How was your experience using Studio?
               </h3>
               <button
@@ -84,13 +84,13 @@ export function PublishRatingPrompt({ onDismiss }: { onDismiss: () => void }) {
                   }`}
                 >
                   <span
-                    className={`text-[28px] leading-none transition-transform duration-[var(--duration-fast)] ${
+                    className={`text-[length:var(--font-size-3xl)] leading-none transition-transform duration-[var(--duration-fast)] ${
                       selected === opt.value ? 'scale-110' : 'group-hover:scale-110'
                     }`}
                   >
                     {opt.emoji}
                   </span>
-                  <span className={`text-xs font-medium transition-colors duration-[var(--duration-fast)] ${
+                  <span className={`text-[length:var(--font-size-sm)] font-medium transition-colors duration-[var(--duration-fast)] ${
                     selected === opt.value ? 'text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-8)]'
                   }`}>
                     {opt.label}
@@ -108,14 +108,14 @@ export function PublishRatingPrompt({ onDismiss }: { onDismiss: () => void }) {
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   placeholder="What could we improve? (optional)"
-                  className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border border-[var(--border-default)] outline-none focus:border-[var(--color-accent-8)] transition-colors duration-[var(--duration-fast)]"
+                  className="w-full resize-none text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border border-[var(--border-default)] outline-none focus:border-[var(--color-accent-8)] transition-colors duration-[var(--duration-fast)]"
                   rows={2}
                   autoFocus
                 />
                 <div className="flex justify-end">
                   <button
                     onClick={handleSubmitFeedback}
-                    className="px-3.5 py-1.5 rounded-lg bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)] text-white text-sm font-medium transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-lg bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)] text-white text-[length:var(--font-size-base)] font-medium transition-colors duration-[var(--duration-fast)] cursor-pointer"
                   >
                     Submit
                   </button>

@@ -49,21 +49,21 @@ export function GeneratedAppPreview({ prompt }: { prompt: string }) {
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 border border-white/10 backdrop-blur-sm">
               <AppIcon size={20} className="text-white/90" />
             </div>
-            <span className="text-[13px] font-semibold tracking-[0.15em] uppercase text-white/70">{app.name}</span>
+            <span className="text-[length:var(--font-size-sm)] font-semibold tracking-[0.15em] uppercase text-white/70">{app.name}</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <h2 className="text-[28px] font-bold leading-tight text-white/60">
+            <h2 className="text-[length:var(--font-size-3xl)] font-bold leading-tight text-white/60">
               {app.headline.split(' ').map((word, i) => (
                 <span key={i}>{i > 0 ? ' ' : ''}<span className={i === app.headline.split(' ').length - 1 ? 'text-white' : ''}>{word}</span></span>
               ))}
             </h2>
-            <h2 className="text-[28px] font-bold leading-tight">
+            <h2 className="text-[length:var(--font-size-3xl)] font-bold leading-tight">
               {app.headlineAccent.split(' ').map((word, i) => (
                 <span key={i}>{i > 0 ? ' ' : ''}<span className={i === app.headlineAccent.split(' ').length - 1 ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#a78bfa] to-[#818cf8]' : 'text-white/60'}>{word}</span></span>
               ))}
             </h2>
           </div>
-          <p className="text-sm text-white/50 max-w-[360px] leading-relaxed">{app.subtitle}</p>
+          <p className="text-[length:var(--font-size-base)] text-white/50 max-w-[360px] leading-relaxed">{app.subtitle}</p>
         </div>
       </div>
 
@@ -76,10 +76,10 @@ export function GeneratedAppPreview({ prompt }: { prompt: string }) {
                 <Camera size={24} className="text-[var(--color-accent-7)]" />
               </div>
               <div className="flex flex-col items-center gap-1 text-center">
-                <p className="text-sm font-semibold text-[var(--color-neutral-12)]">Choose a file or drag & drop it here</p>
-                <p className="text-xs text-[var(--color-neutral-7)]">JPEG, PNG, PDF, and MP4 formats, up to 50MB</p>
+                <p className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">Choose a file or drag & drop it here</p>
+                <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">JPEG, PNG, PDF, and MP4 formats, up to 50MB</p>
               </div>
-              <button className="px-5 py-2 rounded-lg bg-[var(--color-accent-9)] text-white text-sm font-medium hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+              <button className="px-5 py-2 rounded-lg bg-[var(--color-accent-9)] text-white text-[length:var(--font-size-base)] font-medium hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                 Browse File
               </button>
             </>
@@ -91,12 +91,12 @@ export function GeneratedAppPreview({ prompt }: { prompt: string }) {
                     <div className={`w-5 h-5 rounded-[5px] border-2 flex items-center justify-center shrink-0 ${i < 2 ? 'bg-[var(--color-accent-9)] border-[var(--color-accent-9)]' : 'border-[var(--color-neutral-6)]'}`}>
                       {i < 2 && <Check size={12} strokeWidth={3} className="text-white" />}
                     </div>
-                    <span className={`text-sm ${i < 2 ? 'text-[var(--color-neutral-8)] line-through' : 'text-[var(--color-neutral-12)]'}`}>{item}</span>
+                    <span className={`text-[length:var(--font-size-base)] ${i < 2 ? 'text-[var(--color-neutral-8)] line-through' : 'text-[var(--color-neutral-12)]'}`}>{item}</span>
                   </div>
                 ))}
               </div>
               <div className="w-full flex items-center justify-between pt-2">
-                <span className="text-xs text-[var(--color-neutral-7)]">2 of 4 complete</span>
+                <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">2 of 4 complete</span>
                 <div className="w-24 h-1.5 rounded-full bg-[var(--color-neutral-3)]">
                   <div className="w-1/2 h-full rounded-full bg-[var(--color-accent-9)]" />
                 </div>
@@ -112,9 +112,9 @@ export function GeneratedAppPreview({ prompt }: { prompt: string }) {
                   { label: 'Uptime', value: '96.2%', trend: '+1.1%' },
                 ].map((kpi) => (
                   <div key={kpi.label} className="flex flex-col gap-1 p-3 rounded-lg bg-[var(--color-neutral-2)] border border-[var(--border-default)]">
-                    <span className="text-[11px] font-medium text-[var(--color-neutral-8)] uppercase tracking-wider">{kpi.label}</span>
+                    <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-8)] uppercase tracking-wider">{kpi.label}</span>
                     <span className="text-lg font-bold text-[var(--color-neutral-12)]">{kpi.value}</span>
-                    <span className="text-[11px] font-medium text-[var(--color-accent-9)]">{kpi.trend}</span>
+                    <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-accent-9)]">{kpi.trend}</span>
                   </div>
                 ))}
               </div>
@@ -142,7 +142,7 @@ export function GeneratedAppPreview({ prompt }: { prompt: string }) {
       {/* Footer */}
       <div className="flex items-center justify-center gap-2 py-4 border-t border-[var(--border-default)]">
         <Sparkles size={14} className="text-[var(--color-neutral-7)]" />
-        <span className="text-xs text-[var(--color-neutral-7)]">Created by UpKeep Studio — 2026</span>
+        <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Created by UpKeep Studio — 2026</span>
       </div>
     </div>
   )

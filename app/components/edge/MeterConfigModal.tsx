@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import * as Switch from '@radix-ui/react-switch'
+import { Switch } from '@/app/components/ui'
 import { ChevronDown, Info, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import { Modal, ModalHeader } from '@/app/components/ui/Modal'
@@ -226,13 +226,11 @@ export function MeterConfigModal({
                   </div>
 
                   <div className="flex items-center gap-[var(--space-sm)] pt-[var(--space-sm)]">
-                    <Switch.Root
+                    <Switch
                       checked={enableSync}
                       onCheckedChange={setEnableSync}
-                      className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-[var(--duration-fast)] data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
-                    >
-                      <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-[var(--duration-fast)] translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
-                    </Switch.Root>
+                      size="md"
+                    />
                     <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] cursor-pointer select-none">
                       Enable Meter Syncing
                     </label>

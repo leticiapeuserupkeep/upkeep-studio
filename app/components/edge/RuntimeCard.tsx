@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import * as Switch from '@radix-ui/react-switch'
+import { Switch } from '@/app/components/ui'
 import { MapPin, Gauge, EllipsisVertical, Pencil, TrendingUp, TrendingDown } from 'lucide-react'
 import { Badge } from '@/app/components/ui/Badge'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/app/components/ui/DropdownMenu'
@@ -55,7 +55,7 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit, 
   const ringColor =
     sensor.status === 'connected'
       ? 'var(--color-accent-9)'
-      : '#CE2C31'
+      : 'var(--color-error)'
 
   return (
     <>
@@ -85,7 +85,7 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit, 
               </div>
             </div>
             <div className="flex-1" />
-            <span className="text-[length:12px] leading-5 tracking-[-0.15px] text-[var(--widget-empty-text-color)]">
+            <span className="text-[length:var(--font-size-sm)] leading-5 tracking-[-0.15px] text-[var(--widget-empty-text-color)]">
               {sensor.lastReading}
             </span>
             <Badge severity={isReset ? 'neutral' : statusInfo.severity} dot>
@@ -136,12 +136,12 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit, 
             <>
               <div className="flex items-center gap-6">
                 <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-                  <h3 className="text-[length:16px] font-bold text-[var(--color-neutral-12)] leading-5 group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]">
+                  <h3 className="text-[length:var(--font-size-md)] font-bold text-[var(--color-neutral-12)] leading-5 group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]">
                     {sensor.name}
                   </h3>
                   <div className="flex items-center gap-2">
                     <MapPin size={16} className="text-[var(--color-neutral-8)] shrink-0" />
-                    <span className="text-[length:14px] font-medium text-[var(--color-neutral-7)] truncate leading-4">
+                    <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-7)] truncate leading-4">
                       {sensor.locationName}
                     </span>
                   </div>
@@ -151,7 +151,7 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit, 
                     ) : (
                       <TrendingUp size={20} className="text-[var(--color-accent-9)]" />
                     )}
-                    <span className={`text-[length:12px] font-medium leading-[140%] ml-0.5 ${isDown ? 'text-[var(--color-error)]' : 'text-[var(--color-accent-9)]'}`}>
+                    <span className={`text-[length:var(--font-size-sm)] font-medium leading-[140%] ml-0.5 ${isDown ? 'text-[var(--color-error)]' : 'text-[var(--color-accent-9)]'}`}>
                       {isUp ? '+' : ''}{Math.round(delta * 10) / 10}%
                     </span>
                   </div>
@@ -162,27 +162,26 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit, 
 
               {/* Row 3: Meter */}
               <div
-                className="flex items-center gap-1.5 pt-4 border-t border-[#F0F0F3]"
+                className="flex items-center gap-1.5 pt-4 border-t border-[var(--border-subtle)]"
                 onClick={(e) => {
                   e.preventDefault()
                   setShowMeterModal(true)
                 }}
               >
                 <Gauge size={18} className="text-[var(--color-neutral-12)] shrink-0" />
-                <span className="text-[length:12px] text-[var(--color-neutral-7)] leading-4">Meter:</span>
+                <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] leading-4">Meter:</span>
                 {sensor.meterName ? (
                   <>
-                    <span className="text-[length:12px] text-[var(--color-neutral-7)] leading-4 flex-1 truncate">
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] leading-4 flex-1 truncate">
                       {sensor.meterName}
                     </span>
                     <div onClick={(e) => { e.preventDefault(); e.stopPropagation() }}>
-                      <Switch.Root
+                      <Switch
                         checked={meterSyncOn}
                         onCheckedChange={setMeterSyncOn}
-                        className="relative w-7 h-4 rounded-full cursor-pointer transition-colors duration-[var(--duration-fast)] shrink-0 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[#E0E1E6]"
-                      >
-                        <Switch.Thumb className="block w-3.5 h-3.5 bg-white rounded-full shadow-[0px_4px_16px_-8px_rgba(0,0,0,0.1),0px_3px_12px_-4px_rgba(0,0,0,0.1),0px_2px_3px_-2px_rgba(0,0,51,0.06)] transition-transform duration-[var(--duration-fast)] translate-x-[1px] data-[state=checked]:translate-x-[13px]" />
-                      </Switch.Root>
+                        size="sm"
+                        className="shrink-0"
+                      />
                     </div>
                   </>
                 ) : (
@@ -192,7 +191,7 @@ export function RuntimeCard({ sensor, selected = false, onSelectChange, onEdit, 
                       e.stopPropagation()
                       setShowSyncMeterModal(true)
                     }}
-                    className="text-[length:12px] font-medium text-[var(--color-accent-9)] leading-4 flex-1 text-left hover:underline cursor-pointer"
+                    className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] leading-4 flex-1 text-left hover:underline cursor-pointer"
                   >
                     Sync Meter
                   </button>
@@ -239,7 +238,7 @@ function UptimeRing({ percent, color, totalHours }: { percent: number; color: st
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#F0F0F3"
+          stroke="var(--border-subtle)"
           strokeWidth={stroke}
         />
         <circle
@@ -255,10 +254,10 @@ function UptimeRing({ percent, color, totalHours }: { percent: number; color: st
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="text-[length:22px] font-extrabold leading-5 text-[var(--color-neutral-12)]">
+        <span className="text-[length:var(--font-size-xl)] font-extrabold leading-5 text-[var(--color-neutral-12)]">
           {Math.round(percent)}%
         </span>
-        <span className="text-[length:14px] font-normal leading-[18px] text-[var(--color-neutral-7)]">
+        <span className="text-[length:var(--font-size-base)] font-normal leading-[18px] text-[var(--color-neutral-7)]">
           {formatHours(totalHours)} Hs
         </span>
       </div>

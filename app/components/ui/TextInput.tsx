@@ -24,11 +24,11 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
           <input
             ref={ref}
             id={inputId}
-            className={`flex-1 px-[var(--space-md)] py-[10px] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none min-w-0 placeholder:text-[var(--color-neutral-7)] disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+            className={`flex-1 px-[var(--space-md)] py-[var(--space-sm)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none min-w-0 placeholder:text-[var(--color-neutral-7)] disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
             {...props}
           />
           {suffix && (
-            <span className="px-[var(--space-md)] py-[10px] text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] bg-[var(--surface-secondary)] border-l border-[var(--border-default)]">
+            <span className="px-[var(--space-md)] py-[var(--space-sm)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] bg-[var(--surface-secondary)] border-l border-[var(--border-default)]">
               {suffix}
             </span>
           )}

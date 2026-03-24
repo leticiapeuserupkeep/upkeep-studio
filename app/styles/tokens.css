@@ -41,6 +41,10 @@
   --color-info-light: #e7f5ff;
   --color-info-border: #a5d8ff;
 
+  /* ── Purple (Avatars / Accent) ── */
+  --color-purple: #7C3AED;
+  --color-purple-light: #e8d5f5;
+
   /* ── Interactive States ── */
   --color-error-hover: #c92a2a;
   --color-error-active: #641723;
@@ -186,9 +190,18 @@
   --color-accent-1: #1a2035;
   --color-accent-2: #1e2d50;
   --color-accent-3: #253d6e;
+  --color-accent-4: #2d4d8a;
+  --color-accent-5: #3660a8;
+  --color-accent-6: #4070c0;
+  --color-accent-7: #4a80d0;
+  --color-accent-8: #5590e0;
   --color-accent-9: #5b7ef5;
   --color-accent-10: #6d8ef7;
+  --color-accent-11: #8aa4f9;
   --color-accent-12: #3b5cc8;
+
+  --color-purple: #a78bfa;
+  --color-purple-light: #2d1f45;
 
   --color-error-hover: #e64545;
   --color-error-active: #8a2020;
@@ -202,8 +215,11 @@
 
   --surface-primary: var(--color-neutral-1);
   --surface-secondary: var(--color-neutral-2);
+  --surface-sidebar: var(--color-neutral-2);
+  --surface-canvas: var(--color-neutral-1);
   --surface-sunken: #0c0c0e;
   --surface-raised: var(--color-neutral-3);
+  --surface-overlay: rgba(0, 0, 0, 0.7);
   --border-default: var(--color-neutral-4);
   --border-subtle: var(--color-neutral-3);
 

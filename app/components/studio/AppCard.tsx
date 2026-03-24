@@ -1,8 +1,14 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Download, Heart, Star, Check, Pencil } from 'lucide-react'
+import { Download, Heart, Star, Check, Pencil, MoreHorizontal, Copy } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/app/components/ui/DropdownMenu'
 
 type AppStatus = 'install' | 'installed' | 'update' | 'built'
 export type BuildStatus = 'published' | 'in-review' | 'rejected' | 'draft'
@@ -26,6 +32,9 @@ interface AppCardProps {
   rating?: number
   ratingCount?: number
   lastUpdatedStale?: boolean
+  onReuse?: () => void
+  reuseLabel?: string
+  analyticsPreview?: string
 }
 
 const buildStatusConfig: Record<BuildStatus, { label: string; color: string; bg: string; border: string }> = {
@@ -92,10 +101,14 @@ function CardActions({
   status,
   phase,
   onInstall,
+  onReuse,
+  reuseLabel,
 }: {
   status: AppStatus
   phase: CardPhase
   onInstall?: () => void
+  onReuse?: () => void
+  reuseLabel?: string
 }) {
   if (phase === 'installing') {
     return (
@@ -125,27 +138,50 @@ function CardActions({
     )
   }
 
+  const reuseMenu = onReuse ? (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="flex items-center justify-center w-8 h-8 shrink-0 rounded-[var(--radius-lg)] border border-[var(--border-default)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+          onClick={(e) => e.stopPropagation()}
+          aria-label="More actions"
+        >
+          <MoreHorizontal size={14} className="text-[var(--color-neutral-8)]" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem onSelect={onReuse}>
+          <Copy size={14} className="text-[var(--color-neutral-8)]" />
+          {reuseLabel || 'Use as starting point'}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ) : null
+
   switch (status) {
     case 'install':
       return (
-        <div className="pt-[var(--space-sm)]">
-          <Button variant="primary" size="md" className="w-full" onClick={(e) => { e.stopPropagation(); onInstall?.() }}>
+        <div className="flex gap-[var(--space-sm)] pt-[var(--space-sm)]">
+          {reuseMenu}
+          <Button variant="primary" size="md" className="flex-1" onClick={(e) => { e.stopPropagation(); onInstall?.() }}>
             Install
           </Button>
         </div>
       )
     case 'installed':
       return (
-        <div className="pt-[var(--space-sm)]">
-          <Button variant="secondary" size="md" className="w-full border-[var(--color-accent-5)] text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-[var(--space-sm)] pt-[var(--space-sm)]">
+          {reuseMenu}
+          <Button variant="secondary" size="md" className="flex-1 border-[var(--color-accent-5)] text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)]" onClick={(e) => e.stopPropagation()}>
             Open
           </Button>
         </div>
       )
     case 'update':
       return (
-        <div className="pt-[var(--space-sm)]">
-          <Button variant="primary" size="md" className="w-full" onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-[var(--space-sm)] pt-[var(--space-sm)]">
+          {reuseMenu}
+          <Button variant="primary" size="md" className="flex-1" onClick={(e) => e.stopPropagation()}>
             Update
           </Button>
         </div>
@@ -153,6 +189,7 @@ function CardActions({
     case 'built':
       return (
         <div className="flex gap-[var(--space-sm)] pt-[var(--space-sm)]">
+          {reuseMenu}
           <Button
             variant="secondary"
             size="md"
@@ -174,7 +211,7 @@ export function AppCard({
   title, description, likes, downloads, status,
   color = 'var(--color-accent-9)', onClick, creator, lastUpdated, tags,
   image, screenshots, buildStatus, suggestedNote, rating, ratingCount,
-  lastUpdatedStale,
+  lastUpdatedStale, onReuse, reuseLabel, analyticsPreview,
 }: AppCardProps) {
   const [hovered, setHovered] = useState(false)
   const [cardStatus, setCardStatus] = useState(status)
@@ -362,7 +399,7 @@ export function AppCard({
         {/* Suggested section (install cards) */}
         {cardStatus === 'install' && (
           <div className="flex-1 mt-[var(--space-sm)] py-3">
-            <span className="block w-full pb-2 text-[10px] font-medium text-[var(--color-neutral-8)] tracking-wide uppercase">
+            <span className="block w-full pb-2 text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-8)] tracking-wide uppercase">
               Suggested
             </span>
             {suggestedNote && (
@@ -376,7 +413,7 @@ export function AppCard({
         {/* Categories section (installed / update / built cards) */}
         {cardStatus !== 'install' && tags && tags.length > 0 && (
           <div className="flex-1 mt-[var(--space-sm)] py-3">
-            <span className="block w-full pb-2 text-[10px] font-medium text-[var(--color-neutral-8)] tracking-wide uppercase">
+            <span className="block w-full pb-2 text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-8)] tracking-wide uppercase">
               Categories
             </span>
             <div className="flex flex-wrap gap-1.5 mt-0.5">
@@ -390,6 +427,12 @@ export function AppCard({
               ))}
             </div>
           </div>
+        )}
+
+        {analyticsPreview && (
+          <p className="text-[length:var(--font-size-caption)] text-[var(--color-accent-9)] font-medium pb-[var(--space-xs)]">
+            {analyticsPreview}
+          </p>
         )}
 
         {/* Footer: Created By + Date */}
@@ -407,6 +450,8 @@ export function AppCard({
           status={cardStatus}
           phase={phase}
           onInstall={handleInstall}
+          onReuse={onReuse}
+          reuseLabel={reuseLabel}
         />
       </div>
     </div>

@@ -2,8 +2,7 @@
 
 import { useRef, useEffect, useCallback } from 'react'
 
-import * as Tooltip from '@radix-ui/react-tooltip'
-import * as Switch from '@radix-ui/react-switch'
+import { Switch, Tooltip, TooltipProvider } from '@/app/components/ui'
 import {
   PanelLeft, Plus, Mic, ArrowUp,
   Camera, Settings,
@@ -318,56 +317,40 @@ export function BuilderView({
           >
             <PanelLeft size={20} className="text-[var(--color-neutral-10)]" />
           </button>
-          <span className="text-[20px] font-semibold leading-7 text-[var(--color-neutral-12)] pl-4">New App</span>
+          <span className="text-[length:var(--font-size-xl)] font-semibold leading-7 text-[var(--color-neutral-12)] pl-4">New App</span>
         </div>
 
         <div className="w-px h-8 bg-[var(--border-default)] shrink-0" />
 
         <div className="flex items-center flex-1 gap-5">
-          <Tooltip.Provider delayDuration={300}>
+          <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-1 pl-5">
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <button className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Refresh preview">
-                  <RotateCw size={20} strokeWidth={1.5} className="text-[var(--color-neutral-9)]" />
-                </button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content side="bottom" sideOffset={6} className="tooltip-animate px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
-                  Reload preview
-                  <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
+            <Tooltip content="Reload preview" side="bottom" sideOffset={6}>
+              <button className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Refresh preview">
+                <RotateCw size={20} strokeWidth={1.5} className="text-[var(--color-neutral-9)]" />
+              </button>
+            </Tooltip>
             <div className="w-px h-5 bg-[var(--border-default)] mx-1" />
             {deviceConfig.map(({ device, icon: DeviceIcon, label }) => (
-              <Tooltip.Root key={device}>
-                <Tooltip.Trigger asChild>
-                  <button
-                    onClick={() => setPreviewDevice(device)}
-                    className={`flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 rounded-xl transition-colors duration-[var(--duration-fast)] cursor-pointer ${
-                      previewDevice === device
-                        ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)]'
-                        : 'text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-3)]'
-                    }`}
-                    aria-label={`${label} preview`}
-                  >
-                    <DeviceIcon size={18} strokeWidth={1.5} />
-                    <span className={`text-[10px] font-medium leading-none ${
-                      previewDevice === device ? 'text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-8)]'
-                    }`}>{label}</span>
-                  </button>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content side="bottom" sideOffset={6} className="tooltip-animate px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
-                    Preview as {label.toLowerCase()}
-                    <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
+              <Tooltip key={device} content={`Preview as ${label.toLowerCase()}`} side="bottom" sideOffset={6}>
+                <button
+                  onClick={() => setPreviewDevice(device)}
+                  className={`flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 rounded-xl transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+                    previewDevice === device
+                      ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)]'
+                      : 'text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-3)]'
+                  }`}
+                  aria-label={`${label} preview`}
+                >
+                  <DeviceIcon size={18} strokeWidth={1.5} />
+                  <span className={`text-[length:var(--font-size-xs)] font-medium leading-none ${
+                    previewDevice === device ? 'text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-8)]'
+                  }`}>{label}</span>
+                </button>
+              </Tooltip>
             ))}
           </div>
-          </Tooltip.Provider>
+          </TooltipProvider>
 
           {/* Segmented control — centered */}
           <div className="flex-1 flex justify-center">
@@ -381,7 +364,7 @@ export function BuilderView({
                 <button
                   key={key}
                   onClick={() => setPreviewTab(key)}
-                  className={`flex items-center justify-center gap-1.5 px-4 h-8 text-sm rounded-lg transition-all duration-[var(--duration-normal)] cursor-pointer ${
+                  className={`flex items-center justify-center gap-1.5 px-4 h-8 text-[length:var(--font-size-base)] rounded-lg transition-all duration-[var(--duration-normal)] cursor-pointer ${
                     previewTab === key
                       ? 'bg-[var(--surface-primary)] border border-[var(--border-default)] text-[var(--color-neutral-12)] font-medium shadow-sm'
                       : 'text-[var(--color-neutral-12)]'
@@ -396,16 +379,16 @@ export function BuilderView({
         </div>
 
         {/* Right section */}
-        <Tooltip.Provider delayDuration={200}>
+        <TooltipProvider delayDuration={200}>
         <div className="flex items-center gap-2 pr-4">
           {/* Status badge */}
           {s.publishStatus === 'draft' && (
-            <span className="px-2.5 py-1 rounded-full border border-[var(--border-default)] text-xs font-medium text-[var(--color-neutral-8)]">
+            <span className="px-2.5 py-1 rounded-full border border-[var(--border-default)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)]">
               Draft
             </span>
           )}
           {(s.publishStatus === 'published' || s.publishStatus === 'dirty') && (
-            <span className={`px-2.5 py-1 rounded-full border text-xs font-medium ${
+            <span className={`px-2.5 py-1 rounded-full border text-[length:var(--font-size-sm)] font-medium ${
               s.publishStatus === 'dirty'
                 ? 'border-[var(--color-warning-border)] text-[var(--color-warning)] bg-[var(--color-warning-light)]'
                 : 'border-[var(--color-success-light)] text-[var(--color-success)]'
@@ -414,55 +397,39 @@ export function BuilderView({
             </span>
           )}
 
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <button
-                id="settings-button"
-                onClick={() => dispatch({ type: 'SET_SETTINGS_OPEN', open: true })}
-                className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-                aria-label="Settings"
-              >
-                <Settings size={20} strokeWidth={1.5} className="text-[var(--color-neutral-9)]" />
-              </button>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content side="bottom" sideOffset={6} className="tooltip-animate px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
-                Settings
-                <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
+          <Tooltip content="Settings" side="bottom" sideOffset={6}>
+            <button
+              id="settings-button"
+              onClick={() => dispatch({ type: 'SET_SETTINGS_OPEN', open: true })}
+              className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+              aria-label="Settings"
+            >
+              <Settings size={20} strokeWidth={1.5} className="text-[var(--color-neutral-9)]" />
+            </button>
+          </Tooltip>
 
           {/* Share button — visible when published or dirty */}
           {(s.publishStatus === 'published' || s.publishStatus === 'dirty') && (
-            <Tooltip.Root open={s.linkCopied || undefined}>
-              <Tooltip.Trigger asChild>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`https://upkeep.app/apps/${s.appTitle.toLowerCase().replace(/\s+/g, '-')}`)
-                    dispatch({ type: 'SET_LINK_COPIED', value: true })
-                    setTimeout(() => dispatch({ type: 'SET_LINK_COPIED', value: false }), 2000)
-                  }}
-                  className={`flex items-center justify-center w-10 h-10 rounded-xl border transition-colors duration-[var(--duration-fast)] cursor-pointer ${
-                    s.linkCopied
-                      ? 'border-[var(--color-success-light)] bg-[var(--color-success-light)]'
-                      : 'border-[var(--border-default)] hover:bg-[var(--color-neutral-3)]'
-                  }`}
-                  aria-label="Share"
-                >
-                  {s.linkCopied
-                    ? <Check size={16} className="text-[var(--color-success)]" />
-                    : <Link2 size={16} className="text-[var(--color-neutral-9)]" />
-                  }
-                </button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content side="bottom" sideOffset={6} className="tooltip-animate px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
-                  {s.linkCopied ? 'Copied!' : 'Copy share link'}
-                  <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
+            <Tooltip content={s.linkCopied ? 'Copied!' : 'Copy share link'} side="bottom" sideOffset={6} open={s.linkCopied || undefined}>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`https://upkeep.app/apps/${s.appTitle.toLowerCase().replace(/\s+/g, '-')}`)
+                  dispatch({ type: 'SET_LINK_COPIED', value: true })
+                  setTimeout(() => dispatch({ type: 'SET_LINK_COPIED', value: false }), 2000)
+                }}
+                className={`flex items-center justify-center w-10 h-10 rounded-xl border transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+                  s.linkCopied
+                    ? 'border-[var(--color-success-light)] bg-[var(--color-success-light)]'
+                    : 'border-[var(--border-default)] hover:bg-[var(--color-neutral-3)]'
+                }`}
+                aria-label="Share"
+              >
+                {s.linkCopied
+                  ? <Check size={16} className="text-[var(--color-success)]" />
+                  : <Link2 size={16} className="text-[var(--color-neutral-9)]" />
+                }
+              </button>
+            </Tooltip>
           )}
 
           <div className="relative">
@@ -485,7 +452,7 @@ export function BuilderView({
               {s.publishStatus === 'publishing' && (
                 <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               )}
-              <span className="text-sm font-medium text-white">
+              <span className="text-[length:var(--font-size-base)] font-medium text-white">
                 {s.publishStatus === 'publishing' ? 'Publishing…' : 'Publish'}
               </span>
             </button>
@@ -509,23 +476,23 @@ export function BuilderView({
 
                   <div className="flex flex-col gap-5">
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-sm font-semibold text-[var(--color-neutral-12)] shrink-0">Title</span>
+                      <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] shrink-0">Title</span>
                       <input
                         type="text"
                         value={s.appTitle}
                         onChange={(e) => dispatch({ type: 'SET_APP_TITLE', value: e.target.value })}
-                        className="text-sm text-[var(--color-neutral-12)] bg-transparent outline-none border border-[var(--border-default)] rounded-lg px-3 py-2 w-full max-w-[220px]"
+                        className="text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] bg-transparent outline-none border border-[var(--border-default)] rounded-lg px-3 py-2 w-full max-w-[220px]"
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-[var(--color-neutral-12)]">Status</span>
-                      <span className="text-sm font-medium text-[var(--color-neutral-12)] px-2.5 py-1 rounded-full border border-[var(--border-default)]">
+                      <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">Status</span>
+                      <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)] px-2.5 py-1 rounded-full border border-[var(--border-default)]">
                         Draft
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-[var(--color-neutral-12)]">Who can view</span>
-                      <span className="text-sm text-[var(--color-neutral-9)]">
+                      <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">Who can view</span>
+                      <span className="text-[length:var(--font-size-base)] text-[var(--color-neutral-9)]">
                         {audienceOptions.find(o => o.value === s.publishAudience)?.label}
                       </span>
                     </div>
@@ -534,7 +501,7 @@ export function BuilderView({
                   <div className="flex gap-3 pt-1">
                     <button
                       onClick={() => dispatch({ type: 'OPEN_SETTINGS_FROM_PUBLISH' })}
-                      className="flex-1 flex items-center justify-center h-10 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                      className="flex-1 flex items-center justify-center h-10 rounded-xl border border-[var(--border-default)] text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                     >
                       Manage Settings
                     </button>
@@ -543,7 +510,7 @@ export function BuilderView({
                         dispatch({ type: 'SET_PUBLISH_OPEN', open: false })
                         triggerPublish()
                       }}
-                      className="flex-1 flex items-center justify-center h-10 rounded-xl bg-[var(--color-accent-9)] text-sm font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                      className="flex-1 flex items-center justify-center h-10 rounded-xl bg-[var(--color-accent-9)] text-[length:var(--font-size-base)] font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                     >
                       Publish
                     </button>
@@ -553,7 +520,7 @@ export function BuilderView({
             )}
           </div>
         </div>
-        </Tooltip.Provider>
+        </TooltipProvider>
       </header>
 
       {/* ── Two-panel content ── */}
@@ -571,7 +538,7 @@ export function BuilderView({
                     style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
                   >
                     <div className="bg-[var(--color-accent-1)] rounded-xl p-3 max-w-full">
-                      <p className="text-sm leading-5 text-[var(--color-neutral-9)]">{msg.content}</p>
+                      <p className="text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-9)]">{msg.content}</p>
                     </div>
                   </div>
                 )
@@ -592,11 +559,11 @@ export function BuilderView({
                     <div className="w-[18px] h-[18px] rounded-full bg-[var(--color-success)] flex items-center justify-center shrink-0">
                       <Check size={10} strokeWidth={3} className="text-white" />
                     </div>
-                    <span className="text-sm font-medium text-[var(--color-neutral-12)]">
+                    <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">
                       {isFirst ? 'Completed in 3m 50s' : 'Changes applied'}
                     </span>
-                    <span className="text-xs text-[var(--color-neutral-7)]">·</span>
-                    <span className="text-xs text-[var(--color-neutral-8)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]">
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">·</span>
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]">
                       {s.showActivityLog && idx === s.messages.length - 1 ? 'Hide details' : 'View details'}
                     </span>
                     <ChevronDown size={14} className={`text-[var(--color-neutral-8)] transition-transform duration-[var(--duration-fast)] ${s.showActivityLog && idx === s.messages.length - 1 ? 'rotate-180' : ''}`} />
@@ -610,7 +577,7 @@ export function BuilderView({
                       {thinkingSteps.map((step, i) => (
                         <div key={i} className="flex items-center gap-2 py-0.5">
                           <Check size={12} strokeWidth={2} className="text-[var(--color-success)] shrink-0" />
-                          <span className="text-xs text-[var(--color-neutral-9)]">{step.label}</span>
+                          <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)]">{step.label}</span>
                         </div>
                       ))}
                     </div>
@@ -621,18 +588,18 @@ export function BuilderView({
                     className="border border-[var(--border-default)] rounded-xl p-3 flex flex-col gap-2 opacity-0"
                     style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
                   >
-                    <p className="text-sm font-medium text-[var(--color-neutral-12)] leading-5">
+                    <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)] leading-5">
                       {isFirst ? "Here's what I created for you:" : msg.content}
                     </p>
                     {isFirst && (
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 px-0.5">
                           <FileText size={16} className="text-[var(--color-neutral-9)] shrink-0" />
-                          <span className="text-sm font-medium text-[var(--color-neutral-12)]">WO-042 — Pump Station 3</span>
+                          <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">WO-042 — Pump Station 3</span>
                         </div>
                         <div className="flex items-center gap-2 px-0.5">
                           <FileText size={16} className="text-[var(--color-neutral-9)] shrink-0" />
-                          <span className="text-sm font-medium text-[var(--color-neutral-12)]">WO-043 — Conveyor Belt 12</span>
+                          <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">WO-043 — Conveyor Belt 12</span>
                         </div>
                       </div>
                     )}
@@ -644,8 +611,8 @@ export function BuilderView({
                       className="px-0 py-0 flex flex-col gap-3 opacity-0"
                       style={{ animation: 'fadeInUp 0.5s var(--ease-default) 0.2s forwards' }}
                     >
-                      <h4 className="text-xs font-medium uppercase tracking-wider text-[var(--color-neutral-8)]">What would you like to focus on?</h4>
-                      <p className="text-sm leading-5 text-[var(--color-neutral-12)]">
+                      <h4 className="text-[length:var(--font-size-sm)] font-medium uppercase tracking-wider text-[var(--color-neutral-8)]">What would you like to focus on?</h4>
+                      <p className="text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-12)]">
                         I found several directions based on your UpKeep data. Pick one to continue, or describe something else:
                       </p>
                       <div className="flex flex-col gap-3">
@@ -659,15 +626,15 @@ export function BuilderView({
                             className="flex items-center gap-2.5 p-3 bg-[var(--color-neutral-2)] border border-[var(--color-neutral-5)] rounded-xl text-left hover:bg-[var(--color-neutral-3)] hover:border-[var(--color-accent-5)] transition-all duration-[var(--duration-fast)] cursor-pointer group opacity-0"
                             style={{ animation: `fadeInUp 0.4s var(--ease-default) ${0.3 + i * 0.08}s forwards` }}
                           >
-                            <span className="flex-1 text-sm leading-5 text-[var(--color-neutral-12)]">{step.text}</span>
+                            <span className="flex-1 text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-12)]">{step.text}</span>
                             <span className="flex items-center gap-1 shrink-0">
-                              <span className="text-[11px] text-[var(--color-neutral-7)] opacity-0 group-hover:opacity-100 transition-opacity">Add this</span>
+                              <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] opacity-0 group-hover:opacity-100 transition-opacity">Add this</span>
                               <ArrowRight size={16} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
                             </span>
                           </button>
                         ))}
                       </div>
-                      <p className="text-sm leading-5 text-[var(--color-neutral-9)]">
+                      <p className="text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-9)]">
                         You can select multiple, or tell me exactly what you need — I&apos;ll combine them.
                       </p>
                     </div>
@@ -682,9 +649,9 @@ export function BuilderView({
                     >
                       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
                         <Settings size={15} className="text-[var(--color-accent-9)] shrink-0" />
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-accent-9)]">Want to publish your app?</h4>
+                        <h4 className="text-[length:var(--font-size-sm)] font-semibold uppercase tracking-wider text-[var(--color-accent-9)]">Want to publish your app?</h4>
                       </div>
-                      <p className="text-sm leading-5 text-[var(--color-neutral-11)] px-4 pb-3">
+                      <p className="text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-11)] px-4 pb-3">
                         Configure your app settings to get the best visibility and control:
                       </p>
                       <div className="flex flex-col gap-0 px-2 pb-2">
@@ -695,12 +662,12 @@ export function BuilderView({
                             className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left hover:bg-[var(--color-accent-2)] transition-all duration-[var(--duration-fast)] cursor-pointer group opacity-0"
                             style={{ animation: `fadeInUp 0.4s var(--ease-default) ${0.3 + i * 0.08}s forwards` }}
                           >
-                            <span className="flex-1 text-sm leading-5 text-[var(--color-neutral-12)]">{item.text}</span>
+                            <span className="flex-1 text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-12)]">{item.text}</span>
                             <ArrowRight size={14} className="text-[var(--color-accent-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)] shrink-0" />
                           </button>
                         ))}
                       </div>
-                      <p className="text-xs leading-5 text-[var(--color-neutral-8)] px-4 pb-3">
+                      <p className="text-[length:var(--font-size-sm)] leading-5 text-[var(--color-neutral-8)] px-4 pb-3">
                         You can always change these later in Settings.
                       </p>
                     </div>
@@ -715,7 +682,7 @@ export function BuilderView({
                 className="flex flex-col gap-0.5 opacity-0"
                 style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.3s forwards' }}
               >
-                <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--color-neutral-8)] mb-1.5">Working on it…</span>
+                <span className="text-[length:var(--font-size-xs)] font-medium uppercase tracking-wider text-[var(--color-neutral-8)] mb-1.5">Working on it…</span>
                 {thinkingSteps.map((step, i) => {
                   const isComplete = i < s.thinkingStep
                   const isActive = i === s.thinkingStep
@@ -735,11 +702,11 @@ export function BuilderView({
                         <div className="w-[18px] h-[18px] rounded-full border-2 border-[var(--color-neutral-5)] shrink-0" />
                       )}
                       <div className="flex flex-col">
-                        <span className={`text-sm leading-tight ${isActive ? 'font-medium shimmer-text' : isComplete ? 'font-medium text-[var(--color-neutral-12)]' : 'text-[var(--color-neutral-7)]'}`}>
+                        <span className={`text-[length:var(--font-size-base)] leading-tight ${isActive ? 'font-medium shimmer-text' : isComplete ? 'font-medium text-[var(--color-neutral-12)]' : 'text-[var(--color-neutral-7)]'}`}>
                           {step.label}
                         </span>
                         {isActive && (
-                          <span className="text-[11px] text-[var(--color-neutral-8)] mt-0.5">{step.detail}</span>
+                          <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] mt-0.5">{step.detail}</span>
                         )}
                       </div>
                     </div>
@@ -756,7 +723,7 @@ export function BuilderView({
             <div className="px-6 pb-3 fade-animate">
               <div className="rounded-xl border border-[var(--color-accent-5)] bg-[var(--color-accent-1)] overflow-hidden">
                 <div className="flex items-center justify-between px-4 pt-3 pb-1.5">
-                  <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-accent-9)]">Finish setting up</span>
+                  <span className="text-[length:var(--font-size-sm)] font-medium uppercase tracking-wider text-[var(--color-accent-9)]">Finish setting up</span>
                   <button
                     onClick={() => dispatch({ type: 'SET_POST_PUBLISH_CTAS_DISMISSED', value: true })}
                     className="flex items-center justify-center w-5 h-5 rounded-md hover:bg-[var(--color-accent-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
@@ -770,7 +737,7 @@ export function BuilderView({
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-[var(--color-accent-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer group"
                 >
                   <Settings size={15} className="text-[var(--color-accent-9)] shrink-0" />
-                  <span className="flex-1 text-sm font-medium text-[var(--color-neutral-12)]">Add setup instructions</span>
+                  <span className="flex-1 text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Add setup instructions</span>
                   <ArrowRight size={14} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
                 </button>
                 <button
@@ -778,14 +745,14 @@ export function BuilderView({
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-[var(--color-accent-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer group"
                 >
                   <Tag size={15} className="text-[var(--color-accent-9)] shrink-0" />
-                  <span className="flex-1 text-sm font-medium text-[var(--color-neutral-12)]">Add tags so users can find your app</span>
+                  <span className="flex-1 text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Add tags so users can find your app</span>
                   <ArrowRight size={14} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
                 </button>
               </div>
             </div>
           )}
 
-          <div className="px-6 pb-6">
+          <div className="px-6 pb-6 flex flex-col gap-2">
             <div
               id="chat-input"
               className="w-full bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-2xl p-3 flex flex-col gap-3 transition-[border-color,box-shadow] duration-[var(--duration-normal)] focus-within:border-[var(--color-accent-8)] focus-within:shadow-[0_0_0_3px_rgba(59,91,219,0.12),0px_4px_16px_-8px_rgba(59,91,219,0.18),0px_3px_12px_-4px_rgba(59,91,219,0.12)]"
@@ -799,7 +766,7 @@ export function BuilderView({
                   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSend() }
                 }}
                 placeholder={(s.publishStatus === 'published' || s.publishStatus === 'dirty') ? 'Ask for changes' : 'Tell me what to change or add…'}
-                className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[#9CA0A8] outline-none ring-0 focus:outline-none focus:ring-0 bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border-none shadow-none appearance-none"
+                className="w-full resize-none text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] outline-none ring-0 focus:outline-none focus:ring-0 bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border-none shadow-none appearance-none"
                 rows={3}
               />
               <div className="flex items-center justify-between">
@@ -810,7 +777,7 @@ export function BuilderView({
                       className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                     >
                       {(() => { const opt = agentModeOptions.find(o => o.value === s.agentMode); const Icon = opt?.icon || ClipboardList; return <Icon size={14} className="text-[var(--color-neutral-8)]" /> })()}
-                      <span className="text-xs font-medium text-[var(--color-neutral-9)]">{agentModeOptions.find(o => o.value === s.agentMode)?.label}</span>
+                      <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">{agentModeOptions.find(o => o.value === s.agentMode)?.label}</span>
                       <ChevronDown size={12} className={`text-[var(--color-neutral-7)] transition-transform duration-[var(--duration-fast)] ${s.modeDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
 
@@ -828,8 +795,8 @@ export function BuilderView({
                               >
                                 <Icon size={16} className="text-[var(--color-neutral-8)] shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-[var(--color-neutral-12)]">{opt.label}</p>
-                                  <p className="text-xs text-[var(--color-neutral-8)]">{opt.description}</p>
+                                  <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">{opt.label}</p>
+                                  <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">{opt.description}</p>
                                 </div>
                                 {s.agentMode === opt.value && (
                                   <Check size={16} className="text-[var(--color-accent-9)] shrink-0" />
@@ -941,20 +908,20 @@ export function BuilderView({
                   <div className="flex items-start justify-between">
                     <div className="flex flex-col gap-0.5">
                       <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Published app access</h3>
-                      <p className="text-xs text-[var(--color-neutral-8)]">Changing audience will take effect immediately</p>
+                      <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Changing audience will take effect immediately</p>
                     </div>
-                    <button className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0">
+                    <button className="flex items-center gap-1.5 text-[length:var(--font-size-base)] font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0">
                       <Link2 size={14} />
                       Copy link
                     </button>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-[var(--color-neutral-12)]">Who can view</label>
+                    <label className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Who can view</label>
                     <div className="relative">
                       <button
                         onClick={() => dispatch({ type: 'SET_AUDIENCE_DROPDOWN', open: !s.audienceDropdownOpen })}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] text-sm text-[var(--color-neutral-12)] cursor-pointer hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)]"
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] cursor-pointer hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)]"
                       >
                         <div className="flex items-center gap-2">
                           {(() => { const opt = audienceOptions.find(o => o.value === s.publishAudience); const Icon = opt?.icon || Building2; return <Icon size={16} className="text-[var(--color-neutral-8)]" /> })()}
@@ -977,8 +944,8 @@ export function BuilderView({
                                 >
                                   <Icon size={16} className="text-[var(--color-neutral-8)] shrink-0" />
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-[var(--color-neutral-12)]">{opt.label}</p>
-                                    <p className="text-xs text-[var(--color-neutral-8)]">{opt.description}</p>
+                                    <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">{opt.label}</p>
+                                    <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">{opt.description}</p>
                                   </div>
                                   {s.publishAudience === opt.value && (
                                     <Check size={16} className="text-[var(--color-accent-9)] shrink-0" />
@@ -994,18 +961,14 @@ export function BuilderView({
 
                   {/* Marketplace toggle */}
                   <div className="flex items-center gap-3 py-2">
-                    <Switch.Root
+                    <Switch
                       checked={s.marketplacePublish}
                       onCheckedChange={(v) => { dispatch({ type: 'SET_MARKETPLACE_PUBLISH', value: v }) }}
-                      className={`relative inline-flex items-center w-10 h-[22px] rounded-full transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0 ${
-                        s.marketplacePublish ? 'bg-[var(--color-accent-9)]' : 'bg-[var(--color-neutral-5)]'
-                      }`}
-                    >
-                      <Switch.Thumb className="block w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-transform duration-[var(--duration-fast)] translate-x-0.5 data-[state=checked]:translate-x-[20px]" />
-                    </Switch.Root>
+                      size="lg"
+                    />
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-[var(--color-neutral-12)]">Publish to Marketplace</span>
-                      <span className="text-sm text-[var(--color-neutral-8)]"> (Visible for anyone in the UpKeep community</span>
+                      <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Publish to Marketplace</span>
+                      <span className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)]"> (Visible for anyone in the UpKeep community</span>
                     </div>
                   </div>
 
@@ -1013,7 +976,7 @@ export function BuilderView({
                   {s.marketplacePublish && (
                     <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-[var(--color-accent-1)] border border-[var(--color-accent-3)]">
                       <Info size={16} className="text-[var(--color-accent-9)] shrink-0 mt-0.5" />
-                      <span className="text-xs text-[var(--color-neutral-11)] leading-relaxed">
+                      <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] leading-relaxed">
                         Publishing makes it available to your team instantly. Marketplace visibility requires review first.
                       </span>
                     </div>
@@ -1026,26 +989,26 @@ export function BuilderView({
                   <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">App Details</h3>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Name</label>
+                    <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Name</label>
                     <input
                       type="text"
                       value={s.appTitle}
                       onChange={(e) => { dispatch({ type: 'SET_APP_TITLE', value: e.target.value }); dispatch({ type: 'SET_SETTINGS_DIRTY', value: true }) }}
-                      className="w-full text-sm text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none ring-0 focus:outline-none focus:ring-0 border-none"
+                      className="w-full text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none ring-0 focus:outline-none focus:ring-0 border-none"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Description</label>
+                    <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Description</label>
                     <div className="relative">
                       <textarea
                         value={s.appDescription}
                         onChange={(e) => { dispatch({ type: 'SET_APP_DESCRIPTION', value: e.target.value }) }}
                         placeholder="Briefly describe what this app does and who it's for…"
-                        className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 leading-5 outline-none ring-0 focus:outline-none focus:ring-0 border-none shadow-none appearance-none"
+                        className="w-full resize-none text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 leading-5 outline-none ring-0 focus:outline-none focus:ring-0 border-none shadow-none appearance-none"
                         rows={3}
                       />
-                      <button className="absolute right-3 bottom-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-accent-5)] text-xs font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                      <button className="absolute right-3 bottom-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-accent-5)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                         <Sparkles size={12} />
                         Writing Assistant
                       </button>
@@ -1054,11 +1017,11 @@ export function BuilderView({
 
                   <div className="flex gap-4">
                     <div className="flex flex-col gap-1.5 flex-1">
-                      <label className="text-xs font-medium text-[var(--color-neutral-9)]">Category</label>
+                      <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Category</label>
                       <select
                         value={s.appCategory}
                         onChange={(e) => { dispatch({ type: 'SET_APP_CATEGORY', value: e.target.value }) }}
-                        className="w-full text-sm text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none border-none cursor-pointer appearance-none"
+                        className="w-full text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none border-none cursor-pointer appearance-none"
                       >
                         {['Operations', 'Reporting', 'Compliance', 'Work Orders', 'Inventory', 'Assets', 'Data Management', 'Safety'].map(c => (
                           <option key={c} value={c}>{c}</option>
@@ -1066,17 +1029,17 @@ export function BuilderView({
                       </select>
                     </div>
                     <div className="flex flex-col gap-1.5 flex-1">
-                      <label className="text-xs font-medium text-[var(--color-neutral-9)]">Version</label>
+                      <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Version</label>
                       <input
                         type="text"
                         defaultValue="1.0.0"
-                        className="w-full text-sm text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none ring-0 focus:outline-none focus:ring-0 border-none"
+                        className="w-full text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none ring-0 focus:outline-none focus:ring-0 border-none"
                       />
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Tags</label>
+                    <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Tags</label>
                     <div className="flex flex-wrap items-center gap-1.5 bg-[var(--color-neutral-2)] rounded-lg px-3 py-2 min-h-[38px]">
                       {s.appTags.map((tag) => (
                         <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-primary)] border border-[var(--border-default)] text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-11)]">
@@ -1089,7 +1052,7 @@ export function BuilderView({
                       <input
                         type="text"
                         placeholder="Add tag…"
-                        className="flex-1 min-w-[60px] text-xs text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-transparent outline-none border-none"
+                        className="flex-1 min-w-[60px] text-[length:var(--font-size-sm)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-transparent outline-none border-none"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                             dispatch({ type: 'ADD_TAG', tag: e.currentTarget.value.trim() })
@@ -1101,16 +1064,16 @@ export function BuilderView({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Instructions</label>
+                    <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Instructions</label>
                     <div className="relative">
                       <textarea
                         value={s.appInstructions}
                         onChange={(e) => { dispatch({ type: 'SET_APP_INSTRUCTIONS', value: e.target.value }) }}
                         placeholder="step by step for users to install and use the app"
-                        className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 leading-5 outline-none ring-0 focus:outline-none focus:ring-0 border-none shadow-none appearance-none"
+                        className="w-full resize-none text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 leading-5 outline-none ring-0 focus:outline-none focus:ring-0 border-none shadow-none appearance-none"
                         rows={4}
                       />
-                      <button className="absolute right-3 bottom-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-accent-5)] text-xs font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                      <button className="absolute right-3 bottom-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-accent-5)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                         <Sparkles size={12} />
                         Writing Assistant
                       </button>
@@ -1124,35 +1087,35 @@ export function BuilderView({
 
                   {/* Favicon */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-[var(--color-neutral-12)]">Favicon</label>
+                    <label className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Favicon</label>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[var(--color-neutral-2)] border border-[var(--border-default)]">
                         <Camera size={20} className="text-[var(--color-neutral-7)]" />
                       </div>
-                      <button className="flex items-center justify-center h-8 px-3 rounded-lg bg-[var(--color-accent-9)] text-xs font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                      <button className="flex items-center justify-center h-8 px-3 rounded-lg bg-[var(--color-accent-9)] text-[length:var(--font-size-sm)] font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                         Upload an image
                       </button>
-                      <span className="text-xs text-[var(--color-neutral-7)]">Recommended dimensions: 48×48</span>
+                      <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Recommended dimensions: 48×48</span>
                     </div>
                   </div>
 
                   {/* Preview app Images */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-[var(--color-neutral-12)]">Preview app Images (up to 5)</label>
+                    <label className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Preview app Images (up to 5)</label>
                     <div className="flex flex-col items-center gap-4 p-8 rounded-xl border-2 border-dashed border-[var(--color-accent-5)] bg-[var(--color-neutral-2)]">
                       <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--color-accent-2)]">
                         <Upload size={20} className="text-[var(--color-accent-7)]" />
                       </div>
                       <div className="flex flex-col items-center gap-0.5 text-center">
-                        <p className="text-sm font-medium text-[var(--color-neutral-12)]">Drag and drop your file here to upload</p>
-                        <p className="text-xs text-[var(--color-neutral-7)]">Recommended dimensions: 1920×1080 px</p>
+                        <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Drag and drop your file here to upload</p>
+                        <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Recommended dimensions: 1920×1080 px</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                           <Sparkles size={12} />
                           Make an Image
                         </button>
-                        <button className="flex items-center justify-center h-8 px-3 rounded-lg bg-[var(--color-accent-9)] text-xs font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                        <button className="flex items-center justify-center h-8 px-3 rounded-lg bg-[var(--color-accent-9)] text-[length:var(--font-size-sm)] font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                           Browse files
                         </button>
                       </div>
@@ -1165,14 +1128,14 @@ export function BuilderView({
               <div className="flex items-center gap-3 px-6 py-4 border-t border-[var(--border-default)] bg-[var(--color-neutral-2)] shrink-0">
                 <button
                   onClick={() => closeSettings()}
-                  className="mr-auto flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                  className="mr-auto flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                 >
                   Cancel
                 </button>
                 {s.settingsFromPublish && (
                   <button
                     onClick={() => { closeSettings(); triggerPublish() }}
-                    className="flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                    className="flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                   >
                     Save &amp; Publish
                   </button>
@@ -1180,7 +1143,7 @@ export function BuilderView({
                 <button
                   disabled={!s.settingsDirty}
                   onClick={() => dispatch({ type: 'SETTINGS_SAVED' })}
-                  className="flex items-center justify-center h-10 px-5 rounded-xl bg-[var(--color-accent-9)] text-sm font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                  className="flex items-center justify-center h-10 px-5 rounded-xl bg-[var(--color-accent-9)] text-[length:var(--font-size-base)] font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                 >
                   Save changes
                 </button>
@@ -1203,7 +1166,7 @@ export function BuilderView({
         >
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-3 border-white/80 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm font-medium text-white/70">Publishing your app…</p>
+            <p className="text-[length:var(--font-size-base)] font-medium text-white/70">Publishing your app…</p>
           </div>
         </div>
       )}
@@ -1261,14 +1224,14 @@ function VersionHistoryPanel({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-lg font-semibold text-[var(--color-neutral-12)]">Version History</h2>
-          <p className="text-sm text-[var(--color-neutral-8)] mt-0.5">
+          <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)] mt-0.5">
             {versions.length} version{versions.length !== 1 ? 's' : ''} · Select two to compare
           </p>
         </div>
         {selectedVersions.length > 0 && (
           <button
             onClick={onClearSelection}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-accent-9)] rounded-lg hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] rounded-lg hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
           >
             <X size={12} /> Clear selection
           </button>
@@ -1279,7 +1242,7 @@ function VersionHistoryPanel({
         <div className="mb-6 rounded-xl border border-[var(--color-accent-3)] bg-[var(--color-accent-1)] p-5 fade-animate">
           <div className="flex items-center gap-2 mb-3">
             <GitCompare size={16} className="text-[var(--color-accent-9)]" />
-            <h3 className="text-sm font-semibold text-[var(--color-neutral-12)]">
+            <h3 className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">
               Comparing {selectedVersions[0]} → {selectedVersions[1]}
             </h3>
           </div>
@@ -1322,14 +1285,14 @@ function VersionHistoryPanel({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--color-neutral-12)]">{v.version}</span>
+                    <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">{v.version}</span>
                     {isLatest && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-[var(--color-accent-1)] text-[var(--color-accent-9)] border border-[var(--color-accent-3)]">
+                      <span className="px-1.5 py-0.5 text-[length:var(--font-size-xs)] font-medium rounded bg-[var(--color-accent-1)] text-[var(--color-accent-9)] border border-[var(--color-accent-3)]">
                         Current
                       </span>
                     )}
                     {v.type === 'publish' && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)]">
+                      <span className="px-1.5 py-0.5 text-[length:var(--font-size-xs)] font-medium rounded bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)]">
                         Published
                       </span>
                     )}
@@ -1340,15 +1303,15 @@ function VersionHistoryPanel({
                       defaultValue={v.description}
                       onBlur={(e) => onRename(v.id, e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') onRename(v.id, e.currentTarget.value); if (e.key === 'Escape') onStartEdit('') }}
-                      className="mt-1 w-full text-sm text-[var(--color-neutral-12)] bg-[var(--surface-primary)] border border-[var(--color-accent-5)] rounded-lg px-2 py-1 outline-none"
+                      className="mt-1 w-full text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] bg-[var(--surface-primary)] border border-[var(--color-accent-5)] rounded-lg px-2 py-1 outline-none"
                     />
                   ) : (
-                    <p className="text-sm text-[var(--color-neutral-9)] mt-0.5">{v.description}</p>
+                    <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-9)] mt-0.5">{v.description}</p>
                   )}
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-[var(--color-neutral-7)]">{v.timestamp}</span>
-                    <span className="text-xs text-[var(--color-neutral-6)]">·</span>
-                    <span className="text-xs text-[var(--color-neutral-7)]">{v.author}</span>
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">{v.timestamp}</span>
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-6)]">·</span>
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">{v.author}</span>
                   </div>
                 </div>
 
@@ -1363,7 +1326,7 @@ function VersionHistoryPanel({
                   {!isLatest && (
                     <button
                       onClick={() => onRestore(v.id)}
-                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-[var(--color-accent-9)] rounded-lg hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                      className="flex items-center gap-1 px-2 py-1 text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] rounded-lg hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                     >
                       <RotateCcw size={12} /> Restore
                     </button>
@@ -1387,10 +1350,10 @@ function DiffEntry({ type, text }: { type: 'added' | 'removed' | 'modified'; tex
 
   return (
     <div className="flex items-start gap-2">
-      <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${config.color} ${config.bg}`}>
+      <span className={`shrink-0 px-1.5 py-0.5 rounded text-[length:var(--font-size-xs)] font-medium ${config.color} ${config.bg}`}>
         {config.label}
       </span>
-      <span className="text-sm text-[var(--color-neutral-11)]">{text}</span>
+      <span className="text-[length:var(--font-size-base)] text-[var(--color-neutral-11)]">{text}</span>
     </div>
   )
 }
@@ -1416,7 +1379,7 @@ function AnalyticsPanel({ publishStatus, appTitle }: { publishStatus: string; ap
     <div className="flex flex-col gap-6 h-full">
       <div>
         <h2 className="text-lg font-semibold text-[var(--color-neutral-12)]">Analytics</h2>
-        <p className="text-sm text-[var(--color-neutral-8)] mt-0.5">{appTitle} · Last 14 days</p>
+        <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)] mt-0.5">{appTitle} · Last 14 days</p>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
@@ -1442,7 +1405,7 @@ function AnalyticsPanel({ publishStatus, appTitle }: { publishStatus: string; ap
       </div>
 
       <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
-        <h3 className="text-sm font-semibold text-[var(--color-neutral-12)] mb-4">Opens per day</h3>
+        <h3 className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] mb-4">Opens per day</h3>
         <Sparkline
           data={mockOpensPerDay}
           width={600}
@@ -1451,14 +1414,14 @@ function AnalyticsPanel({ publishStatus, appTitle }: { publishStatus: string; ap
           className="w-full"
         />
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-[var(--color-neutral-7)]">Mar 6</span>
-          <span className="text-xs text-[var(--color-neutral-7)]">Mar 19</span>
+          <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Mar 6</span>
+          <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Mar 19</span>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
-          <h3 className="text-sm font-semibold text-[var(--color-neutral-12)] mb-4">Most-used sections</h3>
+          <h3 className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] mb-4">Most-used sections</h3>
           <MiniBarChart
             data={mockSectionUsage}
             labels={mockSectionLabels}
@@ -1471,25 +1434,25 @@ function AnalyticsPanel({ publishStatus, appTitle }: { publishStatus: string; ap
           />
         </div>
         <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
-          <h3 className="text-sm font-semibold text-[var(--color-neutral-12)] mb-4">Drop-off point</h3>
+          <h3 className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] mb-4">Drop-off point</h3>
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[var(--color-warning-light)] flex items-center justify-center">
                 <Share2 size={14} className="text-[var(--color-warning)]" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--color-neutral-12)]">Settings tab</p>
-                <p className="text-xs text-[var(--color-neutral-8)]">Most users leave after this section</p>
+                <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Settings tab</p>
+                <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Most users leave after this section</p>
               </div>
             </div>
             <div className="h-px bg-[var(--border-subtle)]" />
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[var(--color-neutral-8)]">Avg session duration</span>
-              <span className="text-sm font-medium text-[var(--color-neutral-12)]">3m 24s</span>
+              <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Avg session duration</span>
+              <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">3m 24s</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[var(--color-neutral-8)]">Bounce rate</span>
-              <span className="text-sm font-medium text-[var(--color-neutral-12)]">12%</span>
+              <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Bounce rate</span>
+              <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">12%</span>
             </div>
           </div>
         </div>

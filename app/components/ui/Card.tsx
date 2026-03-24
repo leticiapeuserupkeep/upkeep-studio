@@ -26,8 +26,8 @@ export function CardHeader({ children, action, className = '', ...props }: CardH
       className={`flex items-center justify-between px-[var(--widget-padding)] py-[var(--widget-header-padding-y)] ${className}`}
       {...props}
     >
-      <div className="flex flex-col gap-1">{children}</div>
-      {action && <div className="flex items-center gap-2">{action}</div>}
+      <div className="flex flex-col gap-[var(--space-2xs)]">{children}</div>
+      {action && <div className="flex items-center gap-[var(--space-xs)]">{action}</div>}
     </div>
   )
 }
@@ -57,7 +57,7 @@ export function CardBody({ children, className = '', ...props }: HTMLAttributes<
 export function CardFooter({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`flex items-center gap-2 px-[var(--widget-padding)] py-[var(--space-sm)] border-t border-[var(--border-subtle)] ${className}`}
+      className={`flex items-center gap-[var(--space-xs)] px-[var(--widget-padding)] py-[var(--space-sm)] border-t border-[var(--border-subtle)] ${className}`}
     >
       {children}
     </div>

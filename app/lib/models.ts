@@ -230,3 +230,72 @@ export interface RuntimeSensor {
   lastReading: string
   insights: string[]
 }
+
+/* ── Fleet: Vehicles ── */
+
+export type VehicleStatus = 'operational' | 'in_shop' | 'out_of_service' | 'idle'
+
+export interface Vehicle {
+  id: string
+  vin: string
+  make: string
+  model: string
+  year: number
+  type: 'Commercial' | 'Passenger' | 'Heavy Duty' | 'Light Duty'
+  title: string
+  bodyStyle: string
+  fuelType: 'Gasoline' | 'Diesel' | 'Electric' | 'Hybrid'
+  color: string
+  licensePlate: string
+  registrationExpiry: string
+  location: string
+  lastUpdated: string
+  image: string
+  status: VehicleStatus
+  drivetrain: string
+  doors: number
+  odometer?: number
+
+  engine: {
+    type: string
+    displacement?: string
+    cylinders?: number
+    horsepower?: number
+    torque?: string
+  }
+
+  transmission: {
+    type: string
+    drivetrain: string
+  }
+
+  fuel: {
+    cityMpg?: number
+    highwayMpg?: number
+    combinedMpg?: number
+  }
+
+  dimensions: {
+    lengthFt?: number
+    widthFt?: number
+    heightFt?: number
+    wheelbaseIn?: number
+    weightLbs?: number
+    passengerVolume?: string
+    cargoVolume?: string
+  }
+
+  classification: {
+    dealership: string
+    assignedTo: { name: string; href: string }
+  }
+
+  reliability: {
+    status: 'operational' | 'maintenance' | 'critical'
+    uptimePercent: number
+    downtimePercent: number
+    availabilityPeriod: string
+    depreciation?: string
+    depreciationNote?: string
+  }
+}

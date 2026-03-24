@@ -218,7 +218,7 @@ export default function RuntimePage() {
             onClick={() => setStatusFilter(statusFilter === 'connected' ? 'all' : 'connected')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-lg)] border text-[length:var(--font-size-sm)] font-medium cursor-pointer transition-colors duration-[var(--duration-fast)] ${
               statusFilter === 'connected'
-                ? 'bg-[#EEF1FF] border-[#ABBDF9] text-[#3A5BC7]'
+                ? 'bg-[var(--color-accent-1)] border-[var(--color-accent-4)] text-[var(--color-accent-11)]'
                 : 'bg-[var(--surface-primary)] border-[var(--border-default)] text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)]'
             }`}
           >
@@ -274,33 +274,33 @@ export default function RuntimePage() {
       {/* KPI Row */}
       <div className="grid grid-cols-4 gap-[var(--space-md)] px-6 pt-6 pb-3 w-full max-w-[1280px]">
         {/* Total Runtime */}
-        <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-accent-1)] border border-[#D6DEFF] px-5 py-4">
+        <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-accent-1)] border border-[var(--color-accent-3)] px-5 py-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] border border-[var(--color-accent-3)]">
-              <Clock size={20} className="text-[#5B6AD0]" />
+              <Clock size={20} className="text-[var(--color-accent-9)]" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Total<br />Runtime</span>
+              <span className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Total<br />Runtime</span>
               <div className="flex items-center gap-1 mt-0.5 hidden">
-                <TrendingUp size={12} className="text-[#2F9E44]" />
-                <span className="text-[length:11px] font-medium text-[#2F9E44]">+2%</span>
+                <TrendingUp size={12} className="text-[var(--color-success)]" />
+                <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-success)]">+2%</span>
               </div>
             </div>
           </div>
           <div className="shrink-0 flex flex-col items-center">
-            <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{Math.round(totalFleetHours).toLocaleString()}</span>
-            <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] mt-1">Hours</span>
+            <span className="text-[length:var(--font-size-3xl)] font-bold text-[var(--color-neutral-12)] leading-none">{Math.round(totalFleetHours).toLocaleString()}</span>
+            <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)] mt-1">Hours</span>
           </div>
         </div>
 
         {/* Average Uptime */}
-        <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-success-light)] border border-[#C3ECD3] px-5 py-4">
+        <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-success-light)] border border-[var(--color-success-border)] px-5 py-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] border border-[var(--color-success-border)]">
-              <Activity size={20} className="text-[#2F9E44]" />
+              <Activity size={20} className="text-[var(--color-success)]" />
             </div>
             <div className="flex flex-col min-w-0 max-w-[80px]">
-              <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Average Uptime</span>
+              <span className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Average Uptime</span>
             </div>
           </div>
           <div className="shrink-0">
@@ -309,36 +309,36 @@ export default function RuntimePage() {
         </div>
 
         {/* Total Downtime */}
-        <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-error-light)] border border-[#FECDD3] px-5 py-4">
+        <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-error-light)] border border-[var(--color-error-border)] px-5 py-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] border border-[var(--color-error-border)]">
-              <XCircle size={20} className="text-[#E03131]" />
+              <XCircle size={20} className="text-[var(--color-error)]" />
             </div>
             <div className="flex flex-col min-w-0 max-w-[80px]">
-              <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Total Downtime</span>
+              <span className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Total Downtime</span>
             </div>
           </div>
           <div className="shrink-0 flex flex-col items-center">
-            <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{avgDowntime}</span>
-            <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] mt-1">Hours</span>
+            <span className="text-[length:var(--font-size-3xl)] font-bold text-[var(--color-neutral-12)] leading-none">{avgDowntime}</span>
+            <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)] mt-1">Hours</span>
           </div>
         </div>
 
         {/* Overloaded */}
         <div
           onClick={() => setStatusFilter(statusFilter === 'warning' ? 'all' : 'warning')}
-          className={`flex items-center justify-between rounded-[20px] border px-4 py-3 cursor-pointer transition-all duration-[var(--duration-normal)] ease-[var(--ease-default)] ${statusFilter === 'warning' ? 'bg-[#FFEFD6] border-[#E8890C] ring-2 ring-[#E8890C]/30 shadow-md' : 'bg-[#FFF8E1] border-[#FFE5A0] hover:bg-[#FFEFD6] hover:border-[#E8890C] hover:shadow-sm'}`}>
+          className={`flex items-center justify-between rounded-[20px] border px-4 py-3 cursor-pointer transition-all duration-[var(--duration-normal)] ease-[var(--ease-default)] ${statusFilter === 'warning' ? 'bg-[var(--color-warning-light)] border-[var(--color-warning)] ring-2 ring-[var(--color-warning)]/30 shadow-md' : 'bg-[var(--color-warning-light)] border-[var(--color-warning-border)] hover:bg-[var(--color-warning-light)] hover:border-[var(--color-warning)] hover:shadow-sm'}`}>
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] bg-[var(--color-warning-light)] border border-[var(--color-warning-border)]">
-              <Radio size={20} className="text-[#E8890C]" />
+              <Radio size={20} className="text-[var(--color-warning)]" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Overloaded<br />Sensors</span>
+              <span className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Overloaded<br />Sensors</span>
             </div>
           </div>
           <div className="shrink-0 flex flex-col items-center">
-            <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{warningCount}</span>
-            <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] mt-1">Sensors</span>
+            <span className="text-[length:var(--font-size-3xl)] font-bold text-[var(--color-neutral-12)] leading-none">{warningCount}</span>
+            <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)] mt-1">Sensors</span>
           </div>
         </div>
       </div>
@@ -380,13 +380,13 @@ export default function RuntimePage() {
       {/* Floating selection banner */}
       {selectedIds.size > 0 && (
         <div className="sticky bottom-6 z-[var(--z-sticky)] flex items-center gap-4 px-5 py-3 rounded-[var(--radius-xl)] bg-[var(--color-neutral-12)] text-white shadow-[var(--shadow-lg)] mx-auto w-fit">
-          <span className="text-[length:14px] font-medium whitespace-nowrap">
+          <span className="text-[length:var(--font-size-base)] font-medium whitespace-nowrap">
             {selectedIds.size} Sensor{selectedIds.size !== 1 ? 's' : ''} selected
           </span>
           <div className="w-px h-5 bg-white/20" />
           <button
             onClick={allSelected ? deselectAll : selectAll}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-white/10 hover:bg-white/20 text-[length:14px] font-medium cursor-pointer transition-colors duration-[var(--duration-fast)]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-white/10 hover:bg-white/20 text-[length:var(--font-size-base)] font-medium cursor-pointer transition-colors duration-[var(--duration-fast)]"
           >
             {allSelected ? (
               <><CheckSquare size={14} /> Deselect all</>
@@ -396,7 +396,7 @@ export default function RuntimePage() {
           </button>
           <button
             onClick={() => { setEditSensorId([...selectedIds][0]); setShowEditModal(true) }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-white/10 hover:bg-white/20 text-[length:14px] font-medium cursor-pointer transition-colors duration-[var(--duration-fast)]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] bg-white/10 hover:bg-white/20 text-[length:var(--font-size-base)] font-medium cursor-pointer transition-colors duration-[var(--duration-fast)]"
           >
             <Pencil size={14} />
             Edit
@@ -444,15 +444,15 @@ function UptimeRingSmall({ percent }: { percent: number }) {
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#D4EDDA" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--color-success-border)" strokeWidth={stroke} />
         <circle
           cx={size / 2} cy={size / 2} r={radius} fill="none"
-          stroke="#2F9E44" strokeWidth={stroke} strokeLinecap="round"
+          stroke="var(--color-success)" strokeWidth={stroke} strokeLinecap="round"
           strokeDasharray={circumference} strokeDashoffset={offset}
           className="transition-[stroke-dashoffset] duration-1000"
         />
       </svg>
-      <span className="absolute text-[length:var(--font-size-md)] font-bold text-[#1C2024]">
+      <span className="absolute text-[length:var(--font-size-md)] font-bold text-[var(--color-neutral-12)]">
         {Math.round(percent)}%
       </span>
     </div>

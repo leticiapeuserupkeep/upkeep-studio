@@ -27,7 +27,7 @@ function getInitials(name: string): string {
 }
 
 const avatarColors = [
-  'bg-[#e8d5f5] text-[#7C3AED]',
+  'bg-[var(--color-purple-light)] text-[var(--color-purple)]',
   'bg-[var(--color-info-light)] text-[var(--color-info)]',
   'bg-[var(--color-success-light)] text-[var(--color-success)]',
   'bg-[var(--color-warning-light)] text-[var(--color-warning)]',

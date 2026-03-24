@@ -61,6 +61,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isRuntimeList = pathname === '/edge/runtime'
   const isRuntimeDetail = /^\/edge\/runtime\/[^/]+/.test(pathname)
   const isWorkOrders = pathname.startsWith('/work-orders')
+  const isFleetDetail = /^\/fleet\/vehicles\/[^/]+/.test(pathname)
 
   function getActions() {
     if (isStudioSection) {
@@ -114,7 +115,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <SideNav collapsed={sidebarCollapsed} />
 
       <div className="flex flex-col flex-1 min-w-0 min-h-screen">
-        {!isCreateApp && !isBilling && (
+        {!isCreateApp && !isBilling && !isFleetDetail && (
           <TopBar
             title={title}
             role={role}

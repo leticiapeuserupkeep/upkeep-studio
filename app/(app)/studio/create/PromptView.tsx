@@ -146,13 +146,13 @@ export function PromptView({
                     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
                   }}
                   placeholder=""
-                  className="w-full resize-none text-sm text-[var(--color-neutral-12)] outline-none ring-0 focus:outline-none focus:ring-0 bg-transparent rounded-xl px-3 py-2.5 leading-5 relative z-[1] border-none shadow-none appearance-none overflow-auto"
+                  className="w-full resize-none text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] outline-none ring-0 focus:outline-none focus:ring-0 bg-transparent rounded-xl px-3 py-2.5 leading-5 relative z-[1] border-none shadow-none appearance-none overflow-auto"
                   rows={3}
                   style={{ maxHeight: 20 * 6 + 20 }}
                 />
                 {!prompt && (
                   <span
-                    className="absolute top-2.5 left-3 text-sm text-[#9CA0A8] pointer-events-none leading-5 transition-opacity duration-[var(--duration-fast)]"
+                    className="absolute top-2.5 left-3 text-[length:var(--font-size-base)] text-[var(--color-neutral-7)] pointer-events-none leading-5 transition-opacity duration-[var(--duration-fast)]"
                     style={{ opacity: placeholder.visible ? 1 : 0 }}
                   >
                     {placeholder.text}
@@ -165,8 +165,8 @@ export function PromptView({
                     <Plus size={16} strokeWidth={1.5} className="text-[var(--color-neutral-12)]" />
                   </button>
                   {prompt.trim() && (
-                    <span className="text-[11px] text-[var(--color-neutral-7)] select-none">
-                      <kbd className="px-1 py-0.5 rounded bg-[var(--color-neutral-3)] border border-[var(--border-default)] text-[10px] font-medium text-[var(--color-neutral-8)]">↵</kbd> to send
+                    <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] select-none">
+                      <kbd className="px-1 py-0.5 rounded bg-[var(--color-neutral-3)] border border-[var(--border-default)] text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-8)]">↵</kbd> to send
                     </span>
                   )}
                 </div>
@@ -197,7 +197,7 @@ export function PromptView({
                   <button
                     key={s.label}
                     onClick={() => handleSuggestionClick(s.prefill)}
-                    className="px-4 py-1.5 text-sm font-medium rounded-full border transition-all duration-[var(--duration-fast)] cursor-pointer hover:scale-[1.04] active:scale-[0.97]"
+                    className="px-4 py-1.5 text-[length:var(--font-size-base)] font-medium rounded-full border transition-all duration-[var(--duration-fast)] cursor-pointer hover:scale-[1.04] active:scale-[0.97]"
                     style={{ borderColor: s.borderColor, color: s.color, backgroundColor: 'transparent' }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = s.hoverBg }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
@@ -206,7 +206,7 @@ export function PromptView({
                   </button>
                 ))}
               </div>
-              <p className="text-[12px] text-[var(--color-neutral-8)]">Describe what you need in your own words — or pick a template below to start faster</p>
+              <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Describe what you need in your own words — or pick a template below to start faster</p>
             </div>
           </div>
 
@@ -221,7 +221,7 @@ export function PromptView({
               <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Feature Templates</h3>
               <div className="flex items-center gap-2">
                 <Collapsible.Trigger asChild>
-                  <button className="flex items-center gap-1 px-1.5 py-1 text-xs font-medium text-[var(--color-accent-9)] rounded hover:bg-[rgba(59,91,219,0.08)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                  <button className="flex items-center gap-1 px-1.5 py-1 text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] rounded hover:bg-[rgba(59,91,219,0.08)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                     {templatesOpen ? 'Show Less' : 'View All Templates'}
                     <ChevronsDown
                       size={16}
@@ -306,7 +306,7 @@ export function PromptView({
             <div className="flex items-center gap-4 px-6 pt-4 shrink-0">
               <button
                 onClick={() => setTemplateTab('official')}
-                className={`pb-2 text-sm font-medium border-b-2 transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+                className={`pb-2 text-[length:var(--font-size-base)] font-medium border-b-2 transition-colors duration-[var(--duration-fast)] cursor-pointer ${
                   templateTab === 'official' ? 'border-[var(--color-accent-9)] text-[var(--color-accent-9)]' : 'border-transparent text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-9)]'
                 }`}
               >
@@ -314,7 +314,7 @@ export function PromptView({
               </button>
               <button
                 onClick={() => setTemplateTab('mine')}
-                className={`pb-2 text-sm font-medium border-b-2 transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+                className={`pb-2 text-[length:var(--font-size-base)] font-medium border-b-2 transition-colors duration-[var(--duration-fast)] cursor-pointer ${
                   templateTab === 'mine' ? 'border-[var(--color-accent-9)] text-[var(--color-accent-9)]' : 'border-transparent text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-9)]'
                 }`}
               >
@@ -331,7 +331,7 @@ export function PromptView({
                   <button
                     key={cat}
                     onClick={() => setCategoryFilter(cat)}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+                    className={`px-2.5 py-1 text-[length:var(--font-size-sm)] font-medium rounded-full transition-colors duration-[var(--duration-fast)] cursor-pointer ${
                       categoryFilter === cat
                         ? 'bg-[var(--color-accent-9)] text-white'
                         : 'bg-[var(--color-neutral-3)] text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-4)]'
@@ -347,15 +347,15 @@ export function PromptView({
               {templateTab === 'mine' ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-12">
                   <Sparkles size={32} className="text-[var(--color-neutral-6)]" />
-                  <p className="text-sm text-[var(--color-neutral-8)]">You haven&apos;t created any templates yet.</p>
-                  <p className="text-xs text-[var(--color-neutral-7)]">Templates you build and save will appear here.</p>
+                  <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)]">You haven&apos;t created any templates yet.</p>
+                  <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Templates you build and save will appear here.</p>
                 </div>
               ) : (
                 <>
                   {/* Most Used as Starting Point */}
                   {categoryFilter === 'All' && roleFilter === 'All Roles' && complexityFilter === 'All Levels' && (
                     <div className="mb-6">
-                      <h3 className="text-xs font-medium uppercase tracking-wider text-[var(--color-neutral-8)] mb-3">Most Used as Starting Point</h3>
+                      <h3 className="text-[length:var(--font-size-sm)] font-medium uppercase tracking-wider text-[var(--color-neutral-8)] mb-3">Most Used as Starting Point</h3>
                       <div className="grid grid-cols-3 gap-3">
                         {featuredTemplateIndices.map((idx) => {
                           const t = templates[idx]
@@ -370,8 +370,8 @@ export function PromptView({
                                 <Icon size={18} strokeWidth={1.5} className="text-[var(--color-accent-9)]" />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-sm font-medium text-[var(--color-neutral-12)] truncate">{t.title}</p>
-                                <p className="text-xs text-[var(--color-neutral-8)] truncate">{t.description}</p>
+                                <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)] truncate">{t.title}</p>
+                                <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] truncate">{t.description}</p>
                               </div>
                             </button>
                           )
@@ -384,8 +384,8 @@ export function PromptView({
                   {Object.entries(groupedTemplates).map(([category, items]) => (
                     <Collapsible.Root key={category} defaultOpen className="mb-4">
                       <Collapsible.Trigger className="flex items-center gap-2 w-full py-2 cursor-pointer group">
-                        <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-neutral-8)]">{category}</span>
-                        <span className="text-xs text-[var(--color-neutral-7)]">({items.length})</span>
+                        <span className="text-[length:var(--font-size-sm)] font-medium uppercase tracking-wider text-[var(--color-neutral-8)]">{category}</span>
+                        <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">({items.length})</span>
                         <div className="flex-1 h-px bg-[var(--border-subtle)]" />
                         <ChevronsDown size={14} className="text-[var(--color-neutral-8)] transition-transform duration-[var(--duration-normal)] group-data-[state=closed]:rotate-180" />
                       </Collapsible.Trigger>
@@ -403,10 +403,10 @@ export function PromptView({
                                   <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--color-accent-1)] shrink-0">
                                     <Icon size={16} strokeWidth={1.5} className="text-[var(--color-accent-9)]" />
                                   </div>
-                                  <span className="text-xs px-1.5 py-0.5 rounded bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)] capitalize">{t.complexity}</span>
+                                  <span className="text-[length:var(--font-size-sm)] px-1.5 py-0.5 rounded bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)] capitalize">{t.complexity}</span>
                                 </div>
-                                <h4 className="text-sm font-medium text-[var(--color-neutral-12)]">{t.title}</h4>
-                                <p className="text-xs text-[var(--color-neutral-8)] leading-relaxed line-clamp-2">{t.description}</p>
+                                <h4 className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">{t.title}</h4>
+                                <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed line-clamp-2">{t.description}</p>
                               </button>
                             )
                           })}
@@ -417,10 +417,10 @@ export function PromptView({
 
                   {filteredTemplates.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
-                      <p className="text-sm text-[var(--color-neutral-8)]">No templates match your filters.</p>
+                      <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)]">No templates match your filters.</p>
                       <button
                         onClick={() => { setRoleFilter('All Roles'); setComplexityFilter('All Levels'); setCategoryFilter('All') }}
-                        className="text-xs text-[var(--color-accent-9)] hover:underline cursor-pointer"
+                        className="text-[length:var(--font-size-sm)] text-[var(--color-accent-9)] hover:underline cursor-pointer"
                       >
                         Clear filters
                       </button>

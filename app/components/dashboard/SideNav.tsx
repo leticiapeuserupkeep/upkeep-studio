@@ -7,7 +7,7 @@ import * as Avatar from '@radix-ui/react-avatar'
 import * as Collapsible from '@radix-ui/react-collapsible'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as Separator from '@radix-ui/react-separator'
-import * as Tooltip from '@radix-ui/react-tooltip'
+import { Tooltip, TooltipProvider } from '@/app/components/ui'
 import {
   ClipboardList, Wrench, CalendarClock, Inbox,
   Sparkles, BarChart3, Gauge, Wifi,
@@ -84,7 +84,7 @@ const sections: NavSection[] = [
   {
     title: 'FLEET',
     items: [
-      { label: 'Vehicles', icon: Car },
+      { label: 'Vehicles', icon: Car, href: '/fleet/vehicles' },
       { label: 'Inspections', icon: ClipboardCheck },
       { label: 'Inspection History', icon: FileClock },
       { label: 'Recalls', icon: AlertTriangle },
@@ -131,30 +131,18 @@ function isActive(pathname: string, href?: string, label?: string): boolean {
 function CollapsedIcon({ item, active, label }: { item: NavItem; active: boolean; label: string }) {
   const Icon = item.icon
   const inner = (
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>
-        <span
-          className={`relative flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] cursor-pointer transition-all duration-[var(--duration-normal)] ease-[var(--ease-default)] ${
-            active
-              ? 'bg-[var(--color-neutral-5)] text-[var(--color-neutral-12)]'
-              : 'text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] hover:text-[var(--color-neutral-12)]'
-          }`}
-          aria-label={label}
-        >
-          <Icon size={18} />
-        </span>
-      </Tooltip.Trigger>
-      <Tooltip.Portal>
-        <Tooltip.Content
-          side="right"
-          sideOffset={8}
-          className="px-2.5 py-1 rounded-[var(--radius-md)] bg-[var(--color-neutral-12)] text-white text-[length:var(--font-size-sm)] shadow-[var(--shadow-lg)] z-[var(--z-toast)]"
-        >
-          {label}
-          <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-        </Tooltip.Content>
-      </Tooltip.Portal>
-    </Tooltip.Root>
+    <Tooltip content={label} side="right" sideOffset={8}>
+      <span
+        className={`relative flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] cursor-pointer transition-all duration-[var(--duration-normal)] ease-[var(--ease-default)] ${
+          active
+            ? 'bg-[var(--color-neutral-5)] text-[var(--color-neutral-12)]'
+            : 'text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] hover:text-[var(--color-neutral-12)]'
+        }`}
+        aria-label={label}
+      >
+        <Icon size={18} />
+      </span>
+    </Tooltip>
   )
 
   if (item.href) {
@@ -167,7 +155,7 @@ export function SideNav({ collapsed }: SideNavProps) {
   const pathname = usePathname()
 
   return (
-    <Tooltip.Provider delayDuration={300}>
+    <TooltipProvider delayDuration={300}>
       <aside
         className={`flex flex-col min-h-screen h-screen sticky top-0 border-r border-[var(--border-default)] bg-[var(--surface-sidebar)] transition-[width] duration-[var(--duration-slow)] ease-[var(--ease-default)] shrink-0 ${
           collapsed ? 'w-16' : 'w-[280px]'
@@ -199,7 +187,7 @@ export function SideNav({ collapsed }: SideNavProps) {
                 <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[var(--color-error)]" />
               </button>
               <Avatar.Root className="w-7 h-7 rounded-full overflow-hidden shrink-0">
-                <Avatar.Fallback className="flex items-center justify-center w-full h-full bg-[#e8d5f5] text-[#7C3AED] text-[length:var(--font-size-xs)] font-semibold">
+                <Avatar.Fallback className="flex items-center justify-center w-full h-full bg-[var(--color-purple-light)] text-[var(--color-purple)] text-[length:var(--font-size-xs)] font-semibold">
                   AM
                 </Avatar.Fallback>
               </Avatar.Root>
@@ -301,54 +289,30 @@ export function SideNav({ collapsed }: SideNavProps) {
           }`}
         >
           {collapsed ? (
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <button
-                  className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
-                  aria-label="Settings"
-                >
-                  <Settings size={18} />
-                </button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  side="right"
-                  sideOffset={8}
-                  className="px-2.5 py-1 rounded-[var(--radius-md)] bg-[var(--color-neutral-12)] text-white text-[length:var(--font-size-sm)] shadow-[var(--shadow-lg)] z-[var(--z-toast)]"
-                >
-                  Settings
-                  <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
+            <Tooltip content="Settings" side="right" sideOffset={8}>
+              <button
+                className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
+                aria-label="Settings"
+              >
+                <Settings size={18} />
+              </button>
+            </Tooltip>
           ) : (
             <div className="flex items-center gap-1">
               {footerIcons.map(({ icon: Icon, label }) => (
-                <Tooltip.Root key={label}>
-                  <Tooltip.Trigger asChild>
-                    <button
-                      className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] hover:text-[var(--color-neutral-11)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
-                      aria-label={label}
-                    >
-                      <Icon size={16} />
-                    </button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Portal>
-                    <Tooltip.Content
-                      side="top"
-                      sideOffset={6}
-                      className="px-2 py-1 rounded-[var(--radius-md)] bg-[var(--color-neutral-12)] text-white text-[length:var(--font-size-xs)] shadow-[var(--shadow-lg)] z-[var(--z-toast)]"
-                    >
-                      {label}
-                      <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-                    </Tooltip.Content>
-                  </Tooltip.Portal>
-                </Tooltip.Root>
+                <Tooltip key={label} content={label} side="top" sideOffset={6}>
+                  <button
+                    className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] text-[var(--color-neutral-8)] hover:bg-[var(--color-neutral-4)] hover:text-[var(--color-neutral-11)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
+                    aria-label={label}
+                  >
+                    <Icon size={16} />
+                  </button>
+                </Tooltip>
               ))}
             </div>
           )}
         </div>
       </aside>
-    </Tooltip.Provider>
+    </TooltipProvider>
   )
 }

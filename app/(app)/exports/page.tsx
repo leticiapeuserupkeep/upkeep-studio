@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { Search, ArrowUpDown, ChevronDown, ChevronRight, Download, Link2, X, Check, CircleDot, Flag, MapPin, User, Tag, CheckCircle2, Clock, Loader2 } from 'lucide-react'
 import * as Dialog from '@radix-ui/react-dialog'
 import type { LucideIcon } from 'lucide-react'
-import * as Tooltip from '@radix-ui/react-tooltip'
+import { Tooltip, TooltipProvider } from '@/app/components/ui'
 import { Table, TableToolbar, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/components/ui/Table'
 import { Badge } from '@/app/components/ui/Badge'
 import { IconButton } from '@/app/components/ui/IconButton'
@@ -406,21 +406,9 @@ function StatusBadge({ status, duration }: {
 
   if (status === 'Completed' && duration) {
     return (
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-          <span className="inline-flex cursor-default">{badge}</span>
-        </Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Content
-            side="top"
-            sideOffset={6}
-            className="px-2.5 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-neutral-12)] text-white text-[length:var(--font-size-xs)] shadow-[var(--shadow-lg)] z-[var(--z-toast)]"
-          >
-            {formatDurationLabel(duration)}
-            <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
+      <Tooltip content={formatDurationLabel(duration)}>
+        <span className="inline-flex cursor-default">{badge}</span>
+      </Tooltip>
     )
   }
 
@@ -639,54 +627,30 @@ function RowActionMenu({ status, isSubRow }: { status: ExportStatus; isSubRow?: 
   if (isCompleted) {
     return (
       <div className="flex items-center justify-end gap-1.5">
-        <Tooltip.Root open={copied || undefined}>
-          <Tooltip.Trigger asChild>
-            <IconButton
-              variant="secondary"
-              size="sm"
-              label="Copy link"
-              onClick={handleCopyLink}
-            >
-              {copied ? (
-                <Check size={14} className="text-[var(--color-success)]" />
-              ) : (
-                <Link2 size={14} />
-              )}
-            </IconButton>
-          </Tooltip.Trigger>
-          <Tooltip.Portal>
-            <Tooltip.Content
-              side="top"
-              sideOffset={6}
-              className="px-2.5 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-neutral-12)] text-white text-xs font-medium shadow-[var(--shadow-lg)] animate-in fade-in-0 zoom-in-95"
-            >
-              {copied ? 'Copied!' : 'Copy link'}
-              <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" width={10} height={5} />
-            </Tooltip.Content>
-          </Tooltip.Portal>
-        </Tooltip.Root>
-        <Tooltip.Root>
-          <Tooltip.Trigger asChild>
-            <IconButton
-              variant="secondary"
-              size="sm"
-              label="Download PDF"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Download size={14} />
-            </IconButton>
-          </Tooltip.Trigger>
-          <Tooltip.Portal>
-            <Tooltip.Content
-              side="top"
-              sideOffset={6}
-              className="px-2.5 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-neutral-12)] text-white text-xs font-medium shadow-[var(--shadow-lg)] animate-in fade-in-0 zoom-in-95"
-            >
-              Download PDF
-              <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" width={10} height={5} />
-            </Tooltip.Content>
-          </Tooltip.Portal>
-        </Tooltip.Root>
+        <Tooltip content={copied ? 'Copied!' : 'Copy link'} open={copied || undefined}>
+          <IconButton
+            variant="secondary"
+            size="sm"
+            label="Copy link"
+            onClick={handleCopyLink}
+          >
+            {copied ? (
+              <Check size={14} className="text-[var(--color-success)]" />
+            ) : (
+              <Link2 size={14} />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip content="Download PDF">
+          <IconButton
+            variant="secondary"
+            size="sm"
+            label="Download PDF"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download size={14} />
+          </IconButton>
+        </Tooltip>
       </div>
     )
   }
@@ -770,7 +734,7 @@ export default function ExportsPage() {
   )
 
   return (
-    <Tooltip.Provider delayDuration={300}>
+    <TooltipProvider delayDuration={300}>
     {toolbarPortal && createPortal(toolbarBar, toolbarPortal)}
     <div className="flex flex-col flex-1 w-full">
       {toolbarPortal && createPortal(
@@ -875,6 +839,6 @@ export default function ExportsPage() {
         </div>
       </main>
     </div>
-    </Tooltip.Provider>
+    </TooltipProvider>
   )
 }

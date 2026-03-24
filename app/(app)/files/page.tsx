@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, MoreHorizontal, ArrowUpDown, Columns3, SlidersHorizontal, User } from 'lucide-react'
-import * as Tooltip from '@radix-ui/react-tooltip'
+import { TooltipProvider } from '@/app/components/ui'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/components/ui/Table'
 import { Badge } from '@/app/components/ui/Badge'
 import { IconButton } from '@/app/components/ui/IconButton'
@@ -54,7 +54,7 @@ function UserAvatar({ name, color }: { name: string; color: string }) {
   const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   return (
     <span
-      className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-semibold text-white shrink-0"
+      className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[length:var(--font-size-xs)] font-semibold text-white shrink-0"
       style={{ backgroundColor: color }}
     >
       {initials}
@@ -152,7 +152,7 @@ export default function FilesPage() {
   )
 
   return (
-    <Tooltip.Provider delayDuration={300}>
+    <TooltipProvider delayDuration={300}>
       {toolbarPortal && createPortal(toolbarBar, toolbarPortal)}
       <div className="flex flex-col flex-1 w-full">
         <main className="flex-1 overflow-y-auto">
@@ -272,6 +272,6 @@ export default function FilesPage() {
           </div>
         </main>
       </div>
-    </Tooltip.Provider>
+    </TooltipProvider>
   )
 }

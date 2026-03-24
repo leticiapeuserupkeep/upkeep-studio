@@ -47,11 +47,12 @@ const sizeStyles: Record<ButtonSize, string> = {
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', asChild = false, className = '', ...props }, ref) => {
+  ({ variant = 'primary', size = 'md', asChild = false, type = 'button', className = '', ...props }, ref) => {
     const Comp = asChild ? Slot : 'button'
     return (
       <Comp
         ref={ref}
+        type={asChild ? undefined : type}
         className={`inline-flex items-center justify-center font-medium tracking-[0.01em] transition-colors duration-[var(--duration-fast)] cursor-pointer whitespace-nowrap select-none disabled:pointer-events-none ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
         {...props}
       />

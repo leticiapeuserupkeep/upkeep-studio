@@ -9,7 +9,7 @@ import {
   ClipboardList, Plus, Download, XCircle, Calendar, ChevronDown, Zap, Trash2,
   MousePointerClick,
 } from 'lucide-react'
-import * as Switch from '@radix-ui/react-switch'
+import { Switch } from '@/app/components/ui'
 import { Card, CardHeader, CardTitle, CardBody } from '@/app/components/ui/Card'
 import { Badge } from '@/app/components/ui/Badge'
 import { Button } from '@/app/components/ui/Button'
@@ -260,7 +260,7 @@ export default function RuntimeDetailPage() {
                   <Timer size={20} className="text-white" />
                 </div>
                 <div className="flex flex-col gap-1">
-                <span className="text-[length:11px] font-semibold opacity-80 uppercase">Runtime</span>
+                <span className="text-[length:var(--font-size-xs)] font-semibold opacity-80 uppercase">Runtime</span>
                 <span className="text-[length:var(--font-size-3xl)] font-bold leading-none">
                   {Math.round(displayTotalHours)} h
                 </span>
@@ -271,13 +271,13 @@ export default function RuntimeDetailPage() {
             </div>
 
             {/* Downtime Hours */}
-            <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-error-light)] border border-[#FECDD3] px-5 py-4">
+            <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-error-light)] border border-[var(--color-error-border)] px-5 py-4">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] border border-[var(--color-error-border)]">
-                  <XCircle size={20} className="text-[#E03131]" />
+                  <XCircle size={20} className="text-[var(--color-error)]" />
                 </div>
                 <div className="flex flex-col min-w-0 max-w-[80px]">
-                  <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Downtime Hours</span>
+                  <span className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Downtime Hours</span>
                 </div>
               </div>
               <div className="shrink-0 flex flex-col items-center">
@@ -287,18 +287,18 @@ export default function RuntimeDetailPage() {
             </div>
 
             {/* Daily Average */}
-            <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-accent-1)] border border-[#D6DEFF] px-5 py-4">
+            <div className="flex items-center justify-between rounded-[20px] bg-[var(--color-accent-1)] border border-[var(--color-accent-3)] px-5 py-4">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex items-center justify-center w-[56px] h-[56px] shrink-0 rounded-[16px] border border-[var(--color-accent-3)]">
-                  <BarChart3 size={20} className="text-[#5B6AD0]" />
+                  <BarChart3 size={20} className="text-[var(--color-accent-9)]" />
                 </div>
                 <div className="flex flex-col min-w-0 max-w-[80px]">
-                  <span className="text-[length:11px] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Daily Average</span>
+                  <span className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-[0.06em] text-[var(--color-neutral-11)]">Daily Average</span>
                 </div>
               </div>
               <div className="shrink-0 flex flex-col items-center">
-                <span className="text-[length:var(--font-size-3xl)] font-bold text-[#1C2024] leading-none">{displayAvgDailyHours.toFixed(1)}</span>
-                <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] mt-1">Hours</span>
+                <span className="text-[length:var(--font-size-3xl)] font-bold text-[var(--color-neutral-12)] leading-none">{displayAvgDailyHours.toFixed(1)}</span>
+                <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)] mt-1">Hours</span>
               </div>
             </div>
 
@@ -419,13 +419,11 @@ export default function RuntimeDetailPage() {
                         >
                           {sensor.meterName}
                         </button>
-                        <Switch.Root
+                        <Switch
                           checked={meterSyncOn}
                           onCheckedChange={setMeterSyncOn}
-                          className="relative w-[32px] h-[18px] rounded-full cursor-pointer transition-colors duration-[var(--duration-fast)] shrink-0 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
-                        >
-                          <Switch.Thumb className="block w-[14px] h-[14px] bg-white rounded-full shadow-sm transition-transform duration-[var(--duration-fast)] translate-x-[2px] data-[state=checked]:translate-x-[16px]" />
-                        </Switch.Root>
+                          size="sm"
+                        />
                         <button
                           onClick={() => setMeterDeleted(true)}
                           className="flex items-center justify-center w-6 h-6 rounded-[var(--radius-sm)] hover:bg-[var(--color-error-light)] cursor-pointer shrink-0 hidden"
@@ -645,10 +643,10 @@ function DayPieChart({ dayHours, avgDailyHours }: { dayHours: number; avgDailyHo
           />
         </svg>
         <span className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-[length:16px] font-bold text-[var(--color-accent-9)] leading-none">
+          <span className="text-[length:var(--font-size-md)] font-bold text-[var(--color-accent-9)] leading-none">
             {pct}%
           </span>
-          <span className="text-[length:12px] font-medium text-[var(--color-neutral-8)] leading-none mt-1">
+          <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)] leading-none mt-1">
             {dayHours}h
           </span>
         </span>

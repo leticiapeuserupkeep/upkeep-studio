@@ -39,7 +39,7 @@ export function PublishSuccessOverlay({ appTitle, onDismiss }: { appTitle: strin
           >
             <circle
               cx={40} cy={40} r={36}
-              fill="#22C55E"
+              fill="var(--color-success)"
               style={{
                 transformOrigin: 'center',
                 animation: 'success-circle-fill 500ms ease-out forwards',
@@ -71,7 +71,7 @@ export function PublishSuccessOverlay({ appTitle, onDismiss }: { appTitle: strin
 
         {/* Subtitle */}
         <p
-          className="text-sm text-white/50 -mt-2"
+          className="text-[length:var(--font-size-base)] text-white/50 -mt-2"
           style={{ opacity: 0, animation: 'success-text-fade-up 250ms ease-out 850ms forwards' }}
         >
           Your app is now live and accessible
@@ -83,7 +83,7 @@ export function PublishSuccessOverlay({ appTitle, onDismiss }: { appTitle: strin
             e.stopPropagation()
             navigator.clipboard.writeText(`https://upkeep.app/apps/${appTitle.toLowerCase().replace(/\s+/g, '-')}`)
           }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/15 bg-white/10 text-sm font-medium text-white hover:bg-white/15 transition-colors duration-[var(--duration-fast)] cursor-pointer"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/15 bg-white/10 text-[length:var(--font-size-base)] font-medium text-white hover:bg-white/15 transition-colors duration-[var(--duration-fast)] cursor-pointer"
           style={{ opacity: 0, animation: 'success-text-fade-up 250ms ease-out 950ms forwards' }}
         >
           <Link2 size={14} />

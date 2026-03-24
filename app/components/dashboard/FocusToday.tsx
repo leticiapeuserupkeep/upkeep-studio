@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { Sparkles, ArrowRight } from 'lucide-react'
-import * as Tooltip from '@radix-ui/react-tooltip'
 import { Card, CardHeader, CardTitle } from '@/app/components/ui/Card'
 import { Badge } from '@/app/components/ui/Badge'
 import { UrgencyBadge } from '@/app/components/ui/UrgencyBadge'
 import { Button } from '@/app/components/ui/Button'
 import { Chip } from '@/app/components/ui/Chip'
+import { Tooltip, TooltipProvider } from '@/app/components/ui'
 import type { FocusItem } from '@/app/lib/models'
 
 interface FocusTodayProps {
@@ -81,24 +81,13 @@ function FocusRow({ item, rank }: { item: FocusItem; rank: number }) {
         <div className="flex items-center gap-2">
           <span className="text-[length:var(--font-size-base)]">{categoryIcons[item.type]}</span>
           <UrgencyBadge urgency={item.urgency} />
-          <Tooltip.Provider delayDuration={200}>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] cursor-help ml-auto tabular-nums">
-                  Score: {item.priorityScore}
-                </span>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="max-w-[240px] px-3 py-2 rounded-[var(--radius-lg)] bg-[var(--color-neutral-12)] text-white text-[length:var(--font-size-sm)] shadow-[var(--shadow-lg)] z-[var(--z-toast)]"
-                  sideOffset={5}
-                >
-                  {item.priorityReason}
-                  <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </Tooltip.Provider>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip content={item.priorityReason} sideOffset={5} maxWidth="240px" className="px-3 py-2 rounded-[var(--radius-lg)]">
+              <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] cursor-help ml-auto tabular-nums">
+                Score: {item.priorityScore}
+              </span>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         <p className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-11)] mt-1 truncate">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronDown, ArrowUpDown } from 'lucide-react'
 import { AppCard } from '@/app/components/studio/AppCard'
 import { SearchInput } from '@/app/components/ui/SearchInput'
@@ -77,7 +78,12 @@ const builtApps = [
   },
 ]
 
+const analyticsPreviewData: Record<string, string> = {
+  'Warranty Tracker': '42 installs · Last opened 2h ago',
+}
+
 export default function AppsIBuiltPage() {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [category, setCategory] = useState('All Categories')
   const [sortBy, setSortBy] = useState('most-recent')
@@ -184,6 +190,9 @@ export default function AppsIBuiltPage() {
                 lastUpdated={app.date}
                 image={app.image}
                 screenshots={app.screenshots}
+                onReuse={() => router.push(`/studio/create?from=${encodeURIComponent(app.title)}&prompt=${encodeURIComponent(app.description)}`)}
+                reuseLabel="Duplicate and edit"
+                analyticsPreview={app.buildStatus === 'published' ? analyticsPreviewData[app.title] : undefined}
               />
             </div>
           ))}

@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { AppCard } from '@/app/components/studio/AppCard'
 
 const installedApps = [
@@ -43,6 +44,7 @@ const installedApps = [
 ] as const
 
 export default function InstalledAppsPage() {
+  const router = useRouter()
   return (
     <main className="flex-1 overflow-auto bg-[var(--surface-primary)]">
       <div className="max-w-[1280px] mx-auto w-full px-[var(--space-2xl)] py-[var(--space-2xl)]">
@@ -72,6 +74,8 @@ export default function InstalledAppsPage() {
                 image={app.image}
                 screenshots={[...app.screenshots]}
                 lastUpdatedStale={'lastUsedStale' in app && !!app.lastUsedStale}
+                onReuse={() => router.push(`/studio/create?from=${encodeURIComponent(app.title)}&prompt=${encodeURIComponent(app.description)}`)}
+                reuseLabel="Clone and customize"
               />
             </div>
           ))}

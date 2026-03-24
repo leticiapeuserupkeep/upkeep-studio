@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import * as Switch from '@radix-ui/react-switch'
+import { Switch } from '@/app/components/ui'
 import { Settings2, RotateCcw, LayoutGrid, Lock } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardBody } from '@/app/components/ui/Card'
 import { Button } from '@/app/components/ui/Button'
@@ -103,17 +103,16 @@ export function ManageWidgets({
                       )}
                     </div>
 
-                    <Switch.Root
+                    <Switch
                       checked={isVisible}
                       onCheckedChange={() => {
                         if (!isPinned) onToggleWidget(widget.id)
                       }}
                       disabled={isPinned}
-                      className="relative w-9 h-5 rounded-full bg-[var(--color-neutral-5)] data-[state=checked]:bg-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                      size="md"
                       aria-label={`Toggle ${widget.title}`}
-                    >
-                      <Switch.Thumb className="block w-4 h-4 rounded-full bg-white shadow-[var(--shadow-sm)] translate-x-0.5 data-[state=checked]:translate-x-[18px] transition-transform duration-[var(--duration-fast)]" />
-                    </Switch.Root>
+                      className="shrink-0"
+                    />
                   </div>
                 )
               })}

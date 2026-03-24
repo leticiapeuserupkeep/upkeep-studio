@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react'
 import { createPortal } from 'react-dom'
+import { useSearchParams } from 'next/navigation'
 
 import * as Collapsible from '@radix-ui/react-collapsible'
 import * as Dialog from '@radix-ui/react-dialog'
-import * as Switch from '@radix-ui/react-switch'
-import * as Tooltip from '@radix-ui/react-tooltip'
+import { Switch, Tooltip, TooltipProvider } from '@/app/components/ui'
 import {
   PanelLeft, Plus, Mic, ArrowUp,
   BarChart3, Camera, Settings,
@@ -14,12 +14,14 @@ import {
   ArrowRight, FileText, ChevronDown,
   LayoutGrid, Medal, Briefcase, CircleDot,
   RefreshCcw, ShieldCheck, PhoneCall,
-  HelpCircle, Check, X, Monitor, AlertCircle,
+  Check, X, Monitor, AlertCircle,
   Users, Eye, Lock, Building2, Globe, Sparkles,
   Zap, Wrench, ClipboardList, Gauge, Package,
-  Bell, Upload, Image, Info, ChevronRight, Tag, Link2, Square,
+  Bell, Upload, Image, Info, ChevronRight, Tag, Link2, Square, Search,
+  Workflow, Database, PenTool,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
+import { Badge } from '@/app/components/ui/Badge'
 
 /* ── Static data ── */
 
@@ -77,11 +79,122 @@ const thinkingSteps = [
 type ViewState = 'prompt' | 'transitioning' | 'building'
 type AiPhase = 'waiting' | 'thinking' | 'responded'
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile'
+type PreviewTab = 'desktop' | 'code' | 'history' | 'analytics'
 type SaveState = 'saved' | 'saving' | 'unsaved'
 type PublishStatus = 'draft' | 'publishing' | 'published' | 'dirty'
 type AudienceOption = 'company' | 'private' | 'restricted'
 type AgentMode = 'plan' | 'action'
 type SelectedTemplate = typeof templates[number] | null
+
+/* ── Integration data ── */
+
+interface Integration {
+  id: string
+  name: string
+  icon: string
+  description: string
+  connected: boolean
+  prompts: { label: string; prefill: string }[]
+}
+
+const integrations: Integration[] = [
+  {
+    id: 'slack', name: 'Slack', icon: '/images/integrations/slack.svg', description: 'Send messages and collaborate in Slack channels.',
+    connected: true,
+    prompts: [
+      { label: 'Track message volume by channel', prefill: 'Build an app that tracks Slack message volume by channel and highlights trending topics for my maintenance team.' },
+      { label: 'Alert team on work order changes', prefill: 'Create an app that sends Slack alerts when work orders change status, are overdue, or get reassigned.' },
+    ],
+  },
+  {
+    id: 'gmail', name: 'Gmail', icon: '/images/integrations/gmail.svg', description: 'Read, search, and send emails from your inbox.',
+    connected: true,
+    prompts: [
+      { label: 'Summarize open request threads', prefill: 'Build an app that summarizes open email request threads related to maintenance and surfaces unanswered ones.' },
+      { label: 'Flag overdue approvals', prefill: 'Create an app that flags email threads containing overdue approval requests for purchase orders and work orders.' },
+    ],
+  },
+  {
+    id: 'google-sheets', name: 'Google Sheets', icon: '/images/integrations/google-sheets.svg', description: 'Read, write, and manage your spreadsheets.',
+    connected: false,
+    prompts: [
+      { label: 'Import asset lists', prefill: 'Build an app that imports asset lists from Google Sheets and syncs them with UpKeep asset records automatically.' },
+      { label: 'Sync inspection results', prefill: 'Create an app that syncs inspection results from Google Sheets into UpKeep for historical tracking and trend analysis.' },
+    ],
+  },
+  {
+    id: 'teams', name: 'Microsoft Teams', icon: '/images/integrations/teams.svg', description: 'Send messages and collaborate with your team.',
+    connected: false,
+    prompts: [
+      { label: 'Send work order updates to a channel', prefill: 'Build an app that posts work order status updates to a Microsoft Teams channel in real time.' },
+      { label: 'Daily maintenance summary', prefill: 'Create an app that sends a daily maintenance summary to a Teams channel with open WOs, completed tasks, and alerts.' },
+    ],
+  },
+  {
+    id: 'upkeep-wo', name: 'UpKeep Work Orders', icon: '/images/integrations/upkeep.svg', description: 'Work order management and tracking.',
+    connected: true,
+    prompts: [
+      { label: 'Build a real-time WO dashboard', prefill: 'Build a real-time work order dashboard showing open, in-progress, and overdue WOs with filters by priority and technician.' },
+      { label: 'Track past-due assignments', prefill: 'Create an app that tracks past-due work order assignments and shows escalation history for each one.' },
+    ],
+  },
+  {
+    id: 'upkeep-assets', name: 'UpKeep Assets', icon: '/images/integrations/upkeep.svg', description: 'Asset monitoring and management.',
+    connected: true,
+    prompts: [
+      { label: 'Monitor asset health', prefill: 'Build an app that monitors asset health scores across all locations and alerts when any asset drops below threshold.' },
+      { label: 'View warranty expiration by location', prefill: 'Create an app that shows warranty expiration dates for all assets organized by location with upcoming expiry alerts.' },
+    ],
+  },
+  {
+    id: 'outlook', name: 'Outlook', icon: '/images/integrations/outlook.svg', description: 'Read, search, and send emails from Outlook.',
+    connected: false,
+    prompts: [
+      { label: 'Schedule PM from calendar', prefill: 'Build an app that schedules preventive maintenance tasks based on Outlook calendar availability and technician assignments.' },
+      { label: 'Email WO summaries weekly', prefill: 'Create an app that emails weekly work order summary reports to managers via Outlook.' },
+    ],
+  },
+  {
+    id: 'sap', name: 'SAP', icon: '/images/integrations/sap.svg', description: 'Enterprise resource planning.',
+    connected: false,
+    prompts: [
+      { label: 'Sync purchase orders', prefill: 'Build an app that syncs purchase orders between SAP and UpKeep for unified procurement tracking.' },
+      { label: 'Asset cost reconciliation', prefill: 'Create an app that reconciles asset maintenance costs between SAP financials and UpKeep work order data.' },
+    ],
+  },
+  {
+    id: 'confluence', name: 'Confluence', icon: '/images/integrations/confluence.svg', description: 'Create and manage Confluence pages and documentation.',
+    connected: false,
+    prompts: [
+      { label: 'Sync maintenance docs', prefill: 'Build an app that syncs maintenance documentation from Confluence and surfaces relevant SOPs for active work orders.' },
+      { label: 'Auto-generate reports', prefill: 'Create an app that auto-generates Confluence pages with weekly maintenance reports from UpKeep data.' },
+    ],
+  },
+  {
+    id: 'dropbox', name: 'Dropbox', icon: '/images/integrations/dropbox.svg', description: 'Upload, organize, and store files via Dropbox.',
+    connected: false,
+    prompts: [
+      { label: 'Attach files to work orders', prefill: 'Build an app that attaches Dropbox files to work orders and organizes uploads by asset or location.' },
+      { label: 'Archive inspection photos', prefill: 'Create an app that archives inspection photos from UpKeep to organized Dropbox folders automatically.' },
+    ],
+  },
+  {
+    id: 'monday', name: 'Monday', icon: '/images/integrations/monday.svg', description: 'Manage boards, items, and workflows in Monday.com.',
+    connected: false,
+    prompts: [
+      { label: 'Sync tasks with work orders', prefill: 'Build an app that syncs Monday.com tasks with UpKeep work orders to keep project and maintenance aligned.' },
+      { label: 'Track team capacity', prefill: 'Create an app that tracks team capacity across Monday boards and UpKeep technician assignments.' },
+    ],
+  },
+  {
+    id: 'salesforce', name: 'Salesforce', icon: '/images/integrations/salesforce.svg', description: 'Manage contacts, leads, and opportunities in Salesforce.',
+    connected: false,
+    prompts: [
+      { label: 'Link assets to accounts', prefill: 'Build an app that links UpKeep assets to Salesforce accounts for unified customer-asset visibility.' },
+      { label: 'Sync service contracts', prefill: 'Create an app that syncs Salesforce service contracts with UpKeep to track SLA compliance and renewal dates.' },
+    ],
+  },
+]
 
 const audienceOptions: { value: AudienceOption; label: string; description: string; icon: typeof Building2 }[] = [
   { value: 'company', label: 'Anyone at my company', description: 'App will be available for anyone at your company', icon: Building2 },
@@ -94,15 +207,97 @@ const agentModeOptions: { value: AgentMode; label: string; description: string; 
   { value: 'action', label: 'Action mode', description: 'Execute actions directly', icon: Zap },
 ]
 
-export default function CreateAppPage() {
+/* ── Studio Agents ── */
+
+interface StudioAgent {
+  id: string
+  name: string
+  description: string
+  icon: typeof Sparkles
+  color: string
+  bgColor: string
+  capabilities: string[]
+  isDefault?: boolean
+}
+
+const studioAgents: StudioAgent[] = [
+  {
+    id: 'studio-default',
+    name: 'Studio',
+    description: 'General-purpose app builder. Great for dashboards, forms, and operational tools.',
+    icon: Sparkles,
+    color: 'var(--color-accent-9)',
+    bgColor: 'var(--color-accent-1)',
+    capabilities: ['Full-stack apps', 'Dashboards', 'Forms', 'Data views'],
+    isDefault: true,
+  },
+  {
+    id: 'inspector',
+    name: 'Inspector',
+    description: 'Specialized in inspection checklists, audit workflows, and compliance tracking.',
+    icon: ShieldCheck,
+    color: '#2E8540',
+    bgColor: '#F0FDF4',
+    capabilities: ['Checklists', 'Photo capture', 'Follow-up WOs', 'Compliance'],
+  },
+  {
+    id: 'analyst',
+    name: 'Analyst',
+    description: 'Builds data-heavy apps with charts, KPIs, trend analysis, and report generation.',
+    icon: BarChart3,
+    color: '#C2850C',
+    bgColor: '#FFFBEB',
+    capabilities: ['Charts', 'KPI dashboards', 'Trend analysis', 'Reports'],
+  },
+  {
+    id: 'automator',
+    name: 'Automator',
+    description: 'Creates workflow automations, triggered actions, and event-based logic.',
+    icon: Workflow,
+    color: '#7C3AED',
+    bgColor: '#F5F3FF',
+    capabilities: ['Triggers', 'Automations', 'Notifications', 'Scheduling'],
+  },
+  {
+    id: 'connector',
+    name: 'Connector',
+    description: 'Expert at integrating external tools — Slack, email, SAP, Salesforce, and more.',
+    icon: Database,
+    color: '#0891B2',
+    bgColor: '#ECFEFF',
+    capabilities: ['API integrations', 'Data sync', 'Webhooks', 'External tools'],
+  },
+  {
+    id: 'designer',
+    name: 'Designer',
+    description: 'Focuses on beautiful, mobile-first UI with polished layouts and interactions.',
+    icon: PenTool,
+    color: '#DB2777',
+    bgColor: '#FDF2F8',
+    capabilities: ['Mobile-first', 'Custom layouts', 'Branding', 'Polish'],
+  },
+]
+
+function CreateAppInner() {
+  const searchParams = useSearchParams()
+  const fromApp = searchParams.get('from')
+  const fromPrompt = searchParams.get('prompt')
+
   const [view, setView] = useState<ViewState>('prompt')
-  const [prompt, setPrompt] = useState('')
+  const [prompt, setPrompt] = useState(fromPrompt || '')
   const [chatInput, setChatInput] = useState('')
   const [submittedPrompt, setSubmittedPrompt] = useState('')
   const [aiPhase, setAiPhase] = useState<AiPhase>('thinking')
-  const [previewTab, setPreviewTab] = useState<'desktop' | 'code'>('desktop')
+  const [previewTab, setPreviewTab] = useState<PreviewTab>('desktop')
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop')
   const [selectedTemplate, setSelectedTemplate] = useState<SelectedTemplate>(null)
+  const [integrationsOpen, setIntegrationsOpen] = useState(false)
+  const [integrationSearch, setIntegrationSearch] = useState('')
+  const [connectingId, setConnectingId] = useState<string | null>(null)
+  const [connectedIds, setConnectedIds] = useState<Set<string>>(
+    new Set(integrations.filter(i => i.connected).map(i => i.id))
+  )
+  const [selectedAgent, setSelectedAgent] = useState<StudioAgent>(studioAgents[0])
   const promptRef = useRef<HTMLTextAreaElement>(null)
   const chatRef = useRef<HTMLTextAreaElement>(null)
 
@@ -156,6 +351,16 @@ export default function CreateAppPage() {
         setPreviewTab={setPreviewTab}
         previewDevice={previewDevice}
         setPreviewDevice={setPreviewDevice}
+        connectedIds={connectedIds}
+        setConnectedIds={setConnectedIds}
+        integrationsOpen={integrationsOpen}
+        setIntegrationsOpen={setIntegrationsOpen}
+        integrationSearch={integrationSearch}
+        setIntegrationSearch={setIntegrationSearch}
+        connectingId={connectingId}
+        setConnectingId={setConnectingId}
+        selectedAgent={selectedAgent}
+        setSelectedAgent={setSelectedAgent}
       />
     )
   }
@@ -172,7 +377,26 @@ export default function CreateAppPage() {
       selectedTemplate={selectedTemplate}
       setSelectedTemplate={setSelectedTemplate}
       fading={view === 'transitioning'}
+      fromApp={fromApp}
+      connectedIds={connectedIds}
+      setConnectedIds={setConnectedIds}
+      integrationsOpen={integrationsOpen}
+      setIntegrationsOpen={setIntegrationsOpen}
+      integrationSearch={integrationSearch}
+      setIntegrationSearch={setIntegrationSearch}
+      connectingId={connectingId}
+      setConnectingId={setConnectingId}
+      selectedAgent={selectedAgent}
+      setSelectedAgent={setSelectedAgent}
     />
+  )
+}
+
+export default function CreateAppPage() {
+  return (
+    <Suspense>
+      <CreateAppInner />
+    </Suspense>
   )
 }
 
@@ -204,7 +428,10 @@ function useRotatingPlaceholder(items: string[], intervalMs = 4000) {
 
 function PromptView({
   prompt, setPrompt, promptRef, handleSend, handleSuggestionClick,
-  handleTemplateSelect, handleStartTemplate, selectedTemplate, setSelectedTemplate, fading,
+  handleTemplateSelect, handleStartTemplate, selectedTemplate, setSelectedTemplate, fading, fromApp,
+  connectedIds, setConnectedIds, integrationsOpen, setIntegrationsOpen,
+  integrationSearch, setIntegrationSearch, connectingId, setConnectingId,
+  selectedAgent, setSelectedAgent,
 }: {
   prompt: string
   setPrompt: (v: string) => void
@@ -216,10 +443,22 @@ function PromptView({
   selectedTemplate: SelectedTemplate
   setSelectedTemplate: (t: SelectedTemplate) => void
   fading: boolean
+  fromApp: string | null
+  connectedIds: Set<string>
+  setConnectedIds: React.Dispatch<React.SetStateAction<Set<string>>>
+  integrationsOpen: boolean
+  setIntegrationsOpen: (v: boolean) => void
+  integrationSearch: string
+  setIntegrationSearch: (v: string) => void
+  connectingId: string | null
+  setConnectingId: (v: string | null) => void
+  selectedAgent: StudioAgent
+  setSelectedAgent: (agent: StudioAgent) => void
 }) {
   const [templatesOpen, setTemplatesOpen] = useState(false)
   const [allTemplatesOpen, setAllTemplatesOpen] = useState(false)
   const [roleFilter, setRoleFilter] = useState<string>('All Roles')
+  const [promptAgentDropdownOpen, setPromptAgentDropdownOpen] = useState(false)
   const [complexityFilter, setComplexityFilter] = useState<string>('All Levels')
   const [categoryFilter, setCategoryFilter] = useState<string>('All')
   const [templateTab, setTemplateTab] = useState<'official' | 'mine'>('official')
@@ -275,69 +514,179 @@ function PromptView({
         <div className="my-auto flex flex-col items-center gap-[60px] w-full py-6 relative" style={{ zIndex: 1 }}>
           {/* Prompt + Suggestions */}
           <div className="flex flex-col items-center gap-4 w-full max-w-[600px]">
-            <div
-              className="w-full bg-[var(--surface-primary)] border border-[var(--color-neutral-6)] rounded-2xl p-3 flex flex-col gap-3 opacity-0 transition-[border-color,box-shadow] duration-[var(--duration-normal)] focus-within:border-[var(--color-accent-8)] focus-within:shadow-[0_0_0_3px_rgba(59,91,219,0.12),0px_4px_16px_-8px_rgba(59,91,219,0.18),0px_3px_12px_-4px_rgba(59,91,219,0.12)]"
-              style={{
-                minWidth: 400,
-                boxShadow: '0px 4px 20px -6px rgba(0,0,0,0.12), 0px 3px 12px -4px rgba(0,0,0,0.08), 0px 2px 4px -2px rgba(0,0,51,0.06)',
-                animation: 'fadeInUp 0.6s var(--ease-default) 0.1s forwards',
-              }}
-            >
-              <div className="relative bg-[var(--color-neutral-2)] rounded-xl">
-                <textarea
-                  ref={promptRef}
-                  value={prompt}
-                  onChange={(e) => {
-                    setPrompt(e.target.value)
-                    const el = e.target
-                    el.style.height = 'auto'
-                    const maxH = 20 * 6 + 20
-                    el.style.height = `${Math.min(el.scrollHeight, maxH)}px`
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
-                  }}
-                  placeholder=""
-                  className="w-full resize-none text-sm text-[var(--color-neutral-12)] outline-none ring-0 focus:outline-none focus:ring-0 bg-transparent rounded-xl px-3 py-2.5 leading-5 relative z-[1] border-none shadow-none appearance-none overflow-auto"
-                  rows={3}
-                  style={{ maxHeight: 20 * 6 + 20 }}
-                />
-                {!prompt && (
-                  <span
-                    className="absolute top-2.5 left-3 text-sm text-[#9CA0A8] pointer-events-none leading-5 transition-opacity duration-[var(--duration-fast)]"
-                    style={{ opacity: placeholder.visible ? 1 : 0 }}
-                  >
-                    {placeholder.text}
-                  </span>
-                )}
+            {fromApp && (
+              <div
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-accent-1)] border border-[var(--color-accent-3)] w-full opacity-0"
+                style={{ animation: 'fadeInUp 0.5s var(--ease-default) forwards' }}
+              >
+                <Sparkles size={14} className="text-[var(--color-accent-9)] shrink-0" />
+                <span className="text-[length:var(--font-size-base)] text-[var(--color-neutral-11)]">
+                  Starting from: <strong className="text-[var(--color-accent-9)]">{decodeURIComponent(fromApp)}</strong>
+                </span>
               </div>
-                <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <button className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Attach file">
-                    <Plus size={16} strokeWidth={1.5} className="text-[var(--color-neutral-12)]" />
-                  </button>
-                  {prompt.trim() && (
-                    <span className="text-[11px] text-[var(--color-neutral-7)] select-none">
-                      <kbd className="px-1 py-0.5 rounded bg-[var(--color-neutral-3)] border border-[var(--border-default)] text-[10px] font-medium text-[var(--color-neutral-8)]">↵</kbd> to send
+            )}
+            <div
+              className="flex flex-col items-start pb-2 gap-0 w-full bg-[#F0F0F3] rounded-2xl opacity-0"
+              style={{ animation: 'fadeInUp 0.6s var(--ease-default) 0.1s forwards' }}
+            >
+              {/* Chat bar */}
+              <div
+                className="w-full bg-white border border-[#D9D9E0] rounded-2xl p-3 flex flex-col justify-center gap-3 transition-[border-color,box-shadow] duration-[var(--duration-normal)] focus-within:border-[var(--color-accent-8)] focus-within:shadow-[0_0_0_3px_rgba(59,91,219,0.12),0px_4px_16px_-8px_rgba(59,91,219,0.18),0px_3px_12px_-4px_rgba(59,91,219,0.12)]"
+                style={{
+                  minWidth: 400,
+                  minHeight: 76,
+                  maxHeight: 200,
+                  boxShadow: '0px 4px 16px -8px rgba(0,0,0,0.1), 0px 3px 12px -4px rgba(0,0,0,0.1), 0px 2px 3px -2px rgba(0,0,51,0.06)',
+                }}
+              >
+                <div className="flex items-center gap-1">
+                  <textarea
+                    ref={promptRef}
+                    value={prompt}
+                    onChange={(e) => {
+                      setPrompt(e.target.value)
+                      const el = e.target
+                      el.style.height = 'auto'
+                      const maxH = 20 * 6 + 20
+                      el.style.height = `${Math.min(el.scrollHeight, maxH)}px`
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
+                    }}
+                    placeholder=""
+                    className="w-full resize-none text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] outline-none ring-0 focus:outline-none focus:ring-0 bg-transparent leading-5 relative z-[1] border-none shadow-none appearance-none overflow-auto"
+                    rows={1}
+                    style={{ maxHeight: 20 * 6 + 20 }}
+                  />
+                  {!prompt && (
+                    <span
+                      className="absolute left-3 text-[length:var(--font-size-base)] text-[#60646C] pointer-events-none leading-5 transition-opacity duration-[var(--duration-fast)]"
+                      style={{ opacity: placeholder.visible ? 1 : 0 }}
+                    >
+                      {placeholder.text}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <button className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Voice input">
-                    <Mic size={16} strokeWidth={1.5} className="text-[var(--color-neutral-12)]" />
-                  </button>
-                  <button
-                    onClick={handleSend}
-                    disabled={!prompt.trim()}
-                    className={`flex items-center justify-center w-6 h-6 rounded-full transition-all duration-[var(--duration-normal)] ${
-                      prompt.trim() ? 'bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-11)] hover:scale-110 cursor-pointer' : 'bg-[rgba(0,0,51,0.06)] cursor-default'
-                    }`}
-                    aria-label="Send"
-                  >
-                    <ArrowUp size={16} strokeWidth={1.5} className="text-white" />
-                  </button>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    {/* Agent selector in prompt */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setPromptAgentDropdownOpen(!promptAgentDropdownOpen)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                      >
+                        <span
+                          className="flex items-center justify-center w-5 h-5 rounded-md shrink-0"
+                          style={{ backgroundColor: selectedAgent.bgColor }}
+                        >
+                          <selectedAgent.icon size={12} style={{ color: selectedAgent.color }} />
+                        </span>
+                        <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">{selectedAgent.name}</span>
+                        <ChevronDown size={12} className={`text-[var(--color-neutral-7)] transition-transform duration-[var(--duration-fast)] ${promptAgentDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {promptAgentDropdownOpen && (
+                        <>
+                          <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setPromptAgentDropdownOpen(false)} />
+                          <div className="absolute left-0 bottom-full mb-1 z-[var(--z-modal)] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] w-[320px] dropdown-animate overflow-hidden">
+                            <div className="px-4 pt-3 pb-2">
+                              <p className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wider text-[var(--color-neutral-8)]">Choose an agent</p>
+                            </div>
+                            <div className="max-h-[320px] overflow-y-auto py-1">
+                              {studioAgents.map((agent) => {
+                                const isSelected = selectedAgent.id === agent.id
+                                const AgentIcon = agent.icon
+                                return (
+                                  <button
+                                    key={agent.id}
+                                    onClick={() => { setSelectedAgent(agent); setPromptAgentDropdownOpen(false) }}
+                                    className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${isSelected ? 'bg-[var(--color-neutral-2)]' : ''}`}
+                                  >
+                                    <span
+                                      className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0 mt-0.5"
+                                      style={{ backgroundColor: agent.bgColor }}
+                                    >
+                                      <AgentIcon size={16} style={{ color: agent.color }} />
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">{agent.name}</p>
+                                        {agent.isDefault && (
+                                          <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[var(--color-accent-2)] text-[var(--color-accent-9)]">Default</span>
+                                        )}
+                                      </div>
+                                      <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] mt-0.5 line-clamp-2">{agent.description}</p>
+                                      <div className="flex flex-wrap gap-1 mt-1.5">
+                                        {agent.capabilities.map((cap) => (
+                                          <span key={cap} className="text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)]">{cap}</span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    {isSelected && (
+                                      <Check size={16} className="text-[var(--color-accent-9)] shrink-0 mt-1" />
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <button className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Attach file">
+                      <Plus size={16} strokeWidth={1.5} className="text-[#1C2024]" />
+                    </button>
+                    {prompt.trim() && (
+                      <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] select-none">
+                        <kbd className="px-1 py-0.5 rounded bg-[var(--color-neutral-3)] border border-[var(--border-default)] text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-8)]">↵</kbd> to send
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Voice input">
+                      <Mic size={16} strokeWidth={1.5} className="text-[#1C2024]" />
+                    </button>
+                    <button
+                      onClick={handleSend}
+                      disabled={!prompt.trim()}
+                      className={`flex items-center justify-center w-6 h-6 rounded-full transition-all duration-[var(--duration-normal)] ${
+                        prompt.trim() ? 'bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-11)] hover:scale-110 cursor-pointer' : 'bg-[rgba(0,0,51,0.06)] cursor-default'
+                      }`}
+                      aria-label="Send"
+                    >
+                      <ArrowUp size={16} strokeWidth={1.5} className="text-white" />
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              {/* Integrations bar */}
+              <button
+                onClick={() => setIntegrationsOpen(true)}
+                className="flex items-center px-4 pt-3 pb-3 -mb-2 gap-2.5 w-full cursor-pointer rounded-b-2xl transition-opacity duration-[var(--duration-fast)]"
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'linear-gradient(to bottom, transparent, #E8E8EC)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '' }}
+              >
+                <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] flex-1 text-left">Connect your tools to Studio</span>
+                <div className="flex items-center gap-1">
+                  <div className="flex items-center">
+                    {integrations.slice(0, 5).map((ig) => (
+                      <span
+                        key={ig.id}
+                        className="flex items-center justify-center w-[26px] h-[26px] bg-white rounded-full relative"
+                        style={{
+                          border: '0.5px solid #E0E1E6',
+                          boxShadow: '-1px 1px 5px rgba(0,0,0,0.12)',
+                          marginLeft: '-4px',
+                        }}
+                      >
+                        <img src={ig.icon} alt={ig.name} className="w-3.5 h-3.5 object-contain" />
+                      </span>
+                    ))}
+                  </div>
+                  <ChevronRight size={16} strokeWidth={1} className="text-[#1C2024]" />
+                </div>
+              </button>
             </div>
 
             <div
@@ -349,7 +698,7 @@ function PromptView({
                   <button
                     key={s.label}
                     onClick={() => handleSuggestionClick(s.prefill)}
-                    className="px-4 py-1.5 text-sm font-medium rounded-full border transition-all duration-[var(--duration-fast)] cursor-pointer hover:scale-[1.04] active:scale-[0.97]"
+                    className="px-4 py-1.5 text-[length:var(--font-size-base)] font-medium rounded-full border transition-all duration-[var(--duration-fast)] cursor-pointer hover:scale-[1.04] active:scale-[0.97]"
                     style={{ borderColor: s.borderColor, color: s.color, backgroundColor: 'transparent' }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = s.hoverBg }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
@@ -358,9 +707,126 @@ function PromptView({
                   </button>
                 ))}
               </div>
-              <p className="text-[12px] text-[var(--color-neutral-8)]">Describe what you need in your own words — or pick a template below to start faster</p>
+              <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Describe what you need in your own words — or pick a template below to start faster</p>
             </div>
           </div>
+
+          {/* Integrations Modal */}
+          <Dialog.Root open={integrationsOpen} onOpenChange={setIntegrationsOpen}>
+            <Dialog.Portal>
+              <Dialog.Overlay className="fixed inset-0 z-[var(--z-overlay)] bg-black/40" data-dialog-overlay />
+              <Dialog.Content
+                className="fixed left-1/2 top-1/2 z-[var(--z-modal)] flex flex-col w-[90vw] max-w-[640px] max-h-[80vh] bg-[var(--surface-primary)] rounded-2xl shadow-[var(--shadow-xl)] overflow-hidden"
+                data-dialog-content
+              >
+                <div className="flex items-center justify-between px-6 pt-5 pb-1 shrink-0">
+                  <div>
+                    <Dialog.Title className="text-lg font-semibold text-[var(--color-neutral-12)]">Integrations</Dialog.Title>
+                    <Dialog.Description className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)] mt-0.5">
+                      Connect your tools to build apps powered by your data.
+                    </Dialog.Description>
+                  </div>
+                  <Dialog.Close asChild>
+                    <button className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]" aria-label="Close">
+                      <X size={18} className="text-[var(--color-neutral-9)]" />
+                    </button>
+                  </Dialog.Close>
+                </div>
+
+                <div className="px-6 pt-3 pb-3 shrink-0">
+                  <div className="flex items-center gap-[var(--space-xs)] px-3 py-2.5 border border-[var(--border-default)] rounded-2xl bg-[var(--color-neutral-2)]">
+                    <Search size={16} className="text-[var(--color-neutral-7)] shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Search"
+                      value={integrationSearch}
+                      onChange={(e) => setIntegrationSearch(e.target.value)}
+                      className="flex-1 text-[length:var(--font-size-base)] outline-none bg-transparent placeholder:text-[var(--color-neutral-7)]"
+                    />
+                    {integrationSearch && (
+                      <button onClick={() => setIntegrationSearch('')} className="cursor-pointer">
+                        <X size={14} className="text-[var(--color-neutral-7)]" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-6 pt-4 pb-8">
+                  <div className="grid grid-cols-2 gap-4">
+                    {integrations
+                      .filter(ig => ig.id !== 'upkeep-wo' && ig.id !== 'upkeep-assets')
+                      .filter(ig => !integrationSearch || ig.name.toLowerCase().includes(integrationSearch.toLowerCase()) || ig.description.toLowerCase().includes(integrationSearch.toLowerCase()))
+                      .map((ig) => {
+                        const isConnected = connectedIds.has(ig.id)
+                        const isConnecting = connectingId === ig.id
+                        return (
+                          <div
+                            key={ig.id}
+                            className="group/card flex items-center gap-3 px-4 py-3.5 rounded-[20px] border border-[var(--border-default)] hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)]"
+                          >
+                            <span className="flex items-center justify-center w-12 h-12 rounded-[16px] bg-white shrink-0 border border-[var(--border-subtle)] overflow-hidden">
+                              <img src={ig.icon} alt={ig.name} className="w-7 h-7 rounded-lg object-cover" />
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] truncate">{ig.name}</h4>
+                              <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] line-clamp-2 leading-relaxed">{ig.description}</p>
+                            </div>
+                            {isConnected ? (
+                              <button
+                                onClick={() => {
+                                  setConnectedIds(prev => {
+                                    const next = new Set(prev)
+                                    next.delete(ig.id)
+                                    return next
+                                  })
+                                }}
+                                className="relative w-8 h-8 shrink-0 cursor-pointer"
+                                aria-label={`Disconnect ${ig.name}`}
+                              >
+                                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-[var(--color-success)] transition-opacity duration-150 group-hover/card:opacity-0">
+                                  <Check size={12} strokeWidth={3} className="text-white" />
+                                </span>
+                                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-[#FFF0F0] opacity-0 transition-opacity duration-150 group-hover/card:opacity-100">
+                                  <X size={12} strokeWidth={2.5} className="text-[#E5484D]" />
+                                </span>
+                              </button>
+                            ) : isConnecting ? (
+                              <span className="inline-block w-5 h-5 border-2 border-[var(--color-accent-9)] border-t-transparent rounded-full animate-spin shrink-0" />
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setConnectingId(ig.id)
+                                  setTimeout(() => {
+                                    setConnectedIds(prev => new Set([...prev, ig.id]))
+                                    setConnectingId(null)
+                                  }, 1500)
+                                }}
+                                className="w-8 h-8 p-0 rounded-full shrink-0 hover:border-[var(--color-accent-5)] hover:text-[var(--color-accent-9)]"
+                                aria-label={`Connect ${ig.name}`}
+                              >
+                                <Plus size={16} />
+                              </Button>
+                            )}
+                          </div>
+                        )
+                      })}
+                  </div>
+
+                  {integrations.filter(ig => ig.id !== 'upkeep-wo' && ig.id !== 'upkeep-assets').filter(ig => !integrationSearch || ig.name.toLowerCase().includes(integrationSearch.toLowerCase())).length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
+                      <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)]">No integrations match your search.</p>
+                      <button onClick={() => setIntegrationSearch('')} className="text-[length:var(--font-size-sm)] text-[var(--color-accent-9)] hover:underline cursor-pointer">
+                        Clear search
+                      </button>
+                    </div>
+                  )}
+
+                </div>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
 
           {/* Feature Templates */}
           <Collapsible.Root
@@ -373,7 +839,7 @@ function PromptView({
               <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Feature Templates</h3>
               <div className="flex items-center gap-2">
                 <Collapsible.Trigger asChild>
-                  <button className="flex items-center gap-1 px-1.5 py-1 text-xs font-medium text-[var(--color-accent-9)] rounded hover:bg-[rgba(59,91,219,0.08)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                  <button className="flex items-center gap-1 px-1.5 py-1 text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] rounded hover:bg-[rgba(59,91,219,0.08)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                     {templatesOpen ? 'Show Less' : 'View All Templates'}
                     <ChevronsDown
                       size={16}
@@ -458,7 +924,7 @@ function PromptView({
             <div className="flex items-center gap-4 px-6 pt-4 shrink-0">
               <button
                 onClick={() => setTemplateTab('official')}
-                className={`pb-2 text-sm font-medium border-b-2 transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+                className={`pb-2 text-[length:var(--font-size-base)] font-medium border-b-2 transition-colors duration-[var(--duration-fast)] cursor-pointer ${
                   templateTab === 'official' ? 'border-[var(--color-accent-9)] text-[var(--color-accent-9)]' : 'border-transparent text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-9)]'
                 }`}
               >
@@ -466,7 +932,7 @@ function PromptView({
               </button>
               <button
                 onClick={() => setTemplateTab('mine')}
-                className={`pb-2 text-sm font-medium border-b-2 transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+                className={`pb-2 text-[length:var(--font-size-base)] font-medium border-b-2 transition-colors duration-[var(--duration-fast)] cursor-pointer ${
                   templateTab === 'mine' ? 'border-[var(--color-accent-9)] text-[var(--color-accent-9)]' : 'border-transparent text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-9)]'
                 }`}
               >
@@ -483,7 +949,7 @@ function PromptView({
                   <button
                     key={cat}
                     onClick={() => setCategoryFilter(cat)}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+                    className={`px-2.5 py-1 text-[length:var(--font-size-sm)] font-medium rounded-full transition-colors duration-[var(--duration-fast)] cursor-pointer ${
                       categoryFilter === cat
                         ? 'bg-[var(--color-accent-9)] text-white'
                         : 'bg-[var(--color-neutral-3)] text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-4)]'
@@ -499,15 +965,15 @@ function PromptView({
               {templateTab === 'mine' ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-12">
                   <Sparkles size={32} className="text-[var(--color-neutral-6)]" />
-                  <p className="text-sm text-[var(--color-neutral-8)]">You haven&apos;t created any templates yet.</p>
-                  <p className="text-xs text-[var(--color-neutral-7)]">Templates you build and save will appear here.</p>
+                  <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)]">You haven&apos;t created any templates yet.</p>
+                  <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Templates you build and save will appear here.</p>
                 </div>
               ) : (
                 <>
                   {/* Most Used as Starting Point */}
                   {categoryFilter === 'All' && roleFilter === 'All Roles' && complexityFilter === 'All Levels' && (
                     <div className="mb-6">
-                      <h3 className="text-xs font-medium uppercase tracking-wider text-[var(--color-neutral-8)] mb-3">Most Used as Starting Point</h3>
+                      <h3 className="text-[length:var(--font-size-sm)] font-medium uppercase tracking-wider text-[var(--color-neutral-8)] mb-3">Most Used as Starting Point</h3>
                       <div className="grid grid-cols-3 gap-3">
                         {featuredTemplateIndices.map((idx) => {
                           const t = templates[idx]
@@ -522,8 +988,8 @@ function PromptView({
                                 <Icon size={18} strokeWidth={1.5} className="text-[var(--color-accent-9)]" />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-sm font-medium text-[var(--color-neutral-12)] truncate">{t.title}</p>
-                                <p className="text-xs text-[var(--color-neutral-8)] truncate">{t.description}</p>
+                                <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)] truncate">{t.title}</p>
+                                <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] truncate">{t.description}</p>
                               </div>
                             </button>
                           )
@@ -536,8 +1002,8 @@ function PromptView({
                   {Object.entries(groupedTemplates).map(([category, items]) => (
                     <Collapsible.Root key={category} defaultOpen className="mb-4">
                       <Collapsible.Trigger className="flex items-center gap-2 w-full py-2 cursor-pointer group">
-                        <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-neutral-8)]">{category}</span>
-                        <span className="text-xs text-[var(--color-neutral-7)]">({items.length})</span>
+                        <span className="text-[length:var(--font-size-sm)] font-medium uppercase tracking-wider text-[var(--color-neutral-8)]">{category}</span>
+                        <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">({items.length})</span>
                         <div className="flex-1 h-px bg-[var(--border-subtle)]" />
                         <ChevronsDown size={14} className="text-[var(--color-neutral-8)] transition-transform duration-[var(--duration-normal)] group-data-[state=closed]:rotate-180" />
                       </Collapsible.Trigger>
@@ -555,10 +1021,10 @@ function PromptView({
                                   <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--color-accent-1)] shrink-0">
                                     <Icon size={16} strokeWidth={1.5} className="text-[var(--color-accent-9)]" />
                                   </div>
-                                  <span className="text-xs px-1.5 py-0.5 rounded bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)] capitalize">{t.complexity}</span>
+                                  <span className="text-[length:var(--font-size-sm)] px-1.5 py-0.5 rounded bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)] capitalize">{t.complexity}</span>
                                 </div>
-                                <h4 className="text-sm font-medium text-[var(--color-neutral-12)]">{t.title}</h4>
-                                <p className="text-xs text-[var(--color-neutral-8)] leading-relaxed line-clamp-2">{t.description}</p>
+                                <h4 className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">{t.title}</h4>
+                                <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed line-clamp-2">{t.description}</p>
                               </button>
                             )
                           })}
@@ -569,10 +1035,10 @@ function PromptView({
 
                   {filteredTemplates.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
-                      <p className="text-sm text-[var(--color-neutral-8)]">No templates match your filters.</p>
+                      <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)]">No templates match your filters.</p>
                       <button
                         onClick={() => { setRoleFilter('All Roles'); setComplexityFilter('All Levels'); setCategoryFilter('All') }}
-                        className="text-xs text-[var(--color-accent-9)] hover:underline cursor-pointer"
+                        className="text-[length:var(--font-size-sm)] text-[var(--color-accent-9)] hover:underline cursor-pointer"
                       >
                         Clear filters
                       </button>
@@ -776,7 +1242,7 @@ function PublishSuccessOverlay({ appTitle, onDismiss }: { appTitle: string; onDi
           >
             <circle
               cx={40} cy={40} r={36}
-              fill="#22C55E"
+              fill="var(--color-success)"
               style={{
                 transformOrigin: 'center',
                 animation: 'success-circle-fill 500ms ease-out forwards',
@@ -808,7 +1274,7 @@ function PublishSuccessOverlay({ appTitle, onDismiss }: { appTitle: string; onDi
 
         {/* Subtitle */}
         <p
-          className="text-sm text-white/50 -mt-2"
+          className="text-[length:var(--font-size-base)] text-white/50 -mt-2"
           style={{ opacity: 0, animation: 'success-text-fade-up 250ms ease-out 850ms forwards' }}
         >
           Your app is now live and accessible
@@ -820,7 +1286,7 @@ function PublishSuccessOverlay({ appTitle, onDismiss }: { appTitle: string; onDi
             e.stopPropagation()
             navigator.clipboard.writeText(`https://upkeep.app/apps/${appTitle.toLowerCase().replace(/\s+/g, '-')}`)
           }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/15 bg-white/10 text-sm font-medium text-white hover:bg-white/15 transition-colors duration-[var(--duration-fast)] cursor-pointer"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/15 bg-white/10 text-[length:var(--font-size-base)] font-medium text-white hover:bg-white/15 transition-colors duration-[var(--duration-fast)] cursor-pointer"
           style={{ opacity: 0, animation: 'success-text-fade-up 250ms ease-out 950ms forwards' }}
         >
           <Link2 size={14} />
@@ -883,12 +1349,12 @@ function PublishRatingPrompt({ onDismiss }: { onDismiss: () => void }) {
         {submitted ? (
           <div className="flex flex-col items-center gap-1 px-4 py-2">
             <span className="text-base">🙏</span>
-            <p className="text-sm font-medium text-[var(--color-neutral-12)]">Thanks for your feedback!</p>
+            <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Thanks for your feedback!</p>
           </div>
         ) : (
           <>
             <div className="flex items-start justify-between gap-6 mb-5">
-              <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)] leading-snug">
+              <h3 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)] leading-snug">
                 How was your experience using Studio?
               </h3>
               <button
@@ -912,13 +1378,13 @@ function PublishRatingPrompt({ onDismiss }: { onDismiss: () => void }) {
                   }`}
                 >
                   <span
-                    className={`text-[28px] leading-none transition-transform duration-[var(--duration-fast)] ${
+                    className={`text-[length:var(--font-size-3xl)] leading-none transition-transform duration-[var(--duration-fast)] ${
                       selected === opt.value ? 'scale-110' : 'group-hover:scale-110'
                     }`}
                   >
                     {opt.emoji}
                   </span>
-                  <span className={`text-xs font-medium transition-colors duration-[var(--duration-fast)] ${
+                  <span className={`text-[length:var(--font-size-sm)] font-medium transition-colors duration-[var(--duration-fast)] ${
                     selected === opt.value ? 'text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-8)]'
                   }`}>
                     {opt.label}
@@ -936,14 +1402,14 @@ function PublishRatingPrompt({ onDismiss }: { onDismiss: () => void }) {
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   placeholder="What could we improve? (optional)"
-                  className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border border-[var(--border-default)] outline-none focus:border-[var(--color-accent-8)] transition-colors duration-[var(--duration-fast)]"
+                  className="w-full resize-none text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border border-[var(--border-default)] outline-none focus:border-[var(--color-accent-8)] transition-colors duration-[var(--duration-fast)]"
                   rows={2}
                   autoFocus
                 />
                 <div className="flex justify-end">
                   <button
                     onClick={handleSubmitFeedback}
-                    className="px-3.5 py-1.5 rounded-lg bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)] text-white text-sm font-medium transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-lg bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)] text-white text-[length:var(--font-size-base)] font-medium transition-colors duration-[var(--duration-fast)] cursor-pointer"
                   >
                     Submit
                   </button>
@@ -964,20 +1430,34 @@ function PublishRatingPrompt({ onDismiss }: { onDismiss: () => void }) {
 function BuilderView({
   submittedPrompt, aiPhase, chatInput, setChatInput, chatRef, previewTab, setPreviewTab,
   previewDevice, setPreviewDevice,
+  connectedIds, setConnectedIds, integrationsOpen, setIntegrationsOpen,
+  integrationSearch, setIntegrationSearch, connectingId, setConnectingId,
+  selectedAgent, setSelectedAgent,
 }: {
   submittedPrompt: string
   aiPhase: AiPhase
   chatInput: string
   setChatInput: (v: string) => void
   chatRef: React.RefObject<HTMLTextAreaElement | null>
-  previewTab: 'desktop' | 'code'
-  setPreviewTab: (v: 'desktop' | 'code') => void
+  previewTab: PreviewTab
+  setPreviewTab: (v: PreviewTab) => void
   previewDevice: PreviewDevice
   setPreviewDevice: (d: PreviewDevice) => void
+  connectedIds: Set<string>
+  setConnectedIds: React.Dispatch<React.SetStateAction<Set<string>>>
+  integrationsOpen: boolean
+  setIntegrationsOpen: (v: boolean) => void
+  integrationSearch: string
+  setIntegrationSearch: (v: string) => void
+  connectingId: string | null
+  setConnectingId: (v: string | null) => void
+  selectedAgent: StudioAgent
+  setSelectedAgent: (agent: StudioAgent) => void
 }) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [agentMode, setAgentMode] = useState<AgentMode>('plan')
   const [modeDropdownOpen, setModeDropdownOpen] = useState(false)
+  const [agentDropdownOpen, setAgentDropdownOpen] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const [savedAgo, setSavedAgo] = useState(0)
   const [publishOpen, setPublishOpen] = useState(false)
@@ -1192,63 +1672,47 @@ function BuilderView({
           >
             <PanelLeft size={20} className="text-[var(--color-neutral-10)]" />
           </button>
-          <span className="text-[20px] font-semibold leading-7 text-[var(--color-neutral-12)] pl-4">New App</span>
+          <span className="text-[length:var(--font-size-xl)] font-semibold leading-7 text-[var(--color-neutral-12)] pl-4">New App</span>
         </div>
 
         <div className="w-px h-8 bg-[var(--border-default)] shrink-0" />
 
         <div className="flex items-center flex-1 gap-5">
-          <Tooltip.Provider delayDuration={300}>
+          <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-1 pl-5">
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <button className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Refresh preview">
-                  <RotateCw size={20} strokeWidth={1.5} className="text-[var(--color-neutral-9)]" />
-                </button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content side="bottom" sideOffset={6} className="px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
-                  Reload preview
-                  <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
+            <Tooltip content="Reload preview" side="bottom" sideOffset={6}>
+              <button className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Refresh preview">
+                <RotateCw size={20} strokeWidth={1.5} className="text-[var(--color-neutral-9)]" />
+              </button>
+            </Tooltip>
             <div className="w-px h-5 bg-[var(--border-default)] mx-1" />
             {deviceConfig.map(({ device, icon: DeviceIcon, label }) => (
-              <Tooltip.Root key={device}>
-                <Tooltip.Trigger asChild>
-                  <button
-                    onClick={() => setPreviewDevice(device)}
-                    className={`flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 rounded-xl transition-colors duration-[var(--duration-fast)] cursor-pointer ${
-                      previewDevice === device
-                        ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)]'
-                        : 'text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-3)]'
-                    }`}
-                    aria-label={`${label} preview`}
-                  >
-                    <DeviceIcon size={18} strokeWidth={1.5} />
-                    <span className={`text-[10px] font-medium leading-none ${
-                      previewDevice === device ? 'text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-8)]'
-                    }`}>{label}</span>
-                  </button>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content side="bottom" sideOffset={6} className="px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
-                    Preview as {label.toLowerCase()}
-                    <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
+              <Tooltip key={device} content={`Preview as ${label.toLowerCase()}`} side="bottom" sideOffset={6}>
+                <button
+                  onClick={() => setPreviewDevice(device)}
+                  className={`flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 rounded-xl transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+                    previewDevice === device
+                      ? 'bg-[var(--color-accent-1)] text-[var(--color-accent-9)]'
+                      : 'text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-3)]'
+                  }`}
+                  aria-label={`${label} preview`}
+                >
+                  <DeviceIcon size={18} strokeWidth={1.5} />
+                  <span className={`text-[length:var(--font-size-xs)] font-medium leading-none ${
+                    previewDevice === device ? 'text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-8)]'
+                  }`}>{label}</span>
+                </button>
+              </Tooltip>
             ))}
           </div>
-          </Tooltip.Provider>
+          </TooltipProvider>
 
           {/* Segmented control — centered */}
           <div className="flex-1 flex justify-center">
             <div id="preview-switcher" className="flex items-center h-8 rounded-lg overflow-hidden" style={{ background: 'linear-gradient(90deg, rgba(0,0,51,0.06) 0%, rgba(0,0,51,0.06) 100%), #FFFFFF' }}>
               <button
                 onClick={() => setPreviewTab('desktop')}
-                className={`flex items-center justify-center px-4 h-8 text-sm font-medium rounded-lg transition-all duration-[var(--duration-normal)] cursor-pointer ${
+                className={`flex items-center justify-center px-4 h-8 text-[length:var(--font-size-base)] font-medium rounded-lg transition-all duration-[var(--duration-normal)] cursor-pointer ${
                   previewTab === 'desktop'
                     ? 'bg-[var(--surface-primary)] border border-[var(--border-default)] text-[var(--color-neutral-12)] shadow-sm'
                     : 'text-[var(--color-neutral-12)]'
@@ -1258,7 +1722,7 @@ function BuilderView({
               </button>
               <button
                 onClick={() => setPreviewTab('code')}
-                className={`flex items-center justify-center px-4 h-8 text-sm rounded-lg transition-all duration-[var(--duration-normal)] cursor-pointer ${
+                className={`flex items-center justify-center px-4 h-8 text-[length:var(--font-size-base)] rounded-lg transition-all duration-[var(--duration-normal)] cursor-pointer ${
                   previewTab === 'code'
                     ? 'bg-[var(--surface-primary)] border border-[var(--border-default)] text-[var(--color-neutral-12)] font-medium shadow-sm'
                     : 'text-[var(--color-neutral-12)]'
@@ -1271,16 +1735,16 @@ function BuilderView({
         </div>
 
         {/* Right section */}
-        <Tooltip.Provider delayDuration={200}>
+        <TooltipProvider delayDuration={200}>
         <div className="flex items-center gap-2 pr-4">
           {/* Status badge */}
           {publishStatus === 'draft' && (
-            <span className="px-2.5 py-1 rounded-full border border-[var(--border-default)] text-xs font-medium text-[var(--color-neutral-8)]">
+            <span className="px-2.5 py-1 rounded-full border border-[var(--border-default)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)]">
               Draft
             </span>
           )}
           {(publishStatus === 'published' || publishStatus === 'dirty') && (
-            <span className={`px-2.5 py-1 rounded-full border text-xs font-medium ${
+            <span className={`px-2.5 py-1 rounded-full border text-[length:var(--font-size-sm)] font-medium ${
               publishStatus === 'dirty'
                 ? 'border-[var(--color-warning-border)] text-[var(--color-warning)] bg-[var(--color-warning-light)]'
                 : 'border-[var(--color-success-light)] text-[var(--color-success)]'
@@ -1289,55 +1753,39 @@ function BuilderView({
             </span>
           )}
 
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <button
-                id="settings-button"
-                onClick={() => setSettingsOpen(true)}
-                className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
-                aria-label="Settings"
-              >
-                <Settings size={20} strokeWidth={1.5} className="text-[var(--color-neutral-9)]" />
-              </button>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content side="bottom" sideOffset={6} className="px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
-                Settings
-                <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
+          <Tooltip content="Settings" side="bottom" sideOffset={6}>
+            <button
+              id="settings-button"
+              onClick={() => setSettingsOpen(true)}
+              className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+              aria-label="Settings"
+            >
+              <Settings size={20} strokeWidth={1.5} className="text-[var(--color-neutral-9)]" />
+            </button>
+          </Tooltip>
 
           {/* Share button — visible when published or dirty */}
           {(publishStatus === 'published' || publishStatus === 'dirty') && (
-            <Tooltip.Root open={linkCopied || undefined}>
-              <Tooltip.Trigger asChild>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`https://upkeep.app/apps/${appTitle.toLowerCase().replace(/\s+/g, '-')}`)
-                    setLinkCopied(true)
-                    setTimeout(() => setLinkCopied(false), 2000)
-                  }}
-                  className={`flex items-center justify-center w-10 h-10 rounded-xl border transition-colors duration-[var(--duration-fast)] cursor-pointer ${
-                    linkCopied
-                      ? 'border-[var(--color-success-light)] bg-[var(--color-success-light)]'
-                      : 'border-[var(--border-default)] hover:bg-[var(--color-neutral-3)]'
-                  }`}
-                  aria-label="Share"
-                >
-                  {linkCopied
-                    ? <Check size={16} className="text-[var(--color-success)]" />
-                    : <Link2 size={16} className="text-[var(--color-neutral-9)]" />
-                  }
-                </button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content side="bottom" sideOffset={6} className="px-2.5 py-1.5 rounded-lg bg-[var(--color-neutral-12)] text-white text-xs shadow-[var(--shadow-lg)] z-[var(--z-toast)]">
-                  {linkCopied ? 'Copied!' : 'Copy share link'}
-                  <Tooltip.Arrow className="fill-[var(--color-neutral-12)]" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
+            <Tooltip content={linkCopied ? 'Copied!' : 'Copy share link'} side="bottom" sideOffset={6} open={linkCopied || undefined}>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`https://upkeep.app/apps/${appTitle.toLowerCase().replace(/\s+/g, '-')}`)
+                  setLinkCopied(true)
+                  setTimeout(() => setLinkCopied(false), 2000)
+                }}
+                className={`flex items-center justify-center w-10 h-10 rounded-xl border transition-colors duration-[var(--duration-fast)] cursor-pointer ${
+                  linkCopied
+                    ? 'border-[var(--color-success-light)] bg-[var(--color-success-light)]'
+                    : 'border-[var(--border-default)] hover:bg-[var(--color-neutral-3)]'
+                }`}
+                aria-label="Share"
+              >
+                {linkCopied
+                  ? <Check size={16} className="text-[var(--color-success)]" />
+                  : <Link2 size={16} className="text-[var(--color-neutral-9)]" />
+                }
+              </button>
+            </Tooltip>
           )}
 
           <div className="relative">
@@ -1360,7 +1808,7 @@ function BuilderView({
               {publishStatus === 'publishing' && (
                 <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               )}
-              <span className="text-sm font-medium text-white">
+              <span className="text-[length:var(--font-size-base)] font-medium text-white">
                 {publishStatus === 'publishing' ? 'Publishing…' : 'Publish'}
               </span>
             </button>
@@ -1384,23 +1832,23 @@ function BuilderView({
 
                   <div className="flex flex-col gap-5">
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-sm font-semibold text-[var(--color-neutral-12)] shrink-0">Title</span>
+                      <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] shrink-0">Title</span>
                       <input
                         type="text"
                         value={appTitle}
                         onChange={(e) => setAppTitle(e.target.value)}
-                        className="text-sm text-[var(--color-neutral-12)] bg-transparent outline-none border border-[var(--border-default)] rounded-lg px-3 py-2 w-full max-w-[220px]"
+                        className="text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] bg-transparent outline-none border border-[var(--border-default)] rounded-lg px-3 py-2 w-full max-w-[220px]"
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-[var(--color-neutral-12)]">Status</span>
-                      <span className="text-sm font-medium text-[var(--color-neutral-12)] px-2.5 py-1 rounded-full border border-[var(--border-default)]">
+                      <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">Status</span>
+                      <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)] px-2.5 py-1 rounded-full border border-[var(--border-default)]">
                         Draft
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-[var(--color-neutral-12)]">Who can view</span>
-                      <span className="text-sm text-[var(--color-neutral-9)]">
+                      <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">Who can view</span>
+                      <span className="text-[length:var(--font-size-base)] text-[var(--color-neutral-9)]">
                         {audienceOptions.find(o => o.value === publishAudience)?.label}
                       </span>
                     </div>
@@ -1409,7 +1857,7 @@ function BuilderView({
                   <div className="flex gap-3 pt-1">
                     <button
                       onClick={() => { setPublishOpen(false); setSettingsOpen(true); setSettingsFromPublish(true) }}
-                      className="flex-1 flex items-center justify-center h-10 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                      className="flex-1 flex items-center justify-center h-10 rounded-xl border border-[var(--border-default)] text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                     >
                       Manage Settings
                     </button>
@@ -1418,7 +1866,7 @@ function BuilderView({
                         setPublishOpen(false)
                         triggerPublish()
                       }}
-                      className="flex-1 flex items-center justify-center h-10 rounded-xl bg-[var(--color-accent-9)] text-sm font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                      className="flex-1 flex items-center justify-center h-10 rounded-xl bg-[var(--color-accent-9)] text-[length:var(--font-size-base)] font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                     >
                       Publish
                     </button>
@@ -1428,7 +1876,7 @@ function BuilderView({
             )}
           </div>
         </div>
-        </Tooltip.Provider>
+        </TooltipProvider>
       </header>
 
       {/* ── Two-panel content ── */}
@@ -1446,7 +1894,7 @@ function BuilderView({
                     style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
                   >
                     <div className="bg-[var(--color-accent-1)] rounded-xl p-3 max-w-full">
-                      <p className="text-sm leading-5 text-[var(--color-neutral-9)]">{msg.content}</p>
+                      <p className="text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-9)]">{msg.content}</p>
                     </div>
                   </div>
                 )
@@ -1467,11 +1915,11 @@ function BuilderView({
                     <div className="w-[18px] h-[18px] rounded-full bg-[var(--color-success)] flex items-center justify-center shrink-0">
                       <Check size={10} strokeWidth={3} className="text-white" />
                     </div>
-                    <span className="text-sm font-medium text-[var(--color-neutral-12)]">
+                    <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">
                       {isFirst ? 'Completed in 3m 50s' : 'Changes applied'}
                     </span>
-                    <span className="text-xs text-[var(--color-neutral-7)]">·</span>
-                    <span className="text-xs text-[var(--color-neutral-8)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]">
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">·</span>
+                    <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]">
                       {showActivityLog && idx === messages.length - 1 ? 'Hide details' : 'View details'}
                     </span>
                     <ChevronDown size={14} className={`text-[var(--color-neutral-8)] transition-transform duration-[var(--duration-fast)] ${showActivityLog && idx === messages.length - 1 ? 'rotate-180' : ''}`} />
@@ -1485,7 +1933,7 @@ function BuilderView({
                       {thinkingSteps.map((step, i) => (
                         <div key={i} className="flex items-center gap-2 py-0.5">
                           <Check size={12} strokeWidth={2} className="text-[var(--color-success)] shrink-0" />
-                          <span className="text-xs text-[var(--color-neutral-9)]">{step.label}</span>
+                          <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)]">{step.label}</span>
                         </div>
                       ))}
                     </div>
@@ -1496,18 +1944,18 @@ function BuilderView({
                     className="border border-[var(--border-default)] rounded-xl p-3 flex flex-col gap-2 opacity-0"
                     style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
                   >
-                    <p className="text-sm font-medium text-[var(--color-neutral-12)] leading-5">
+                    <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)] leading-5">
                       {isFirst ? "Here's what I created for you:" : msg.content}
                     </p>
                     {isFirst && (
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 px-0.5">
                           <FileText size={16} className="text-[var(--color-neutral-9)] shrink-0" />
-                          <span className="text-sm font-medium text-[var(--color-neutral-12)]">WO-042 — Pump Station 3</span>
+                          <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">WO-042 — Pump Station 3</span>
                         </div>
                         <div className="flex items-center gap-2 px-0.5">
                           <FileText size={16} className="text-[var(--color-neutral-9)] shrink-0" />
-                          <span className="text-sm font-medium text-[var(--color-neutral-12)]">WO-043 — Conveyor Belt 12</span>
+                          <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">WO-043 — Conveyor Belt 12</span>
                         </div>
                       </div>
                     )}
@@ -1519,8 +1967,8 @@ function BuilderView({
                       className="px-0 py-0 flex flex-col gap-3 opacity-0"
                       style={{ animation: 'fadeInUp 0.5s var(--ease-default) 0.2s forwards' }}
                     >
-                      <h4 className="text-xs font-medium uppercase tracking-wider text-[var(--color-neutral-8)]">What would you like to focus on?</h4>
-                      <p className="text-sm leading-5 text-[var(--color-neutral-12)]">
+                      <h4 className="text-[length:var(--font-size-sm)] font-medium uppercase tracking-wider text-[var(--color-neutral-8)]">What would you like to focus on?</h4>
+                      <p className="text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-12)]">
                         I found several directions based on your UpKeep data. Pick one to continue, or describe something else:
                       </p>
                       <div className="flex flex-col gap-3">
@@ -1534,15 +1982,15 @@ function BuilderView({
                             className="flex items-center gap-2.5 p-3 bg-[var(--color-neutral-2)] border border-[var(--color-neutral-5)] rounded-xl text-left hover:bg-[var(--color-neutral-3)] hover:border-[var(--color-accent-5)] transition-all cursor-pointer group opacity-0"
                             style={{ animation: `fadeInUp 0.4s var(--ease-default) ${0.3 + i * 0.08}s forwards` }}
                           >
-                            <span className="flex-1 text-sm leading-5 text-[var(--color-neutral-12)]">{step.text}</span>
+                            <span className="flex-1 text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-12)]">{step.text}</span>
                             <span className="flex items-center gap-1 shrink-0">
-                              <span className="text-[11px] text-[var(--color-neutral-7)] opacity-0 group-hover:opacity-100 transition-opacity">Add this</span>
+                              <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] opacity-0 group-hover:opacity-100 transition-opacity">Add this</span>
                               <ArrowRight size={16} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
                             </span>
                           </button>
                         ))}
                       </div>
-                      <p className="text-sm leading-5 text-[var(--color-neutral-9)]">
+                      <p className="text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-9)]">
                         You can select multiple, or tell me exactly what you need — I&apos;ll combine them.
                       </p>
                     </div>
@@ -1557,9 +2005,9 @@ function BuilderView({
                     >
                       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
                         <Settings size={15} className="text-[var(--color-accent-9)] shrink-0" />
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-accent-9)]">Want to publish your app?</h4>
+                        <h4 className="text-[length:var(--font-size-sm)] font-semibold uppercase tracking-wider text-[var(--color-accent-9)]">Want to publish your app?</h4>
                       </div>
-                      <p className="text-sm leading-5 text-[var(--color-neutral-11)] px-4 pb-3">
+                      <p className="text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-11)] px-4 pb-3">
                         Configure your app settings to get the best visibility and control:
                       </p>
                       <div className="flex flex-col gap-0 px-2 pb-2">
@@ -1570,12 +2018,12 @@ function BuilderView({
                             className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left hover:bg-[var(--color-accent-2)] transition-all cursor-pointer group opacity-0"
                             style={{ animation: `fadeInUp 0.4s var(--ease-default) ${0.3 + i * 0.08}s forwards` }}
                           >
-                            <span className="flex-1 text-sm leading-5 text-[var(--color-neutral-12)]">{item.text}</span>
+                            <span className="flex-1 text-[length:var(--font-size-base)] leading-5 text-[var(--color-neutral-12)]">{item.text}</span>
                             <ArrowRight size={14} className="text-[var(--color-accent-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)] shrink-0" />
                           </button>
                         ))}
                       </div>
-                      <p className="text-xs leading-5 text-[var(--color-neutral-8)] px-4 pb-3">
+                      <p className="text-[length:var(--font-size-sm)] leading-5 text-[var(--color-neutral-8)] px-4 pb-3">
                         You can always change these later in Settings.
                       </p>
                     </div>
@@ -1590,7 +2038,7 @@ function BuilderView({
                 className="flex flex-col gap-0.5 opacity-0"
                 style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.3s forwards' }}
               >
-                <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--color-neutral-8)] mb-1.5">Working on it…</span>
+                <span className="text-[length:var(--font-size-xs)] font-medium uppercase tracking-wider text-[var(--color-neutral-8)] mb-1.5">Working on it…</span>
                 {thinkingSteps.map((step, i) => {
                   const isComplete = i < thinkingStep
                   const isActive = i === thinkingStep
@@ -1610,11 +2058,11 @@ function BuilderView({
                         <div className="w-[18px] h-[18px] rounded-full border-2 border-[var(--color-neutral-5)] shrink-0" />
                       )}
                       <div className="flex flex-col">
-                        <span className={`text-sm leading-tight ${isActive ? 'font-medium shimmer-text' : isComplete ? 'font-medium text-[var(--color-neutral-12)]' : 'text-[var(--color-neutral-7)]'}`}>
+                        <span className={`text-[length:var(--font-size-base)] leading-tight ${isActive ? 'font-medium shimmer-text' : isComplete ? 'font-medium text-[var(--color-neutral-12)]' : 'text-[var(--color-neutral-7)]'}`}>
                           {step.label}
                         </span>
                         {isActive && (
-                          <span className="text-[11px] text-[var(--color-neutral-8)] mt-0.5">{step.detail}</span>
+                          <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] mt-0.5">{step.detail}</span>
                         )}
                       </div>
                     </div>
@@ -1631,7 +2079,7 @@ function BuilderView({
             <div className="px-6 pb-3 fade-animate">
               <div className="rounded-xl border border-[var(--color-accent-5)] bg-[var(--color-accent-1)] overflow-hidden">
                 <div className="flex items-center justify-between px-4 pt-3 pb-1.5">
-                  <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-accent-9)]">Finish setting up</span>
+                  <span className="text-[length:var(--font-size-sm)] font-medium uppercase tracking-wider text-[var(--color-accent-9)]">Finish setting up</span>
                   <button
                     onClick={() => setPostPublishCTAsDismissed(true)}
                     className="flex items-center justify-center w-5 h-5 rounded-md hover:bg-[var(--color-accent-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
@@ -1645,7 +2093,7 @@ function BuilderView({
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-[var(--color-accent-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer group"
                 >
                   <Settings size={15} className="text-[var(--color-accent-9)] shrink-0" />
-                  <span className="flex-1 text-sm font-medium text-[var(--color-neutral-12)]">Add setup instructions</span>
+                  <span className="flex-1 text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Add setup instructions</span>
                   <ArrowRight size={14} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
                 </button>
                 <button
@@ -1653,7 +2101,7 @@ function BuilderView({
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-left hover:bg-[var(--color-accent-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer group"
                 >
                   <Tag size={15} className="text-[var(--color-accent-9)] shrink-0" />
-                  <span className="flex-1 text-sm font-medium text-[var(--color-neutral-12)]">Add tags so users can find your app</span>
+                  <span className="flex-1 text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Add tags so users can find your app</span>
                   <ArrowRight size={14} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-accent-9)] transition-colors duration-[var(--duration-fast)]" />
                 </button>
               </div>
@@ -1674,44 +2122,94 @@ function BuilderView({
                   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSend() }
                 }}
                 placeholder={(publishStatus === 'published' || publishStatus === 'dirty') ? 'Ask for changes' : 'Tell me what to change or add…'}
-                className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[#9CA0A8] outline-none ring-0 focus:outline-none focus:ring-0 bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border-none shadow-none appearance-none"
+                className="w-full resize-none text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] outline-none ring-0 focus:outline-none focus:ring-0 bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border-none shadow-none appearance-none"
                 rows={3}
               />
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  {/* Agent selector */}
                   <div className="relative">
                     <button
-                      onClick={() => setModeDropdownOpen(!modeDropdownOpen)}
+                      onClick={() => setAgentDropdownOpen(!agentDropdownOpen)}
                       className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                     >
-                      {(() => { const opt = agentModeOptions.find(o => o.value === agentMode); const Icon = opt?.icon || ClipboardList; return <Icon size={14} className="text-[var(--color-neutral-8)]" /> })()}
-                      <span className="text-xs font-medium text-[var(--color-neutral-9)]">{agentModeOptions.find(o => o.value === agentMode)?.label}</span>
-                      <ChevronDown size={12} className={`text-[var(--color-neutral-7)] transition-transform duration-[var(--duration-fast)] ${modeDropdownOpen ? 'rotate-180' : ''}`} />
+                      <span
+                        className="flex items-center justify-center w-5 h-5 rounded-md shrink-0"
+                        style={{ backgroundColor: selectedAgent.bgColor }}
+                      >
+                        <selectedAgent.icon size={12} style={{ color: selectedAgent.color }} />
+                      </span>
+                      <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">{selectedAgent.name}</span>
+                      <ChevronDown size={12} className={`text-[var(--color-neutral-7)] transition-transform duration-[var(--duration-fast)] ${agentDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
 
-                    {modeDropdownOpen && (
+                    {agentDropdownOpen && (
                       <>
-                        <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setModeDropdownOpen(false)} />
-                        <div className="absolute left-0 bottom-full mb-1 z-[var(--z-modal)] rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] py-1 w-[260px] dropdown-animate">
-                          {agentModeOptions.map((opt) => {
-                            const Icon = opt.icon
-                            return (
-                              <button
-                                key={opt.value}
-                                onClick={() => { setAgentMode(opt.value); setModeDropdownOpen(false) }}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${agentMode === opt.value ? 'bg-[var(--color-accent-1)]' : ''}`}
-                              >
-                                <Icon size={16} className="text-[var(--color-neutral-8)] shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-[var(--color-neutral-12)]">{opt.label}</p>
-                                  <p className="text-xs text-[var(--color-neutral-8)]">{opt.description}</p>
-                                </div>
-                                {agentMode === opt.value && (
-                                  <Check size={16} className="text-[var(--color-accent-9)] shrink-0" />
-                                )}
-                              </button>
-                            )
-                          })}
+                        <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setAgentDropdownOpen(false)} />
+                        <div className="absolute left-0 bottom-full mb-1 z-[var(--z-modal)] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] w-[320px] dropdown-animate overflow-hidden">
+                          <div className="px-4 pt-3 pb-2">
+                            <p className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wider text-[var(--color-neutral-8)]">Agents</p>
+                          </div>
+                          <div className="max-h-[320px] overflow-y-auto py-1">
+                            {studioAgents.map((agent) => {
+                              const isSelected = selectedAgent.id === agent.id
+                              const AgentIcon = agent.icon
+                              return (
+                                <button
+                                  key={agent.id}
+                                  onClick={() => { setSelectedAgent(agent); setAgentDropdownOpen(false) }}
+                                  className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${isSelected ? 'bg-[var(--color-neutral-2)]' : ''}`}
+                                >
+                                  <span
+                                    className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0 mt-0.5"
+                                    style={{ backgroundColor: agent.bgColor }}
+                                  >
+                                    <AgentIcon size={16} style={{ color: agent.color }} />
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">{agent.name}</p>
+                                      {agent.isDefault && (
+                                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[var(--color-accent-2)] text-[var(--color-accent-9)]">Default</span>
+                                      )}
+                                    </div>
+                                    <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] mt-0.5 line-clamp-2">{agent.description}</p>
+                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                      {agent.capabilities.map((cap) => (
+                                        <span key={cap} className="text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)]">{cap}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  {isSelected && (
+                                    <Check size={16} className="text-[var(--color-accent-9)] shrink-0 mt-1" />
+                                  )}
+                                </button>
+                              )
+                            })}
+                          </div>
+                          <div className="border-t border-[var(--border-default)] px-4 py-2.5">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {(() => { const opt = agentModeOptions.find(o => o.value === agentMode); const ModeIcon = opt?.icon || ClipboardList; return <ModeIcon size={13} className="text-[var(--color-neutral-8)]" /> })()}
+                                <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-9)]">{agentModeOptions.find(o => o.value === agentMode)?.label}</span>
+                              </div>
+                              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-[var(--color-neutral-3)]">
+                                {agentModeOptions.map((opt) => {
+                                  const MIcon = opt.icon
+                                  return (
+                                    <button
+                                      key={opt.value}
+                                      onClick={(e) => { e.stopPropagation(); setAgentMode(opt.value) }}
+                                      className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium cursor-pointer transition-all duration-[var(--duration-fast)] ${agentMode === opt.value ? 'bg-white shadow-sm text-[var(--color-neutral-12)]' : 'text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-10)]'}`}
+                                    >
+                                      <MIcon size={10} />
+                                      {opt.label.replace(' mode', '')}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </>
                     )}
@@ -1749,6 +2247,62 @@ function BuilderView({
                 </div>
               </div>
             </div>
+
+            {/* Integrations compact bar */}
+            <button
+              onClick={() => setIntegrationsOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 w-full rounded-xl bg-[var(--color-neutral-2)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer group"
+            >
+              <span className="inline-flex items-center gap-1.5 w-full px-2 py-0.5 rounded-md text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-8)] group-hover:text-[var(--color-neutral-10)] transition-colors duration-[var(--duration-fast)]">
+                Integrations
+              </span>
+              <div className="flex items-center ml-auto -space-x-1.5">
+                {integrations.filter(ig => connectedIds.has(ig.id)).slice(0, 4).map((ig) => (
+                  <span
+                    key={ig.id}
+                    className="flex items-center justify-center w-[22px] h-[22px] bg-white rounded-full border border-[var(--border-default)]"
+                    style={{ boxShadow: '-1px 1px 4px rgba(0,0,0,0.08)' }}
+                  >
+                    <img src={ig.icon} alt={ig.name} className="w-3 h-3 object-contain" />
+                  </span>
+                ))}
+              </div>
+              {connectedIds.size > 0 && (
+                <Badge severity="neutral" variant="surface" size="sm">
+                  {connectedIds.size}
+                </Badge>
+              )}
+              <ChevronRight size={12} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-neutral-9)] transition-colors duration-[var(--duration-fast)]" />
+            </button>
+
+            {/* Agents quick-switch bar */}
+            <div className="flex items-center gap-1.5 w-full px-1 py-1 rounded-xl bg-[var(--color-neutral-2)] overflow-x-auto">
+              {studioAgents.map((agent) => {
+                const isActive = selectedAgent.id === agent.id
+                const AgentIcon = agent.icon
+                return (
+                  <button
+                    key={agent.id}
+                    onClick={() => setSelectedAgent(agent)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg whitespace-nowrap cursor-pointer transition-all duration-[var(--duration-fast)] shrink-0 ${
+                      isActive
+                        ? 'bg-white shadow-sm'
+                        : 'hover:bg-[var(--color-neutral-3)]'
+                    }`}
+                  >
+                    <span
+                      className="flex items-center justify-center w-5 h-5 rounded-md shrink-0"
+                      style={{ backgroundColor: isActive ? agent.bgColor : 'transparent' }}
+                    >
+                      <AgentIcon size={12} style={{ color: isActive ? agent.color : 'var(--color-neutral-7)' }} />
+                    </span>
+                    <span className={`text-[11px] font-medium ${isActive ? 'text-[var(--color-neutral-12)]' : 'text-[var(--color-neutral-8)]'}`}>
+                      {agent.name}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
         </div>
@@ -1762,6 +2316,122 @@ function BuilderView({
           )}
 
         </div>
+
+        {/* ── Integrations Modal (Builder) ── */}
+        <Dialog.Root open={integrationsOpen} onOpenChange={setIntegrationsOpen}>
+          <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 z-[var(--z-overlay)] bg-black/40" data-dialog-overlay />
+            <Dialog.Content
+              className="fixed left-1/2 top-1/2 z-[var(--z-modal)] flex flex-col w-[90vw] max-w-[640px] max-h-[80vh] bg-[var(--surface-primary)] rounded-2xl shadow-[var(--shadow-xl)] overflow-hidden"
+              data-dialog-content
+            >
+              <div className="flex items-center justify-between px-6 pt-5 pb-1 shrink-0">
+                <div>
+                  <Dialog.Title className="text-lg font-semibold text-[var(--color-neutral-12)]">Integrations</Dialog.Title>
+                  <Dialog.Description className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)] mt-0.5">
+                    Connect your tools to build apps powered by your data.
+                  </Dialog.Description>
+                </div>
+                <Dialog.Close asChild>
+                  <button className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]" aria-label="Close">
+                    <X size={18} className="text-[var(--color-neutral-9)]" />
+                  </button>
+                </Dialog.Close>
+              </div>
+
+              <div className="px-6 pt-3 pb-3 shrink-0">
+                <div className="flex items-center gap-[var(--space-xs)] px-3 py-2.5 border border-[var(--border-default)] rounded-2xl bg-[var(--color-neutral-2)]">
+                  <Search size={16} className="text-[var(--color-neutral-7)] shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    value={integrationSearch}
+                    onChange={(e) => setIntegrationSearch(e.target.value)}
+                    className="flex-1 text-[length:var(--font-size-base)] outline-none bg-transparent placeholder:text-[var(--color-neutral-7)]"
+                  />
+                  {integrationSearch && (
+                    <button onClick={() => setIntegrationSearch('')} className="cursor-pointer">
+                      <X size={14} className="text-[var(--color-neutral-7)]" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-6 pt-4 pb-8">
+                <div className="grid grid-cols-2 gap-4">
+                  {integrations
+                    .filter(ig => ig.id !== 'upkeep-wo' && ig.id !== 'upkeep-assets')
+                    .filter(ig => !integrationSearch || ig.name.toLowerCase().includes(integrationSearch.toLowerCase()) || ig.description.toLowerCase().includes(integrationSearch.toLowerCase()))
+                    .map((ig) => {
+                      const isConnected = connectedIds.has(ig.id)
+                      const isConnecting = connectingId === ig.id
+                      return (
+                        <div
+                          key={ig.id}
+                          className="group/card flex items-center gap-3 px-4 py-3.5 rounded-[20px] border border-[var(--border-default)] hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)]"
+                        >
+                          <span className="flex items-center justify-center w-12 h-12 rounded-[16px] bg-white shrink-0 border border-[var(--border-subtle)] overflow-hidden">
+                            <img src={ig.icon} alt={ig.name} className="w-7 h-7 rounded-lg object-cover" />
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] truncate">{ig.name}</h4>
+                            <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] line-clamp-2 leading-relaxed">{ig.description}</p>
+                          </div>
+                          {isConnected ? (
+                            <button
+                              onClick={() => {
+                                setConnectedIds(prev => {
+                                  const next = new Set(prev)
+                                  next.delete(ig.id)
+                                  return next
+                                })
+                              }}
+                              className="relative w-8 h-8 shrink-0 cursor-pointer"
+                              aria-label={`Disconnect ${ig.name}`}
+                            >
+                              <span className="absolute inset-0 flex items-center justify-center rounded-full bg-[var(--color-success)] transition-opacity duration-150 group-hover/card:opacity-0">
+                                <Check size={12} strokeWidth={3} className="text-white" />
+                              </span>
+                              <span className="absolute inset-0 flex items-center justify-center rounded-full bg-[#FFF0F0] opacity-0 transition-opacity duration-150 group-hover/card:opacity-100">
+                                <X size={12} strokeWidth={2.5} className="text-[#E5484D]" />
+                              </span>
+                            </button>
+                          ) : isConnecting ? (
+                            <span className="inline-block w-5 h-5 border-2 border-[var(--color-accent-9)] border-t-transparent rounded-full animate-spin shrink-0" />
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setConnectingId(ig.id)
+                                setTimeout(() => {
+                                  setConnectedIds(prev => new Set([...prev, ig.id]))
+                                  setConnectingId(null)
+                                }, 1500)
+                              }}
+                              className="w-8 h-8 p-0 rounded-full shrink-0 hover:border-[var(--color-accent-5)] hover:text-[var(--color-accent-9)]"
+                              aria-label={`Connect ${ig.name}`}
+                            >
+                              <Plus size={16} />
+                            </Button>
+                          )}
+                        </div>
+                      )
+                    })}
+                </div>
+
+                {integrations.filter(ig => ig.id !== 'upkeep-wo' && ig.id !== 'upkeep-assets').filter(ig => !integrationSearch || ig.name.toLowerCase().includes(integrationSearch.toLowerCase())).length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
+                    <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)]">No integrations match your search.</p>
+                    <button onClick={() => setIntegrationSearch('')} className="text-[length:var(--font-size-sm)] text-[var(--color-accent-9)] hover:underline cursor-pointer">
+                      Clear search
+                    </button>
+                  </div>
+                )}
+              </div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
 
         {/* ── Settings Drawer ── */}
         {settingsOpen && (
@@ -1794,20 +2464,20 @@ function BuilderView({
                   <div className="flex items-start justify-between">
                     <div className="flex flex-col gap-0.5">
                       <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Published app access</h3>
-                      <p className="text-xs text-[var(--color-neutral-8)]">Changing audience will take effect immediately</p>
+                      <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Changing audience will take effect immediately</p>
                     </div>
-                    <button className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0">
+                    <button className="flex items-center gap-1.5 text-[length:var(--font-size-base)] font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0">
                       <Link2 size={14} />
                       Copy link
                     </button>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-[var(--color-neutral-12)]">Who can view</label>
+                    <label className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Who can view</label>
                     <div className="relative">
                       <button
                         onClick={() => setAudienceDropdownOpen(!audienceDropdownOpen)}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] text-sm text-[var(--color-neutral-12)] cursor-pointer hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)]"
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] cursor-pointer hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)]"
                       >
                         <div className="flex items-center gap-2">
                           {(() => { const opt = audienceOptions.find(o => o.value === publishAudience); const Icon = opt?.icon || Building2; return <Icon size={16} className="text-[var(--color-neutral-8)]" /> })()}
@@ -1830,8 +2500,8 @@ function BuilderView({
                                 >
                                   <Icon size={16} className="text-[var(--color-neutral-8)] shrink-0" />
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-[var(--color-neutral-12)]">{opt.label}</p>
-                                    <p className="text-xs text-[var(--color-neutral-8)]">{opt.description}</p>
+                                    <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">{opt.label}</p>
+                                    <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">{opt.description}</p>
                                   </div>
                                   {publishAudience === opt.value && (
                                     <Check size={16} className="text-[var(--color-accent-9)] shrink-0" />
@@ -1847,18 +2517,14 @@ function BuilderView({
 
                   {/* Marketplace toggle */}
                   <div className="flex items-center gap-3 py-2">
-                    <Switch.Root
+                    <Switch
                       checked={marketplacePublish}
                       onCheckedChange={(v) => { setMarketplacePublish(v); setSettingsDirty(true) }}
-                      className={`relative inline-flex items-center w-10 h-[22px] rounded-full transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0 ${
-                        marketplacePublish ? 'bg-[var(--color-accent-9)]' : 'bg-[var(--color-neutral-5)]'
-                      }`}
-                    >
-                      <Switch.Thumb className="block w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-transform duration-[var(--duration-fast)] translate-x-0.5 data-[state=checked]:translate-x-[20px]" />
-                    </Switch.Root>
+                      size="lg"
+                    />
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-[var(--color-neutral-12)]">Publish to Marketplace</span>
-                      <span className="text-sm text-[var(--color-neutral-8)]"> (Visible for anyone in the UpKeep community</span>
+                      <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Publish to Marketplace</span>
+                      <span className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)]"> (Visible for anyone in the UpKeep community</span>
                     </div>
                   </div>
 
@@ -1866,7 +2532,7 @@ function BuilderView({
                   {marketplacePublish && (
                     <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-[var(--color-accent-1)] border border-[var(--color-accent-3)]">
                       <Info size={16} className="text-[var(--color-accent-9)] shrink-0 mt-0.5" />
-                      <span className="text-xs text-[var(--color-neutral-11)] leading-relaxed">
+                      <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] leading-relaxed">
                         Publishing makes it available to your team instantly. Marketplace visibility requires review first.
                       </span>
                     </div>
@@ -1879,26 +2545,26 @@ function BuilderView({
                   <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">App Details</h3>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Name</label>
+                    <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Name</label>
                     <input
                       type="text"
                       value={appTitle}
                       onChange={(e) => { setAppTitle(e.target.value); setSettingsDirty(true) }}
-                      className="w-full text-sm text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none ring-0 focus:outline-none focus:ring-0 border-none"
+                      className="w-full text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none ring-0 focus:outline-none focus:ring-0 border-none"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Description</label>
+                    <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Description</label>
                     <div className="relative">
                       <textarea
                         value={appDescription}
                         onChange={(e) => { setAppDescription(e.target.value); setSettingsDirty(true) }}
                         placeholder="Briefly describe what this app does and who it's for…"
-                        className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 leading-5 outline-none ring-0 focus:outline-none focus:ring-0 border-none shadow-none appearance-none"
+                        className="w-full resize-none text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 leading-5 outline-none ring-0 focus:outline-none focus:ring-0 border-none shadow-none appearance-none"
                         rows={3}
                       />
-                      <button className="absolute right-3 bottom-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-accent-5)] text-xs font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                      <button className="absolute right-3 bottom-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-accent-5)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                         <Sparkles size={12} />
                         Writing Assistant
                       </button>
@@ -1907,11 +2573,11 @@ function BuilderView({
 
                   <div className="flex gap-4">
                     <div className="flex flex-col gap-1.5 flex-1">
-                      <label className="text-xs font-medium text-[var(--color-neutral-9)]">Category</label>
+                      <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Category</label>
                       <select
                         value={appCategory}
                         onChange={(e) => { setAppCategory(e.target.value); setSettingsDirty(true) }}
-                        className="w-full text-sm text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none border-none cursor-pointer appearance-none"
+                        className="w-full text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none border-none cursor-pointer appearance-none"
                       >
                         {['Operations', 'Reporting', 'Compliance', 'Work Orders', 'Inventory', 'Assets', 'Data Management', 'Safety'].map(c => (
                           <option key={c} value={c}>{c}</option>
@@ -1919,17 +2585,17 @@ function BuilderView({
                       </select>
                     </div>
                     <div className="flex flex-col gap-1.5 flex-1">
-                      <label className="text-xs font-medium text-[var(--color-neutral-9)]">Version</label>
+                      <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Version</label>
                       <input
                         type="text"
                         defaultValue="1.0.0"
-                        className="w-full text-sm text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none ring-0 focus:outline-none focus:ring-0 border-none"
+                        className="w-full text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 outline-none ring-0 focus:outline-none focus:ring-0 border-none"
                       />
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Tags</label>
+                    <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Tags</label>
                     <div className="flex flex-wrap items-center gap-1.5 bg-[var(--color-neutral-2)] rounded-lg px-3 py-2 min-h-[38px]">
                       {appTags.map((tag) => (
                         <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-primary)] border border-[var(--border-default)] text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-11)]">
@@ -1942,7 +2608,7 @@ function BuilderView({
                       <input
                         type="text"
                         placeholder="Add tag…"
-                        className="flex-1 min-w-[60px] text-xs text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-transparent outline-none border-none"
+                        className="flex-1 min-w-[60px] text-[length:var(--font-size-sm)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-transparent outline-none border-none"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                             setAppTags(prev => [...prev, e.currentTarget.value.trim()])
@@ -1955,16 +2621,16 @@ function BuilderView({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-[var(--color-neutral-9)]">Instructions</label>
+                    <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Instructions</label>
                     <div className="relative">
                       <textarea
                         value={appInstructions}
                         onChange={(e) => { setAppInstructions(e.target.value); setSettingsDirty(true) }}
                         placeholder="step by step for users to install and use the app"
-                        className="w-full resize-none text-sm text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 leading-5 outline-none ring-0 focus:outline-none focus:ring-0 border-none shadow-none appearance-none"
+                        className="w-full resize-none text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] rounded-lg px-3 py-2.5 leading-5 outline-none ring-0 focus:outline-none focus:ring-0 border-none shadow-none appearance-none"
                         rows={4}
                       />
-                      <button className="absolute right-3 bottom-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-accent-5)] text-xs font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                      <button className="absolute right-3 bottom-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-accent-5)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                         <Sparkles size={12} />
                         Writing Assistant
                       </button>
@@ -1978,35 +2644,35 @@ function BuilderView({
 
                   {/* Favicon */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-[var(--color-neutral-12)]">Favicon</label>
+                    <label className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Favicon</label>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[var(--color-neutral-2)] border border-[var(--border-default)]">
                         <Camera size={20} className="text-[var(--color-neutral-7)]" />
                       </div>
-                      <button className="flex items-center justify-center h-8 px-3 rounded-lg bg-[var(--color-accent-9)] text-xs font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                      <button className="flex items-center justify-center h-8 px-3 rounded-lg bg-[var(--color-accent-9)] text-[length:var(--font-size-sm)] font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                         Upload an image
                       </button>
-                      <span className="text-xs text-[var(--color-neutral-7)]">Recommended dimensions: 48×48</span>
+                      <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Recommended dimensions: 48×48</span>
                     </div>
                   </div>
 
                   {/* Preview app Images */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-[var(--color-neutral-12)]">Preview app Images (up to 5)</label>
+                    <label className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Preview app Images (up to 5)</label>
                     <div className="flex flex-col items-center gap-4 p-8 rounded-xl border-2 border-dashed border-[var(--color-accent-5)] bg-[var(--color-neutral-2)]">
                       <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--color-accent-2)]">
                         <Upload size={20} className="text-[var(--color-accent-7)]" />
                       </div>
                       <div className="flex flex-col items-center gap-0.5 text-center">
-                        <p className="text-sm font-medium text-[var(--color-neutral-12)]">Drag and drop your file here to upload</p>
-                        <p className="text-xs text-[var(--color-neutral-7)]">Recommended dimensions: 1920×1080 px</p>
+                        <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Drag and drop your file here to upload</p>
+                        <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Recommended dimensions: 1920×1080 px</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                           <Sparkles size={12} />
                           Make an Image
                         </button>
-                        <button className="flex items-center justify-center h-8 px-3 rounded-lg bg-[var(--color-accent-9)] text-xs font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                        <button className="flex items-center justify-center h-8 px-3 rounded-lg bg-[var(--color-accent-9)] text-[length:var(--font-size-sm)] font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
                           Browse files
                         </button>
                       </div>
@@ -2019,14 +2685,14 @@ function BuilderView({
               <div className="flex items-center gap-3 px-6 py-4 border-t border-[var(--border-default)] bg-[var(--color-neutral-2)] shrink-0">
                 <button
                   onClick={() => { setSettingsOpen(false); setSettingsFromPublish(false) }}
-                  className="mr-auto flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                  className="mr-auto flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                 >
                   Cancel
                 </button>
                 {settingsFromPublish && (
                   <button
                     onClick={() => { setSettingsOpen(false); setSettingsFromPublish(false); triggerPublish() }}
-                    className="flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-sm font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
+                    className="flex items-center justify-center h-10 px-5 rounded-xl border border-[var(--border-default)] text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                   >
                     Save &amp; Publish
                   </button>
@@ -2034,7 +2700,7 @@ function BuilderView({
                 <button
                   disabled={!settingsDirty}
                   onClick={() => { setSettingsOpen(false); setSettingsDirty(false); setSettingsFromPublish(false); setPostPublishCTAsDismissed(true); setSettingsSaved(true) }}
-                  className="flex items-center justify-center h-10 px-5 rounded-xl bg-[var(--color-accent-9)] text-sm font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                  className="flex items-center justify-center h-10 px-5 rounded-xl bg-[var(--color-accent-9)] text-[length:var(--font-size-base)] font-medium text-white hover:bg-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                 >
                   Save changes
                 </button>
@@ -2059,7 +2725,7 @@ function BuilderView({
         >
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-3 border-white/80 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm font-medium text-white/70">Publishing your app…</p>
+            <p className="text-[length:var(--font-size-base)] font-medium text-white/70">Publishing your app…</p>
           </div>
         </div>
       )}
@@ -2134,21 +2800,21 @@ function GeneratedAppPreview({ prompt }: { prompt: string }) {
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 border border-white/10 backdrop-blur-sm">
               <AppIcon size={20} className="text-white/90" />
             </div>
-            <span className="text-[13px] font-semibold tracking-[0.15em] uppercase text-white/70">{app.name}</span>
+            <span className="text-[length:var(--font-size-sm)] font-semibold tracking-[0.15em] uppercase text-white/70">{app.name}</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <h2 className="text-[28px] font-bold leading-tight text-white/60">
+            <h2 className="text-[length:var(--font-size-3xl)] font-bold leading-tight text-white/60">
               {app.headline.split(' ').map((word, i) => (
                 <span key={i}>{i > 0 ? ' ' : ''}<span className={i === app.headline.split(' ').length - 1 ? 'text-white' : ''}>{word}</span></span>
               ))}
             </h2>
-            <h2 className="text-[28px] font-bold leading-tight">
+            <h2 className="text-[length:var(--font-size-3xl)] font-bold leading-tight">
               {app.headlineAccent.split(' ').map((word, i) => (
                 <span key={i}>{i > 0 ? ' ' : ''}<span className={i === app.headlineAccent.split(' ').length - 1 ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#a78bfa] to-[#818cf8]' : 'text-white/60'}>{word}</span></span>
               ))}
             </h2>
           </div>
-          <p className="text-sm text-white/50 max-w-[360px] leading-relaxed">{app.subtitle}</p>
+          <p className="text-[length:var(--font-size-base)] text-white/50 max-w-[360px] leading-relaxed">{app.subtitle}</p>
         </div>
       </div>
 
@@ -2161,10 +2827,10 @@ function GeneratedAppPreview({ prompt }: { prompt: string }) {
                 <Camera size={24} className="text-[var(--color-accent-7)]" />
               </div>
               <div className="flex flex-col items-center gap-1 text-center">
-                <p className="text-sm font-semibold text-[var(--color-neutral-12)]">Choose a file or drag & drop it here</p>
-                <p className="text-xs text-[var(--color-neutral-7)]">JPEG, PNG, PDF, and MP4 formats, up to 50MB</p>
+                <p className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">Choose a file or drag & drop it here</p>
+                <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">JPEG, PNG, PDF, and MP4 formats, up to 50MB</p>
               </div>
-              <button className="px-5 py-2 rounded-lg bg-[var(--color-accent-9)] text-white text-sm font-medium hover:bg-[var(--color-accent-10)] transition-colors cursor-pointer">
+              <button className="px-5 py-2 rounded-lg bg-[var(--color-accent-9)] text-white text-[length:var(--font-size-base)] font-medium hover:bg-[var(--color-accent-10)] transition-colors cursor-pointer">
                 Browse File
               </button>
             </>
@@ -2176,12 +2842,12 @@ function GeneratedAppPreview({ prompt }: { prompt: string }) {
                     <div className={`w-5 h-5 rounded-[5px] border-2 flex items-center justify-center shrink-0 ${i < 2 ? 'bg-[var(--color-accent-9)] border-[var(--color-accent-9)]' : 'border-[var(--color-neutral-6)]'}`}>
                       {i < 2 && <Check size={12} strokeWidth={3} className="text-white" />}
                     </div>
-                    <span className={`text-sm ${i < 2 ? 'text-[var(--color-neutral-8)] line-through' : 'text-[var(--color-neutral-12)]'}`}>{item}</span>
+                    <span className={`text-[length:var(--font-size-base)] ${i < 2 ? 'text-[var(--color-neutral-8)] line-through' : 'text-[var(--color-neutral-12)]'}`}>{item}</span>
                   </div>
                 ))}
               </div>
               <div className="w-full flex items-center justify-between pt-2">
-                <span className="text-xs text-[var(--color-neutral-7)]">2 of 4 complete</span>
+                <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">2 of 4 complete</span>
                 <div className="w-24 h-1.5 rounded-full bg-[var(--color-neutral-3)]">
                   <div className="w-1/2 h-full rounded-full bg-[var(--color-accent-9)]" />
                 </div>
@@ -2197,9 +2863,9 @@ function GeneratedAppPreview({ prompt }: { prompt: string }) {
                   { label: 'Uptime', value: '96.2%', trend: '+1.1%' },
                 ].map((kpi) => (
                   <div key={kpi.label} className="flex flex-col gap-1 p-3 rounded-lg bg-[var(--color-neutral-2)] border border-[var(--border-default)]">
-                    <span className="text-[11px] font-medium text-[var(--color-neutral-8)] uppercase tracking-wider">{kpi.label}</span>
+                    <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-8)] uppercase tracking-wider">{kpi.label}</span>
                     <span className="text-lg font-bold text-[var(--color-neutral-12)]">{kpi.value}</span>
-                    <span className="text-[11px] font-medium text-[var(--color-accent-9)]">{kpi.trend}</span>
+                    <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-accent-9)]">{kpi.trend}</span>
                   </div>
                 ))}
               </div>
@@ -2227,7 +2893,7 @@ function GeneratedAppPreview({ prompt }: { prompt: string }) {
       {/* Footer */}
       <div className="flex items-center justify-center gap-2 py-4 border-t border-[var(--border-default)]">
         <Sparkles size={14} className="text-[var(--color-neutral-7)]" />
-        <span className="text-xs text-[var(--color-neutral-7)]">Created by UpKeep Studio — 2026</span>
+        <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Created by UpKeep Studio — 2026</span>
       </div>
     </div>
   )

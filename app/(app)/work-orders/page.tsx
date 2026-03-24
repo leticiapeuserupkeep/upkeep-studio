@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import * as Dialog from '@radix-ui/react-dialog'
-import * as Switch from '@radix-ui/react-switch'
+import { Switch } from '@/app/components/ui'
 import Link from 'next/link'
 import { Table, TableToolbar, TableHeader, TableBody, TableHead, TableCell } from '@/app/components/ui/Table'
 import { Button } from '@/app/components/ui/Button'
@@ -452,15 +452,14 @@ function ExportModal({
                           {t.description}
                         </p>
                       </div>
-                      <Switch.Root
+                      <Switch
                         checked={toggleState[t.id]}
                         onCheckedChange={(v) =>
                           setToggleState((s) => ({ ...s, [t.id]: v }))
                         }
-                        className="relative w-[36px] h-[20px] rounded-full cursor-pointer transition-colors duration-[var(--duration-fast)] shrink-0 ml-4 data-[state=checked]:bg-[var(--color-accent-9)] data-[state=unchecked]:bg-[var(--color-neutral-5)]"
-                      >
-                        <Switch.Thumb className="block w-[16px] h-[16px] bg-white rounded-full shadow-sm transition-transform duration-[var(--duration-fast)] translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
-                      </Switch.Root>
+                        size="md"
+                        className="shrink-0 ml-4"
+                      />
                     </div>
                   ))}
                 </div>

@@ -41,7 +41,7 @@ export const navSections: NavSection[] = [
     title: 'STUDIO',
     badge: 'NEW',
     items: [
-      { label: 'Create New App', icon: Wand2, href: '/studio/create', dot: true },
+      { label: 'New App', icon: Wand2, href: '/studio/create', dot: true },
       { label: 'Browse Apps', icon: Gem, href: '/studio/browse' },
       { label: 'Installed Apps', icon: Download, href: '/studio/installed' },
       { label: 'Apps I Built', icon: Command, href: '/studio/built' },
@@ -70,7 +70,7 @@ export const navSections: NavSection[] = [
   {
     title: 'FLEET',
     items: [
-      { label: 'Vehicles', icon: Car },
+      { label: 'Vehicles', icon: Car, href: '/fleet/vehicles' },
       { label: 'Inspections', icon: ClipboardCheck },
       { label: 'Inspection History', icon: FileClock },
       { label: 'Recalls', icon: AlertTriangle },
