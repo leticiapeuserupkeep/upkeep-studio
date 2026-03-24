@@ -175,11 +175,11 @@ export default function VehicleDetailPage() {
                   <span>{vehicle.drivetrain}</span>
                   <span className="text-[length:26px] leading-[12px] font-extrabold text-[var(--color-neutral-7)]">·</span>
                   <button
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 -mx-1.5 -my-0.5 rounded-[var(--radius-sm)] bg-[var(--color-neutral-3)] hover:bg-[var(--color-neutral-4)] cursor-pointer transition-colors duration-[var(--duration-fast)] group/odo"
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 -mx-1.5 -my-0.5 rounded-[var(--radius-sm)] bg-[var(--color-neutral-3)] hover:bg-[var(--color-neutral-4)] hover:scale-[1.03] active:scale-[0.97] cursor-pointer transition-all duration-[var(--duration-fast)] ease-out group/odo"
                     title="Edit odometer"
                   >
                     {vehicle.odometer != null ? `${vehicle.odometer.toLocaleString()} mi` : '— mi'}
-                    <Pencil size={12} className="hidden group-hover/odo:block text-[var(--color-neutral-7)]" />
+                    <Pencil size={12} className="shrink-0 w-0 group-hover/odo:w-3 opacity-0 group-hover/odo:opacity-100 transition-all duration-[var(--duration-fast)] ease-out text-[var(--color-neutral-7)]" />
                   </button>
                 </div>
                 <div className="flex items-center gap-[var(--space-sm)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] pt-[20px]">
@@ -214,7 +214,7 @@ export default function VehicleDetailPage() {
 
           {/* Tab content */}
           {activeTab === 'Overview' && (
-            <div className="px-[var(--space-2xl)] py-[var(--space-lg)] max-w-[720px]">
+            <div className="px-[var(--space-2xl)] py-[var(--space-lg)] w-full">
               <Section title="Basic Information">
                 <DetailRow label="VIN" value={vehicle.vin} />
                 <DetailRow label="Make" value={vehicle.make} />
