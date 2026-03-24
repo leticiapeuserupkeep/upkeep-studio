@@ -171,7 +171,7 @@ export default function VehicleDetailPage() {
                 <h1 className="text-[length:var(--font-size-2xl)] leading-[24px] font-bold text-[var(--color-neutral-12)] mb-1">
                   {vehicle.year} {vehicle.make} {vehicle.model}
                 </h1>
-                <div className="flex items-center gap-[var(--space-sm)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] mb-1 pt-[20px]">
+                <div className="flex items-center gap-[var(--space-sm)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] mb-1 pt-[7px]">
                   <span>{vehicle.drivetrain}</span>
                   <span className="text-[length:26px] leading-[12px] font-extrabold text-[var(--color-neutral-7)]">·</span>
                   <button
@@ -182,7 +182,7 @@ export default function VehicleDetailPage() {
                     <Pencil size={12} className="hidden group-hover/odo:block text-[var(--color-neutral-7)]" />
                   </button>
                 </div>
-                <div className="flex items-center gap-[var(--space-sm)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] pt-[31px]">
+                <div className="flex items-center gap-[var(--space-sm)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] pt-[20px]">
                   <div className="flex items-center gap-1 text-[var(--color-neutral-9)]">
                     <MapPin size={12} />
                     <span>{vehicle.location}</span>
