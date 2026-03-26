@@ -14,7 +14,7 @@ import {
   Box, MapPin, Users, ListChecks, FileText, FileDown, Files,
   Car, Map, FileSearch, Ticket, AlertTriangle, Plug,
   Rocket, Receipt, Building2,
-  Gem, Download, Command, Wand2, Wallet,
+  Gem, Download, Command, Wand2, Wallet, Bot,
   Bell, ChevronUp,
   LayoutGrid, CircleHelp, MessageCircle, Settings,
   Signal, Radar, Radio, Siren, Timer, Settings2, Warehouse, ScrollText,

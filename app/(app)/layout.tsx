@@ -19,6 +19,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/exports')) return 'File Management'
   if (pathname.startsWith('/billing')) return 'Billing & Usage'
   if (pathname.startsWith('/studio/create')) return 'New App'
+  if (pathname.startsWith('/studio/agents')) return 'My Agents'
   if (pathname.startsWith('/studio/browse')) return 'Studio'
   if (pathname.startsWith('/studio')) return 'Studio'
   if (pathname.startsWith('/edge/runtime')) return 'Runtime'
@@ -56,7 +57,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isStudioBrowse = pathname.startsWith('/studio/browse')
   const isStudioInstalled = pathname.startsWith('/studio/installed')
   const isStudioBuilt = pathname.startsWith('/studio/built')
-  const isStudioSection = isStudioBrowse || isStudioInstalled || isStudioBuilt
+  const isStudioAgents = pathname === '/studio/agents'
+  const isStudioSection = isStudioBrowse || isStudioInstalled || isStudioBuilt || isStudioAgents
   const isEdge = pathname.startsWith('/edge/')
   const isRuntimeList = pathname === '/edge/runtime'
   const isRuntimeDetail = /^\/edge\/runtime\/[^/]+/.test(pathname)
@@ -64,6 +66,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isFleetDetail = /^\/fleet\/vehicles\/[^/]+/.test(pathname)
 
   function getActions() {
+    if (isStudioAgents) {
+      return (
+        <Button variant="primary" size="md">+ New Agent</Button>
+      )
+    }
     if (isStudioSection) {
       return (
         <Button variant="primary" size="md" asChild>

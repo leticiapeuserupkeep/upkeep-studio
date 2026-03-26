@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, Suspense } from 'react'
 import { createPortal } from 'react-dom'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 import * as Collapsible from '@radix-ui/react-collapsible'
 import * as Dialog from '@radix-ui/react-dialog'
@@ -18,7 +18,7 @@ import {
   Users, Eye, Lock, Building2, Globe, Sparkles,
   Zap, Wrench, ClipboardList, Gauge, Package,
   Bell, Upload, Image, Info, ChevronRight, Tag, Link2, Square, Search,
-  Workflow, Database, PenTool,
+  Workflow, Database, PenTool, Bot,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import { Badge } from '@/app/components/ui/Badge'
@@ -36,6 +36,12 @@ const suggestions = [
   { label: 'Track my team\u2019s work', prefill: 'Build an app that tracks my team\u2019s open work orders, assignments, and completion rates across all locations.', color: '#6E7C2F', borderColor: '#8B9A3C', hoverBg: 'rgba(110, 124, 47, 0.08)' },
   { label: 'Monitor asset health', prefill: 'Create a dashboard that monitors asset health scores, downtime trends, and maintenance history for all critical equipment.', color: '#C2850C', borderColor: '#D4A030', hoverBg: 'rgba(194, 133, 12, 0.08)' },
   { label: 'Digitize inspections', prefill: 'Make a mobile-friendly inspection app with customizable checklists, photo capture, and automatic follow-up work order creation.', color: '#2E8540', borderColor: '#3DA352', hoverBg: 'rgba(46, 133, 64, 0.08)' },
+]
+
+const agentSuggestions = [
+  { label: 'Automate inspections', prefill: 'Create an agent that runs HVAC inspection checklists and auto-generates follow-up work orders on failures.', color: '#6366f1', borderColor: '#818cf8', hoverBg: 'rgba(99, 102, 241, 0.08)' },
+  { label: 'Analyze PM trends', prefill: 'Build an agent that tracks preventive maintenance KPIs and surfaces trend anomalies weekly.', color: '#f59e0b', borderColor: '#fbbf24', hoverBg: 'rgba(245, 158, 11, 0.08)' },
+  { label: 'Triage work orders', prefill: 'Create an agent that classifies incoming work orders by urgency and routes them to the right technician.', color: '#2E8540', borderColor: '#3DA352', hoverBg: 'rgba(46, 133, 64, 0.08)' },
 ]
 
 const templates = [
@@ -83,7 +89,7 @@ type PreviewTab = 'desktop' | 'code' | 'history' | 'analytics'
 type SaveState = 'saved' | 'saving' | 'unsaved'
 type PublishStatus = 'draft' | 'publishing' | 'published' | 'dirty'
 type AudienceOption = 'company' | 'private' | 'restricted'
-type AgentMode = 'plan' | 'action'
+type AgentMode = 'plan' | 'action' | 'agent'
 type SelectedTemplate = typeof templates[number] | null
 
 /* ── Integration data ── */
@@ -205,6 +211,7 @@ const audienceOptions: { value: AudienceOption; label: string; description: stri
 const agentModeOptions: { value: AgentMode; label: string; description: string; icon: typeof ClipboardList }[] = [
   { value: 'plan', label: 'Plan mode', description: 'Review the approach before acting', icon: ClipboardList },
   { value: 'action', label: 'Action mode', description: 'Execute actions directly', icon: Zap },
+  { value: 'agent', label: 'Agent mode', description: 'Let agents handle tasks autonomously', icon: Bot },
 ]
 
 /* ── Studio Agents ── */
@@ -278,6 +285,46 @@ const studioAgents: StudioAgent[] = [
   },
 ]
 
+const myPersonalAgents: StudioAgent[] = [
+  {
+    id: 'my-hvac-inspector',
+    name: 'HVAC Inspector',
+    description: 'Inspection checklists and WO follow-ups',
+    icon: Bot,
+    color: '#6366f1',
+    bgColor: '#EEF2FF',
+    capabilities: ['Inspections', 'Work Orders', 'Assets'],
+  },
+  {
+    id: 'my-pm-analyst',
+    name: 'PM Analyst',
+    description: 'KPI dashboards for PM performance',
+    icon: Bot,
+    color: '#f59e0b',
+    bgColor: '#FFFBEB',
+    capabilities: ['Assets', 'Meters'],
+  },
+]
+
+const agentWelcomeMessages: Record<string, { greeting: string; actions: { label: string; prompt: string }[] }> = {
+  'my-hvac-inspector': {
+    greeting: 'Hi Leti! I\'m your HVAC Inspector agent. I can help you build apps for inspection workflows, compliance tracking, and maintenance follow-ups.',
+    actions: [
+      { label: 'Build an HVAC inspection app', prompt: 'Build a mobile inspection app with HVAC checklists, photo capture, and automatic work order creation on failures.' },
+      { label: 'Create a compliance dashboard', prompt: 'Create a compliance dashboard showing inspection pass/fail rates, overdue inspections, and follow-up WO status across all sites.' },
+      { label: 'Make a work order follow-up tracker', prompt: 'Build an app that tracks follow-up work orders generated from failed inspections, with status, priority, and technician assignment views.' },
+    ],
+  },
+  'my-pm-analyst': {
+    greeting: 'Hi Leti! I\'m your PM Analyst agent. I can help you build apps for KPI dashboards, performance tracking, and asset health monitoring.',
+    actions: [
+      { label: 'Build a PM performance dashboard', prompt: 'Build a dashboard app showing PM completion rates, overdue PMs, and compliance trends across all sites with drill-down views.' },
+      { label: 'Create an asset health app', prompt: 'Create an app that visualizes asset health scores, downtime trends, and maintenance cost analysis with alerts for declining assets.' },
+      { label: 'Make a meter readings tracker', prompt: 'Build an app that tracks meter readings over time, flags anomalies, and triggers preventive maintenance when thresholds are reached.' },
+    ],
+  },
+}
+
 function CreateAppInner() {
   const searchParams = useSearchParams()
   const fromApp = searchParams.get('from')
@@ -298,8 +345,20 @@ function CreateAppInner() {
     new Set(integrations.filter(i => i.connected).map(i => i.id))
   )
   const [selectedAgent, setSelectedAgent] = useState<StudioAgent>(studioAgents[0])
+  const [agentWelcome, setAgentWelcome] = useState<StudioAgent | null>(null)
   const promptRef = useRef<HTMLTextAreaElement>(null)
   const chatRef = useRef<HTMLTextAreaElement>(null)
+
+  const handleAgentCardClick = useCallback((agent: StudioAgent) => {
+    setSelectedAgent(agent)
+    setAgentWelcome(agent)
+    setSubmittedPrompt('')
+    setView('transitioning')
+    setTimeout(() => {
+      setView('building')
+      setAiPhase('waiting')
+    }, 350)
+  }, [])
 
   const handleSend = useCallback(() => {
     if (!prompt.trim()) return
@@ -361,6 +420,7 @@ function CreateAppInner() {
         setConnectingId={setConnectingId}
         selectedAgent={selectedAgent}
         setSelectedAgent={setSelectedAgent}
+        agentWelcome={agentWelcome}
       />
     )
   }
@@ -388,6 +448,7 @@ function CreateAppInner() {
       setConnectingId={setConnectingId}
       selectedAgent={selectedAgent}
       setSelectedAgent={setSelectedAgent}
+      handleAgentCardClick={handleAgentCardClick}
     />
   )
 }
@@ -431,7 +492,7 @@ function PromptView({
   handleTemplateSelect, handleStartTemplate, selectedTemplate, setSelectedTemplate, fading, fromApp,
   connectedIds, setConnectedIds, integrationsOpen, setIntegrationsOpen,
   integrationSearch, setIntegrationSearch, connectingId, setConnectingId,
-  selectedAgent, setSelectedAgent,
+  selectedAgent, setSelectedAgent, handleAgentCardClick,
 }: {
   prompt: string
   setPrompt: (v: string) => void
@@ -454,11 +515,13 @@ function PromptView({
   setConnectingId: (v: string | null) => void
   selectedAgent: StudioAgent
   setSelectedAgent: (agent: StudioAgent) => void
+  handleAgentCardClick: (agent: StudioAgent) => void
 }) {
   const [templatesOpen, setTemplatesOpen] = useState(false)
   const [allTemplatesOpen, setAllTemplatesOpen] = useState(false)
   const [roleFilter, setRoleFilter] = useState<string>('All Roles')
   const [promptAgentDropdownOpen, setPromptAgentDropdownOpen] = useState(false)
+  const [promptMode, setPromptMode] = useState<AgentMode>('action')
   const [complexityFilter, setComplexityFilter] = useState<string>('All Levels')
   const [categoryFilter, setCategoryFilter] = useState<string>('All')
   const [templateTab, setTemplateTab] = useState<'official' | 'mine'>('official')
@@ -569,62 +632,39 @@ function PromptView({
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    {/* Agent selector in prompt */}
+                    {/* Mode selector in prompt */}
                     <div className="relative">
                       <button
                         onClick={() => setPromptAgentDropdownOpen(!promptAgentDropdownOpen)}
                         className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                       >
-                        <span
-                          className="flex items-center justify-center w-5 h-5 rounded-md shrink-0"
-                          style={{ backgroundColor: selectedAgent.bgColor }}
-                        >
-                          <selectedAgent.icon size={12} style={{ color: selectedAgent.color }} />
-                        </span>
-                        <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">{selectedAgent.name}</span>
+                        {(() => { const cur = agentModeOptions.find(o => o.value === promptMode); const CurIcon = cur?.icon || Zap; return <CurIcon size={13} className="text-[var(--color-neutral-8)]" /> })()}
+                        <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">{agentModeOptions.find(o => o.value === promptMode)?.label.replace(' mode', '') || 'Action'}</span>
                         <ChevronDown size={12} className={`text-[var(--color-neutral-7)] transition-transform duration-[var(--duration-fast)] ${promptAgentDropdownOpen ? 'rotate-180' : ''}`} />
                       </button>
 
                       {promptAgentDropdownOpen && (
                         <>
                           <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setPromptAgentDropdownOpen(false)} />
-                          <div className="absolute left-0 bottom-full mb-1 z-[var(--z-modal)] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] w-[320px] dropdown-animate overflow-hidden">
-                            <div className="px-4 pt-3 pb-2">
-                              <p className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wider text-[var(--color-neutral-8)]">Choose an agent</p>
-                            </div>
-                            <div className="max-h-[320px] overflow-y-auto py-1">
-                              {studioAgents.map((agent) => {
-                                const isSelected = selectedAgent.id === agent.id
-                                const AgentIcon = agent.icon
+                          <div className="absolute left-0 bottom-full mb-1 z-[var(--z-modal)] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] w-[280px] dropdown-animate overflow-hidden">
+                            <div className="py-1">
+                              {agentModeOptions.map((opt) => {
+                                const isSelected = promptMode === opt.value
+                                const OptIcon = opt.icon
                                 return (
                                   <button
-                                    key={agent.id}
-                                    onClick={() => { setSelectedAgent(agent); setPromptAgentDropdownOpen(false) }}
+                                    key={opt.value}
+                                    onClick={() => { setPromptMode(opt.value); setPromptAgentDropdownOpen(false) }}
                                     className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${isSelected ? 'bg-[var(--color-neutral-2)]' : ''}`}
                                   >
-                                    <span
-                                      className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0 mt-0.5"
-                                      style={{ backgroundColor: agent.bgColor }}
-                                    >
-                                      <AgentIcon size={16} style={{ color: agent.color }} />
+                                    <span className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0 mt-0.5 bg-[var(--color-neutral-3)]">
+                                      <OptIcon size={16} className="text-[var(--color-neutral-9)]" />
                                     </span>
                                     <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                        <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">{agent.name}</p>
-                                        {agent.isDefault && (
-                                          <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[var(--color-accent-2)] text-[var(--color-accent-9)]">Default</span>
-                                        )}
-                                      </div>
-                                      <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] mt-0.5 line-clamp-2">{agent.description}</p>
-                                      <div className="flex flex-wrap gap-1 mt-1.5">
-                                        {agent.capabilities.map((cap) => (
-                                          <span key={cap} className="text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)]">{cap}</span>
-                                        ))}
-                                      </div>
+                                      <p className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-12)]">{opt.label}</p>
+                                      <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] mt-0.5">{opt.description}</p>
                                     </div>
-                                    {isSelected && (
-                                      <Check size={16} className="text-[var(--color-accent-9)] shrink-0 mt-1" />
-                                    )}
+                                    {isSelected && <Check size={14} className="text-[var(--color-accent-9)] shrink-0 mt-1" />}
                                   </button>
                                 )
                               })}
@@ -694,7 +734,7 @@ function PromptView({
               style={{ animation: 'fadeInUp 0.6s var(--ease-default) 0.2s forwards' }}
             >
               <div className="flex items-center gap-3">
-                {suggestions.map((s) => (
+                {(promptMode === 'agent' ? agentSuggestions : suggestions).map((s) => (
                   <button
                     key={s.label}
                     onClick={() => handleSuggestionClick(s.prefill)}
@@ -707,7 +747,11 @@ function PromptView({
                   </button>
                 ))}
               </div>
-              <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Describe what you need in your own words — or pick a template below to start faster</p>
+              <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
+                {promptMode === 'agent'
+                  ? 'Describe what your agent should do — or pick one of your agents below'
+                  : 'Describe what you need in your own words — or pick a template below to start faster'}
+              </p>
             </div>
           </div>
 
@@ -828,55 +872,60 @@ function PromptView({
             </Dialog.Portal>
           </Dialog.Root>
 
-          {/* Feature Templates */}
-          <Collapsible.Root
-            open={templatesOpen}
-            onOpenChange={setTemplatesOpen}
-            className="flex flex-col w-full max-w-[888px] opacity-0"
-            style={{ animation: 'fadeInUp 0.6s var(--ease-default) 0.3s forwards' }}
-          >
-            <div className="flex items-center justify-between mb-[var(--space-md)]">
-              <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Feature Templates</h3>
-              <div className="flex items-center gap-2">
-                <Collapsible.Trigger asChild>
-                  <button className="flex items-center gap-1 px-1.5 py-1 text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] rounded hover:bg-[rgba(59,91,219,0.08)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
-                    {templatesOpen ? 'Show Less' : 'View All Templates'}
-                    <ChevronsDown
-                      size={16}
-                      className={`text-[var(--color-accent-9)] transition-transform duration-[var(--duration-fast)] ${templatesOpen ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-                </Collapsible.Trigger>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-[var(--space-md)]">
-              {templates.slice(0, 3).map((t, i) => {
-                const Icon = t.icon
-                return (
+          {promptMode === 'agent' ? (
+            /* Your Agents — shown when Agent mode is selected */
+            <div
+              className="flex flex-col w-full max-w-[888px] opacity-0"
+              style={{ animation: 'fadeInUp 0.6s var(--ease-default) 0.3s forwards' }}
+            >
+              <h3 className="text-base font-semibold text-[var(--color-neutral-12)] mb-[var(--space-md)]">Your Agents</h3>
+              <div className="grid grid-cols-3 gap-[var(--space-md)]">
+                {myPersonalAgents.map((agent, i) => (
                   <button
-                    key={t.title}
-                    onClick={() => handleTemplateSelect(t)}
-                    className={`flex flex-col items-start bg-[var(--surface-primary)] border rounded-2xl p-5 gap-3 text-left transition-all duration-[var(--duration-fast)] cursor-pointer hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 opacity-0 ${
-                      selectedTemplate?.title === t.title ? 'border-[var(--color-accent-9)] ring-1 ring-[var(--color-accent-9)]' : 'border-[var(--border-default)]'
-                    }`}
+                    key={agent.id}
+                    onClick={() => handleAgentCardClick(agent)}
+                    className="flex flex-col items-start bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-2xl p-5 gap-3 text-left transition-all duration-[var(--duration-fast)] cursor-pointer hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 opacity-0"
                     style={{ animation: `fadeInUp 0.5s var(--ease-default) ${0.4 + i * 0.1}s forwards` }}
                   >
-                    <div className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-xl)] bg-[var(--color-accent-1)]">
-                      <Icon size={20} strokeWidth={1.5} className="text-[var(--color-accent-9)]" />
+                    <div className="flex items-center gap-3">
+                      <span className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: agent.color }} />
+                      <h4 className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">{agent.name}</h4>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <h4 className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">{t.title}</h4>
-                      <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed">{t.description}</p>
+                    <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed">{agent.description}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {agent.capabilities.map((cap) => (
+                        <span key={cap} className="text-[10px] font-medium px-2 py-0.5 rounded-[var(--radius-md)] bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)]">{cap}</span>
+                      ))}
                     </div>
                   </button>
-                )
-              })}
+                ))}
+              </div>
             </div>
+          ) : (
+            /* Feature Templates — default view */
+            <Collapsible.Root
+              open={templatesOpen}
+              onOpenChange={setTemplatesOpen}
+              className="flex flex-col w-full max-w-[888px] opacity-0"
+              style={{ animation: 'fadeInUp 0.6s var(--ease-default) 0.3s forwards' }}
+            >
+              <div className="flex items-center justify-between mb-[var(--space-md)]">
+                <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Feature Templates</h3>
+                <div className="flex items-center gap-2">
+                  <Collapsible.Trigger asChild>
+                    <button className="flex items-center gap-1 px-1.5 py-1 text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] rounded hover:bg-[rgba(59,91,219,0.08)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
+                      {templatesOpen ? 'Show Less' : 'View All Templates'}
+                      <ChevronsDown
+                        size={16}
+                        className={`text-[var(--color-accent-9)] transition-transform duration-[var(--duration-fast)] ${templatesOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                  </Collapsible.Trigger>
+                </div>
+              </div>
 
-            <Collapsible.Content>
-              <div className="grid grid-cols-3 gap-[var(--space-md)] pt-[var(--space-md)]">
-                {templates.slice(3).map((t, i) => {
+              <div className="grid grid-cols-3 gap-[var(--space-md)]">
+                {templates.slice(0, 3).map((t, i) => {
                   const Icon = t.icon
                   return (
                     <button
@@ -885,7 +934,7 @@ function PromptView({
                       className={`flex flex-col items-start bg-[var(--surface-primary)] border rounded-2xl p-5 gap-3 text-left transition-all duration-[var(--duration-fast)] cursor-pointer hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 opacity-0 ${
                         selectedTemplate?.title === t.title ? 'border-[var(--color-accent-9)] ring-1 ring-[var(--color-accent-9)]' : 'border-[var(--border-default)]'
                       }`}
-                      style={templatesOpen ? { animation: `fadeInUp 0.35s var(--ease-default) ${i * 0.05}s forwards` } : { opacity: 1 }}
+                      style={{ animation: `fadeInUp 0.5s var(--ease-default) ${0.4 + i * 0.1}s forwards` }}
                     >
                       <div className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-xl)] bg-[var(--color-accent-1)]">
                         <Icon size={20} strokeWidth={1.5} className="text-[var(--color-accent-9)]" />
@@ -898,8 +947,34 @@ function PromptView({
                   )
                 })}
               </div>
-            </Collapsible.Content>
-          </Collapsible.Root>
+
+              <Collapsible.Content>
+                <div className="grid grid-cols-3 gap-[var(--space-md)] pt-[var(--space-md)]">
+                  {templates.slice(3).map((t, i) => {
+                    const Icon = t.icon
+                    return (
+                      <button
+                        key={t.title}
+                        onClick={() => handleTemplateSelect(t)}
+                        className={`flex flex-col items-start bg-[var(--surface-primary)] border rounded-2xl p-5 gap-3 text-left transition-all duration-[var(--duration-fast)] cursor-pointer hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 opacity-0 ${
+                          selectedTemplate?.title === t.title ? 'border-[var(--color-accent-9)] ring-1 ring-[var(--color-accent-9)]' : 'border-[var(--border-default)]'
+                        }`}
+                        style={templatesOpen ? { animation: `fadeInUp 0.35s var(--ease-default) ${i * 0.05}s forwards` } : { opacity: 1 }}
+                      >
+                        <div className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-xl)] bg-[var(--color-accent-1)]">
+                          <Icon size={20} strokeWidth={1.5} className="text-[var(--color-accent-9)]" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <h4 className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">{t.title}</h4>
+                          <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed">{t.description}</p>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </Collapsible.Content>
+            </Collapsible.Root>
+          )}
         </div>
       </main>
 
@@ -1432,7 +1507,7 @@ function BuilderView({
   previewDevice, setPreviewDevice,
   connectedIds, setConnectedIds, integrationsOpen, setIntegrationsOpen,
   integrationSearch, setIntegrationSearch, connectingId, setConnectingId,
-  selectedAgent, setSelectedAgent,
+  selectedAgent, setSelectedAgent, agentWelcome,
 }: {
   submittedPrompt: string
   aiPhase: AiPhase
@@ -1453,11 +1528,14 @@ function BuilderView({
   setConnectingId: (v: string | null) => void
   selectedAgent: StudioAgent
   setSelectedAgent: (agent: StudioAgent) => void
+  agentWelcome: StudioAgent | null
 }) {
+  const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [agentMode, setAgentMode] = useState<AgentMode>('plan')
   const [modeDropdownOpen, setModeDropdownOpen] = useState(false)
   const [agentDropdownOpen, setAgentDropdownOpen] = useState(false)
+  const [multiAgent, setMultiAgent] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const [savedAgo, setSavedAgo] = useState(0)
   const [publishOpen, setPublishOpen] = useState(false)
@@ -1486,17 +1564,22 @@ function BuilderView({
   const hasPublishedOnce = useRef(false)
   const hasShownRating = useRef(false)
 
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([
-    { role: 'user', content: submittedPrompt },
-  ])
-  const [localPhase, setLocalPhase] = useState<AiPhase>(aiPhase === 'waiting' ? 'waiting' : aiPhase)
+  const welcomeData = agentWelcome ? agentWelcomeMessages[agentWelcome.id] : null
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>(() => {
+    if (welcomeData) {
+      return [{ role: 'assistant' as const, content: welcomeData.greeting }]
+    }
+    return [{ role: 'user' as const, content: submittedPrompt }]
+  })
+  const [localPhase, setLocalPhase] = useState<AiPhase>(agentWelcome ? 'responded' : aiPhase === 'waiting' ? 'waiting' : aiPhase)
   const prevPhaseRef = useRef<AiPhase>(aiPhase)
   const responseCountRef = useRef(0)
   const thinkingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastPromptRef = useRef(submittedPrompt)
 
-  // Sync from parent — only for non-waiting phases
+  // Sync from parent — only for non-waiting phases (skip when agent welcome is active)
   useEffect(() => {
+    if (agentWelcome) return
     if (aiPhase === 'responded' && responseCountRef.current === 0) {
       setLocalPhase('responded')
       responseCountRef.current = 1
@@ -1504,20 +1587,20 @@ function BuilderView({
     if (aiPhase === 'thinking' && localPhase === 'waiting') {
       setLocalPhase('thinking')
     }
-  }, [aiPhase, localPhase])
+  }, [aiPhase, localPhase, agentWelcome])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [localPhase, thinkingStep, messages.length])
 
   useEffect(() => {
-    if (localPhase !== 'thinking') return
+    if (agentWelcome || localPhase !== 'thinking') return
     setThinkingStep(0)
     const timers = thinkingSteps.map((_, i) =>
       i > 0 ? setTimeout(() => setThinkingStep(i), i * 800) : null
     ).filter(Boolean) as ReturnType<typeof setTimeout>[]
     return () => timers.forEach(clearTimeout)
-  }, [localPhase])
+  }, [localPhase, agentWelcome])
 
   useEffect(() => {
     if (prevPhaseRef.current === 'thinking' && localPhase === 'responded') {
@@ -1791,7 +1874,7 @@ function BuilderView({
           <div className="relative">
             <button
               id="publish-button"
-              disabled={publishStatus === 'published' || publishStatus === 'publishing'}
+              disabled={publishStatus === 'published' || publishStatus === 'publishing' || !!(agentWelcome && messages.length === 1 && messages[0].role === 'assistant')}
               onClick={() => {
                 if (publishStatus === 'dirty') {
                   triggerPublish()
@@ -1885,7 +1968,46 @@ function BuilderView({
         <div id="chat-panel" className="flex flex-col w-[400px] shrink-0 h-full relative">
           {completionSignal && <div className="completion-edge-glow" />}
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
-            {messages.map((msg, idx) => {
+            {/* Agent welcome message */}
+            {agentWelcome && welcomeData && messages.length === 1 && messages[0].role === 'assistant' && (
+              <div
+                className="flex flex-col gap-4 opacity-0"
+                style={{ animation: 'fadeInUp 0.5s var(--ease-default) 0.1s forwards' }}
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0 mt-0.5"
+                    style={{ backgroundColor: agentWelcome.bgColor }}
+                  >
+                    <agentWelcome.icon size={16} style={{ color: agentWelcome.color }} />
+                  </span>
+                  <div className="flex flex-col gap-3">
+                    <p className="text-[length:var(--font-size-base)] leading-relaxed text-[var(--color-neutral-11)]">
+                      {welcomeData.greeting}
+                    </p>
+                    <p className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">I can help you with:</p>
+                    <div className="flex flex-col gap-2">
+                      {welcomeData.actions.map((action) => (
+                        <button
+                          key={action.label}
+                          onClick={() => {
+                            setChatInput(action.prompt)
+                            chatRef.current?.focus()
+                          }}
+                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] text-left hover:bg-[var(--color-neutral-2)] hover:border-[var(--color-accent-5)] cursor-pointer transition-all duration-[var(--duration-fast)]"
+                        >
+                          <ArrowRight size={14} className="text-[var(--color-accent-9)] shrink-0" />
+                          <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)]">{action.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Regular messages */}
+            {!(agentWelcome && welcomeData && messages.length === 1 && messages[0].role === 'assistant') && messages.map((msg, idx) => {
               if (msg.role === 'user') {
                 return (
                   <div
@@ -2121,7 +2243,7 @@ function BuilderView({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSend() }
                 }}
-                placeholder={(publishStatus === 'published' || publishStatus === 'dirty') ? 'Ask for changes' : 'Tell me what to change or add…'}
+                placeholder={agentWelcome ? `Ask ${agentWelcome.name} anything…` : (publishStatus === 'published' || publishStatus === 'dirty') ? 'Ask for changes' : 'Tell me what to change or add…'}
                 className="w-full resize-none text-[length:var(--font-size-base)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-7)] outline-none ring-0 focus:outline-none focus:ring-0 bg-[var(--color-neutral-2)] rounded-xl px-3 py-2.5 leading-5 border-none shadow-none appearance-none"
                 rows={3}
               />
@@ -2146,70 +2268,86 @@ function BuilderView({
                     {agentDropdownOpen && (
                       <>
                         <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setAgentDropdownOpen(false)} />
-                        <div className="absolute left-0 bottom-full mb-1 z-[var(--z-modal)] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] w-[320px] dropdown-animate overflow-hidden">
+                        <div className="absolute left-0 bottom-full mb-1 z-[var(--z-modal)] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] w-[300px] dropdown-animate overflow-hidden">
+                          {/* MY AGENTS */}
                           <div className="px-4 pt-3 pb-2">
-                            <p className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wider text-[var(--color-neutral-8)]">Agents</p>
+                            <p className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wider text-[var(--color-neutral-8)]">My Agents</p>
                           </div>
-                          <div className="max-h-[320px] overflow-y-auto py-1">
-                            {studioAgents.map((agent) => {
+                          <div className="py-1">
+                            {myPersonalAgents.map((agent) => {
                               const isSelected = selectedAgent.id === agent.id
-                              const AgentIcon = agent.icon
                               return (
                                 <button
                                   key={agent.id}
                                   onClick={() => { setSelectedAgent(agent); setAgentDropdownOpen(false) }}
-                                  className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${isSelected ? 'bg-[var(--color-neutral-2)]' : ''}`}
+                                  className={`w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${isSelected ? 'bg-[var(--color-neutral-2)]' : ''}`}
                                 >
-                                  <span
-                                    className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0 mt-0.5"
-                                    style={{ backgroundColor: agent.bgColor }}
-                                  >
-                                    <AgentIcon size={16} style={{ color: agent.color }} />
-                                  </span>
+                                  <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: agent.color }} />
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">{agent.name}</p>
-                                      {agent.isDefault && (
-                                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[var(--color-accent-2)] text-[var(--color-accent-9)]">Default</span>
-                                      )}
-                                    </div>
-                                    <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] mt-0.5 line-clamp-2">{agent.description}</p>
-                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                      {agent.capabilities.map((cap) => (
-                                        <span key={cap} className="text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)]">{cap}</span>
-                                      ))}
-                                    </div>
+                                    <p className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-12)]">{agent.name}</p>
+                                    <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] mt-0.5">{agent.description}</p>
                                   </div>
-                                  {isSelected && (
-                                    <Check size={16} className="text-[var(--color-accent-9)] shrink-0 mt-1" />
-                                  )}
+                                  {isSelected && <Check size={14} className="text-[var(--color-accent-9)] shrink-0 mt-1" />}
                                 </button>
                               )
                             })}
                           </div>
-                          <div className="border-t border-[var(--border-default)] px-4 py-2.5">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                {(() => { const opt = agentModeOptions.find(o => o.value === agentMode); const ModeIcon = opt?.icon || ClipboardList; return <ModeIcon size={13} className="text-[var(--color-neutral-8)]" /> })()}
-                                <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-9)]">{agentModeOptions.find(o => o.value === agentMode)?.label}</span>
-                              </div>
-                              <div className="flex items-center gap-1 p-0.5 rounded-lg bg-[var(--color-neutral-3)]">
-                                {agentModeOptions.map((opt) => {
-                                  const MIcon = opt.icon
-                                  return (
-                                    <button
-                                      key={opt.value}
-                                      onClick={(e) => { e.stopPropagation(); setAgentMode(opt.value) }}
-                                      className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium cursor-pointer transition-all duration-[var(--duration-fast)] ${agentMode === opt.value ? 'bg-white shadow-sm text-[var(--color-neutral-12)]' : 'text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-10)]'}`}
-                                    >
-                                      <MIcon size={10} />
-                                      {opt.label.replace(' mode', '')}
-                                    </button>
-                                  )
-                                })}
-                              </div>
-                            </div>
+
+                          <hr className="border-[var(--border-default)]" />
+
+                          {/* MODE */}
+                          <div className="px-4 pt-3 pb-2">
+                            <p className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wider text-[var(--color-neutral-8)]">Mode</p>
                           </div>
+                          <div className="py-1">
+                            {agentModeOptions.map((opt) => {
+                              const isActive = agentMode === opt.value
+                              const OptIcon = opt.icon
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={(e) => { e.stopPropagation(); setAgentMode(opt.value) }}
+                                  className={`w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors duration-[var(--duration-fast)] ${isActive ? 'bg-[var(--color-neutral-2)]' : ''}`}
+                                >
+                                  <span className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0 bg-[var(--color-neutral-3)]">
+                                    <OptIcon size={14} className="text-[var(--color-neutral-9)]" />
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-12)]">{opt.label}</p>
+                                    <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] mt-0.5">{opt.description}</p>
+                                  </div>
+                                  {isActive && <Check size={14} className="text-[var(--color-accent-9)] shrink-0 mt-1" />}
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          <hr className="border-[var(--border-default)]" />
+
+                          {/* Multi-Agent toggle */}
+                          <div className="px-4 py-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Sparkles size={13} className="text-[var(--color-neutral-8)]" />
+                              <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Multi-Agent</span>
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setMultiAgent(!multiAgent) }}
+                              className={`relative w-8 h-[18px] rounded-full cursor-pointer transition-colors duration-[var(--duration-fast)] ${multiAgent ? 'bg-[var(--color-accent-9)]' : 'bg-[var(--color-neutral-5)]'}`}
+                            >
+                              <span className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm transition-transform duration-[var(--duration-fast)] ${multiAgent ? 'translate-x-[16px]' : 'translate-x-[2px]'}`} />
+                            </button>
+                          </div>
+
+                          <hr className="border-[var(--border-default)]" />
+
+                          {/* Create new agent */}
+                          <button
+                            onClick={() => { setAgentDropdownOpen(false); router.push('/studio/agents') }}
+                            className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
+                          >
+                            <Plus size={14} className="text-[var(--color-neutral-7)]" />
+                            <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Create new agent</span>
+                          </button>
                         </div>
                       </>
                     )}
@@ -2275,41 +2413,29 @@ function BuilderView({
               <ChevronRight size={12} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-neutral-9)] transition-colors duration-[var(--duration-fast)]" />
             </button>
 
-            {/* Agents quick-switch bar */}
-            <div className="flex items-center gap-1.5 w-full px-1 py-1 rounded-xl bg-[var(--color-neutral-2)] overflow-x-auto">
-              {studioAgents.map((agent) => {
-                const isActive = selectedAgent.id === agent.id
-                const AgentIcon = agent.icon
-                return (
-                  <button
-                    key={agent.id}
-                    onClick={() => setSelectedAgent(agent)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg whitespace-nowrap cursor-pointer transition-all duration-[var(--duration-fast)] shrink-0 ${
-                      isActive
-                        ? 'bg-white shadow-sm'
-                        : 'hover:bg-[var(--color-neutral-3)]'
-                    }`}
-                  >
-                    <span
-                      className="flex items-center justify-center w-5 h-5 rounded-md shrink-0"
-                      style={{ backgroundColor: isActive ? agent.bgColor : 'transparent' }}
-                    >
-                      <AgentIcon size={12} style={{ color: isActive ? agent.color : 'var(--color-neutral-7)' }} />
-                    </span>
-                    <span className={`text-[11px] font-medium ${isActive ? 'text-[var(--color-neutral-12)]' : 'text-[var(--color-neutral-8)]'}`}>
-                      {agent.name}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
+            {/* Agents quick-switch bar — hidden when entering via agent card */}
           </div>
 
         </div>
 
         {/* ── Preview panel (always visible) ── */}
         <div id="preview-panel" className="flex-1 bg-[var(--color-neutral-2)] border-l border-[var(--border-default)] p-8 flex flex-col gap-4 overflow-auto relative">
-          {localPhase === 'thinking' || localPhase === 'waiting' ? (
+          {agentWelcome && welcomeData && messages.length === 1 && messages[0].role === 'assistant' ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+              <span
+                className="flex items-center justify-center w-16 h-16 rounded-2xl opacity-0"
+                style={{ backgroundColor: agentWelcome.bgColor, animation: 'fadeInUp 0.5s var(--ease-default) 0.2s forwards' }}
+              >
+                <agentWelcome.icon size={32} style={{ color: agentWelcome.color }} />
+              </span>
+              <p
+                className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] opacity-0"
+                style={{ animation: 'fadeInUp 0.5s var(--ease-default) 0.35s forwards' }}
+              >
+                Start a conversation to build with {agentWelcome.name}
+              </p>
+            </div>
+          ) : localPhase === 'thinking' || localPhase === 'waiting' ? (
             <BuilderSkeletons />
           ) : (
             <GeneratedAppPreview prompt={submittedPrompt} />
