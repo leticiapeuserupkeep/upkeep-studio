@@ -11,7 +11,7 @@ import { Button } from '@/app/components/ui/Button'
 const myAgents = [
   {
     name: 'HVAC Inspector',
-    color: '#6366f1',
+    color: '#f59e0b',
     description: 'Specialized in HVAC inspection checklists, photo capture, and follow-up work order creation.',
     dataAccess: ['Inspections', 'Work Orders', 'Assets'],
     created: 'Mon, 25 Sep — You',

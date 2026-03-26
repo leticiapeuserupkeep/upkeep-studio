@@ -39,9 +39,9 @@ const suggestions = [
 ]
 
 const agentSuggestions = [
-  { label: 'Automate inspections', prefill: 'Create an agent that runs HVAC inspection checklists and auto-generates follow-up work orders on failures.', color: '#6366f1', borderColor: '#818cf8', hoverBg: 'rgba(99, 102, 241, 0.08)' },
-  { label: 'Analyze PM trends', prefill: 'Build an agent that tracks preventive maintenance KPIs and surfaces trend anomalies weekly.', color: '#f59e0b', borderColor: '#fbbf24', hoverBg: 'rgba(245, 158, 11, 0.08)' },
-  { label: 'Triage work orders', prefill: 'Create an agent that classifies incoming work orders by urgency and routes them to the right technician.', color: '#2E8540', borderColor: '#3DA352', hoverBg: 'rgba(46, 133, 64, 0.08)' },
+  { label: 'Automate inspections', prefill: 'Create an agent that runs HVAC inspection checklists and auto-generates follow-up work orders on failures.', color: '#f59e0b', borderColor: '#fbbf24', hoverBg: 'rgba(245, 158, 11, 0.08)', agentId: 'my-hvac-inspector' },
+  { label: 'Analyze PM trends', prefill: 'Build an agent that tracks preventive maintenance KPIs and surfaces trend anomalies weekly.', color: '#f59e0b', borderColor: '#fbbf24', hoverBg: 'rgba(245, 158, 11, 0.08)', agentId: 'my-pm-analyst' },
+  { label: 'Triage work orders', prefill: 'Create an agent that classifies incoming work orders by urgency and routes them to the right technician.', color: '#2E8540', borderColor: '#3DA352', hoverBg: 'rgba(46, 133, 64, 0.08)', agentId: 'my-hvac-inspector' },
 ]
 
 const templates = [
@@ -291,8 +291,8 @@ const myPersonalAgents: StudioAgent[] = [
     name: 'HVAC Inspector',
     description: 'Inspection checklists and WO follow-ups',
     icon: Bot,
-    color: '#6366f1',
-    bgColor: '#EEF2FF',
+    color: '#f59e0b',
+    bgColor: '#FFFBEB',
     capabilities: ['Inspections', 'Work Orders', 'Assets'],
   },
   {
@@ -522,6 +522,8 @@ function PromptView({
   const [roleFilter, setRoleFilter] = useState<string>('All Roles')
   const [promptAgentDropdownOpen, setPromptAgentDropdownOpen] = useState(false)
   const [promptMode, setPromptMode] = useState<AgentMode>('action')
+  const modeButtonRef = useRef<HTMLButtonElement>(null)
+  const [modeDropdownPos, setModeDropdownPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const [complexityFilter, setComplexityFilter] = useState<string>('All Levels')
   const [categoryFilter, setCategoryFilter] = useState<string>('All')
   const [templateTab, setTemplateTab] = useState<'official' | 'mine'>('official')
@@ -635,18 +637,28 @@ function PromptView({
                     {/* Mode selector in prompt */}
                     <div className="relative">
                       <button
-                        onClick={() => setPromptAgentDropdownOpen(!promptAgentDropdownOpen)}
+                        ref={modeButtonRef}
+                        onClick={() => {
+                          if (!promptAgentDropdownOpen && modeButtonRef.current) {
+                            const rect = modeButtonRef.current.getBoundingClientRect()
+                            setModeDropdownPos({ top: rect.bottom + 4, left: rect.left })
+                          }
+                          setPromptAgentDropdownOpen(!promptAgentDropdownOpen)
+                        }}
                         className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] cursor-pointer"
                       >
                         {(() => { const cur = agentModeOptions.find(o => o.value === promptMode); const CurIcon = cur?.icon || Zap; return <CurIcon size={13} className="text-[var(--color-neutral-8)]" /> })()}
-                        <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">{agentModeOptions.find(o => o.value === promptMode)?.label.replace(' mode', '') || 'Action'}</span>
+                        <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] whitespace-nowrap">{agentModeOptions.find(o => o.value === promptMode)?.label || 'Action mode'}</span>
                         <ChevronDown size={12} className={`text-[var(--color-neutral-7)] transition-transform duration-[var(--duration-fast)] ${promptAgentDropdownOpen ? 'rotate-180' : ''}`} />
                       </button>
 
-                      {promptAgentDropdownOpen && (
+                      {promptAgentDropdownOpen && createPortal(
                         <>
-                          <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setPromptAgentDropdownOpen(false)} />
-                          <div className="absolute left-0 bottom-full mb-1 z-[var(--z-modal)] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] w-[280px] dropdown-animate overflow-hidden">
+                          <div className="fixed inset-0 z-[9998]" onClick={() => setPromptAgentDropdownOpen(false)} />
+                          <div
+                            className="fixed z-[9999] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] w-[280px] dropdown-animate overflow-hidden"
+                            style={{ top: modeDropdownPos.top, left: modeDropdownPos.left }}
+                          >
                             <div className="py-1">
                               {agentModeOptions.map((opt) => {
                                 const isSelected = promptMode === opt.value
@@ -670,7 +682,8 @@ function PromptView({
                               })}
                             </div>
                           </div>
-                        </>
+                        </>,
+                        document.body
                       )}
                     </div>
                     <button className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Attach file">
@@ -737,7 +750,14 @@ function PromptView({
                 {(promptMode === 'agent' ? agentSuggestions : suggestions).map((s) => (
                   <button
                     key={s.label}
-                    onClick={() => handleSuggestionClick(s.prefill)}
+                    onClick={() => {
+                      if (promptMode === 'agent' && 'agentId' in s) {
+                        const agent = myPersonalAgents.find(a => a.id === s.agentId)
+                        if (agent) handleAgentCardClick(agent)
+                      } else {
+                        handleSuggestionClick(s.prefill)
+                      }
+                    }}
                     className="px-4 py-1.5 text-[length:var(--font-size-base)] font-medium rounded-full border transition-all duration-[var(--duration-fast)] cursor-pointer hover:scale-[1.04] active:scale-[0.97]"
                     style={{ borderColor: s.borderColor, color: s.color, backgroundColor: 'transparent' }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = s.hoverBg }}
@@ -2230,7 +2250,7 @@ function BuilderView({
             </div>
           )}
 
-          <div className="px-6 pb-6">
+          <div className="px-6 pb-6 flex flex-col gap-2">
             <div
               id="chat-input"
               className="w-full bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-2xl p-3 flex flex-col gap-3 transition-[border-color,box-shadow] duration-[var(--duration-normal)] focus-within:border-[var(--color-accent-8)] focus-within:shadow-[0_0_0_3px_rgba(59,91,219,0.12),0px_4px_16px_-8px_rgba(59,91,219,0.18),0px_3px_12px_-4px_rgba(59,91,219,0.12)]"
@@ -2394,6 +2414,11 @@ function BuilderView({
               <span className="inline-flex items-center gap-1.5 w-full px-2 py-0.5 rounded-md text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-8)] group-hover:text-[var(--color-neutral-10)] transition-colors duration-[var(--duration-fast)]">
                 Integrations
               </span>
+              {connectedIds.size > 0 && (
+                <Badge severity="neutral" variant="surface" size="sm">
+                  {connectedIds.size}
+                </Badge>
+              )}
               <div className="flex items-center ml-auto -space-x-1.5">
                 {integrations.filter(ig => connectedIds.has(ig.id)).slice(0, 4).map((ig) => (
                   <span
@@ -2405,11 +2430,6 @@ function BuilderView({
                   </span>
                 ))}
               </div>
-              {connectedIds.size > 0 && (
-                <Badge severity="neutral" variant="surface" size="sm">
-                  {connectedIds.size}
-                </Badge>
-              )}
               <ChevronRight size={12} className="text-[var(--color-neutral-7)] group-hover:text-[var(--color-neutral-9)] transition-colors duration-[var(--duration-fast)]" />
             </button>
 
