@@ -7,7 +7,12 @@ import {
   ChevronLeft, MapPin, Clock, ChevronUp, ChevronDown,
   Settings, MoreHorizontal, Pencil, Plus, RefreshCw,
   AlertTriangle, Info, PanelLeft,
+  Fuel, Droplets, Gauge, BatteryMedium,
+  Thermometer, CircleGauge, RotateCw,
+  Sun, Snowflake, Timer,
+  Navigation, Car,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Badge } from '@/app/components/ui/Badge'
 import { Button } from '@/app/components/ui/Button'
 import { DonutChart } from '@/app/components/ui/DonutChart'
@@ -17,16 +22,59 @@ import { vehicles } from '@/app/lib/fleet-data'
 
 const tabs = [
   'Overview',
-  'Vehicle Details',
-  'Preventive Maintenance',
-  'Work Orders',
-  'Recalls (1)',
+  'Vehicle Status',
+  'Financial',
+  'Recalls',
   'Inspections',
-  'Financials',
-  'More',
+  'Work Orders',
+  'Preventive Maintenance',
+  'Files',
 ] as const
 
 type Tab = (typeof tabs)[number]
+
+/* ── Telematics mock data ── */
+
+interface GaugeCardData {
+  label: string
+  value: number
+  unit: string
+  max: number
+  icon: LucideIcon
+  color: string
+}
+
+interface MetricCardData {
+  label: string
+  value: string
+  unit: string
+  icon: LucideIcon
+  valueColor?: string
+}
+
+const overviewGauges: GaugeCardData[] = [
+  { label: 'Fuel Level', value: 68, unit: '%', max: 100, icon: Fuel, color: 'var(--color-accent-9)' },
+  { label: 'Def Level', value: 25, unit: '%', max: 100, icon: Droplets, color: '#f59e0b' },
+  { label: 'Speed', value: 34, unit: 'MPH', max: 120, icon: Gauge, color: 'var(--color-accent-9)' },
+  { label: 'Battery', value: 12.3, unit: 'VOLTS', max: 14.5, icon: BatteryMedium, color: 'var(--color-error)' },
+]
+
+const engineHealthMetrics: MetricCardData[] = [
+  { label: 'Engine Temp', value: '238°', unit: '°F', icon: Thermometer, valueColor: 'var(--color-success)' },
+  { label: 'Oil Pressure', value: '452.0', unit: 'PSI', icon: CircleGauge, valueColor: 'var(--color-success)' },
+  { label: 'RPM', value: '121', unit: 'RPM', icon: RotateCw, valueColor: 'var(--color-success)' },
+]
+
+const environmentMetrics: MetricCardData[] = [
+  { label: 'Ambient Temperature', value: '93°', unit: '°F', icon: Sun, valueColor: undefined },
+  { label: 'Intake Temp', value: '78°', unit: '°F', icon: Snowflake, valueColor: undefined },
+  { label: 'Atmospheric Pressure', value: '195879.0', unit: 'inHg', icon: Timer, valueColor: undefined },
+]
+
+const vehicleInfoMetrics: MetricCardData[] = [
+  { label: 'Odometer', value: '23,092', unit: 'Miles', icon: Car, valueColor: undefined },
+  { label: 'Heading', value: '129°', unit: 'N', icon: Navigation, valueColor: '#f59e0b' },
+]
 
 /* ── Reliability status config ── */
 
@@ -82,6 +130,84 @@ function Section({ title, defaultOpen = true, children }: { title: string; defau
   )
 }
 
+/* ── Telemetry Gauge Card ── */
+
+function TelemetryGaugeCard({ data }: { data: GaugeCardData }) {
+  const pct = Math.min((data.value / data.max) * 100, 100)
+  const size = 120
+  const strokeWidth = 10
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const dashLength = (pct / 100) * circumference
+  const Icon = data.icon
+
+  return (
+    <div className="flex flex-col bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-[var(--radius-xl)] p-5">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-12)]">{data.label}</span>
+        <Info size={14} className="text-[var(--color-neutral-5)]" />
+      </div>
+      <div className="flex justify-center">
+        <div className="relative inline-flex items-center justify-center">
+          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="rotate-[-90deg]" aria-hidden="true">
+            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--color-neutral-3)" strokeWidth={strokeWidth} />
+            <circle
+              cx={size / 2} cy={size / 2} r={radius} fill="none"
+              stroke={data.color} strokeWidth={strokeWidth}
+              strokeDasharray={`${dashLength} ${circumference - dashLength}`}
+              strokeLinecap="round"
+              className="transition-all duration-[var(--duration-slow)]"
+            />
+          </svg>
+          <div className="absolute flex flex-col items-center justify-center">
+            <Icon size={16} className="text-[var(--color-neutral-5)] mb-1" />
+            <span className="text-[length:var(--font-size-2xl)] font-bold text-[var(--color-neutral-12)] tabular-nums leading-none">
+              {data.value % 1 === 0 ? data.value : data.value.toFixed(1)}
+            </span>
+            <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] mt-1 font-medium">{data.unit}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Telemetry Metric Card ── */
+
+function TelemetryMetricCard({ data }: { data: MetricCardData }) {
+  const Icon = data.icon
+
+  return (
+    <div className="flex flex-col bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-[var(--radius-xl)] px-5 py-4">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-12)]">{data.label}</span>
+        <Icon size={16} className="text-[var(--color-neutral-5)]" />
+      </div>
+      <span
+        className="text-[length:var(--font-size-xl)] font-bold tabular-nums leading-none"
+        style={{ color: data.valueColor || 'var(--color-neutral-12)' }}
+      >
+        {data.value}
+      </span>
+      <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] mt-1">{data.unit}</span>
+    </div>
+  )
+}
+
+/* ── Telemetry Section Header ── */
+
+function TelemetrySection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="border-t border-[var(--border-default)] pt-[var(--space-xl)]">
+      <div className="flex items-center justify-between mb-[var(--space-md)]">
+        <h3 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">{title}</h3>
+        <Info size={14} className="text-[var(--color-neutral-5)]" />
+      </div>
+      {children}
+    </div>
+  )
+}
+
 /* ── Main Page ── */
 
 export default function VehicleDetailPage() {
@@ -125,7 +251,7 @@ export default function VehicleDetailPage() {
           </button>
           <span>Vehicles</span>
           <span>/</span>
-          <span className="text-[var(--color-neutral-12)] font-medium">{vehicle.year} {vehicle.make} {vehicle.model} (VIN)</span>
+          <span className="text-[var(--color-neutral-12)] font-medium">{vehicle.year} {vehicle.make} {vehicle.model} {vehicle.vin.slice(-5)}</span>
         </div>
         <div className="flex items-center gap-[var(--space-xs)]">
           <Button variant="ghost" size="sm"><Pencil size={14} /></Button>
@@ -265,7 +391,60 @@ export default function VehicleDetailPage() {
             </div>
           )}
 
-          {activeTab !== 'Overview' && (
+          {activeTab === 'Vehicle Status' && (
+            <div className="px-[var(--space-2xl)] py-[var(--space-xl)] w-full flex flex-col gap-[var(--space-xl)]">
+              {/* Telemetry Overview header */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-[length:var(--font-size-lg)] font-semibold text-[var(--color-neutral-12)]">Telemetry Overview</h2>
+                <div className="flex items-center gap-[var(--space-md)]">
+                  <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Last reading: 2 mins ago</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[var(--border-default)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-success)]">
+                    <span className="w-2 h-2 rounded-full bg-[var(--color-success)]" />
+                    Live
+                  </span>
+                  <button className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer">
+                    <Settings size={16} className="text-[var(--color-neutral-7)]" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Overview gauge cards */}
+              <div className="grid grid-cols-4 gap-[var(--space-md)]">
+                {overviewGauges.map((g) => (
+                  <TelemetryGaugeCard key={g.label} data={g} />
+                ))}
+              </div>
+
+              {/* Engine Health */}
+              <TelemetrySection title="Engine Health">
+                <div className="grid grid-cols-3 gap-[var(--space-md)]">
+                  {engineHealthMetrics.map((m) => (
+                    <TelemetryMetricCard key={m.label} data={m} />
+                  ))}
+                </div>
+              </TelemetrySection>
+
+              {/* Environment */}
+              <TelemetrySection title="Environment">
+                <div className="grid grid-cols-3 gap-[var(--space-md)]">
+                  {environmentMetrics.map((m) => (
+                    <TelemetryMetricCard key={m.label} data={m} />
+                  ))}
+                </div>
+              </TelemetrySection>
+
+              {/* Vehicle Info */}
+              <TelemetrySection title="Vehicle Info">
+                <div className="grid grid-cols-3 gap-[var(--space-md)]">
+                  {vehicleInfoMetrics.map((m) => (
+                    <TelemetryMetricCard key={m.label} data={m} />
+                  ))}
+                </div>
+              </TelemetrySection>
+            </div>
+          )}
+
+          {activeTab !== 'Overview' && activeTab !== 'Vehicle Status' && (
             <div className="flex flex-col items-center justify-center py-[var(--space-5xl)] gap-[var(--space-sm)]">
               <p className="text-[length:var(--font-size-lg)] font-medium text-[var(--color-neutral-9)]">{activeTab}</p>
               <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-7)]">Content coming soon.</p>
