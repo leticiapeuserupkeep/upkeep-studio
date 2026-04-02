@@ -1379,7 +1379,7 @@ export default function SchedulerPage() {
                 </div>
 
                 {/* ── Timeline Visualizer (always visible in template form) ── */}
-                {dailyHours > 0 && Object.values(workDays).some(Boolean) && (() => {
+                {Number(dailyHours) > 0 && Object.values(workDays).some(Boolean) && (() => {
                   const toMin = (t: string) => parseInt(t.split(':')[0]) * 60 + parseInt(t.split(':')[1])
                   const fmtM = (m: number) => `${String(Math.floor((m % 1440) / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
                   const fmtLabel = (m: number) => {
