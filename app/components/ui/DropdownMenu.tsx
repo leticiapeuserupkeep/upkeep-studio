@@ -23,7 +23,7 @@ export function DropdownMenuContent({
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
-        className={`z-[var(--z-dropdown)] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] py-1 dropdown-animate outline-none ${className}`}
+        className={`z-[var(--z-dropdown)] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] py-[var(--space-2xs)] dropdown-animate outline-none ${className}`}
         style={{ minWidth }}
         sideOffset={sideOffset}
         align={align}
@@ -42,7 +42,7 @@ export function DropdownMenuItem({
 }: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item>) {
   return (
     <DropdownMenuPrimitive.Item
-      className={`flex items-center gap-2 w-full px-[var(--space-md)] py-2 text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none cursor-pointer data-[highlighted]:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] ${className}`}
+      className={`flex items-center gap-[var(--space-xs)] w-full px-[var(--space-md)] py-[var(--space-xs)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] outline-none cursor-pointer data-[highlighted]:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)] ${className}`}
       {...props}
     >
       {children}
@@ -53,7 +53,7 @@ export function DropdownMenuItem({
 export function DropdownMenuSeparator({ className = '' }: { className?: string }) {
   return (
     <DropdownMenuPrimitive.Separator
-      className={`h-px my-1 bg-[var(--border-subtle)] ${className}`}
+      className={`h-px my-[var(--space-2xs)] bg-[var(--border-subtle)] ${className}`}
     />
   )
 }

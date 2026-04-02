@@ -42,7 +42,7 @@ export function InlineAlert({ severity = 'info', children, className = '' }: Inl
   return (
     <div
       role="alert"
-      className={`flex items-start gap-2 px-3 py-2.5 rounded-[var(--radius-lg)] border ${c.bg} ${c.border} ${className}`}
+      className={`flex items-start gap-[var(--space-xs)] px-[var(--space-sm)] py-[var(--space-sm)] rounded-[var(--radius-lg)] border ${c.bg} ${c.border} ${className}`}
     >
       <Icon size={16} className={`${c.text} shrink-0 mt-0.5`} />
       <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] leading-[var(--line-height-normal)]">

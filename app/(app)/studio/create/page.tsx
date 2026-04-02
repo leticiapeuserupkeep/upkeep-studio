@@ -591,12 +591,12 @@ function PromptView({
               </div>
             )}
             <div
-              className="flex flex-col items-start pb-2 gap-0 w-full bg-[#F0F0F3] rounded-2xl opacity-0"
+              className="flex flex-col items-start pb-2 gap-0 w-full bg-[var(--surface-sidebar)] rounded-2xl opacity-0"
               style={{ animation: 'fadeInUp 0.6s var(--ease-default) 0.1s forwards' }}
             >
               {/* Chat bar */}
               <div
-                className="w-full bg-white border border-[#D9D9E0] rounded-2xl p-3 flex flex-col justify-center gap-3 transition-[border-color,box-shadow] duration-[var(--duration-normal)] focus-within:border-[var(--color-accent-8)] focus-within:shadow-[0_0_0_3px_rgba(59,91,219,0.12),0px_4px_16px_-8px_rgba(59,91,219,0.18),0px_3px_12px_-4px_rgba(59,91,219,0.12)]"
+                className="w-full bg-[var(--surface-primary)] border border-[var(--border-default)] rounded-2xl p-3 flex flex-col justify-center gap-3 transition-[border-color,box-shadow] duration-[var(--duration-normal)] focus-within:border-[var(--color-accent-8)] focus-within:shadow-[0_0_0_3px_rgba(59,91,219,0.12),0px_4px_16px_-8px_rgba(59,91,219,0.18),0px_3px_12px_-4px_rgba(59,91,219,0.12)]"
                 style={{
                   minWidth: 400,
                   minHeight: 76,
@@ -625,7 +625,7 @@ function PromptView({
                   />
                   {!prompt && (
                     <span
-                      className="absolute left-3 text-[length:var(--font-size-base)] text-[#60646C] pointer-events-none leading-5 transition-opacity duration-[var(--duration-fast)]"
+                      className="absolute left-3 text-[length:var(--font-size-base)] text-[var(--color-neutral-8)] pointer-events-none leading-5 transition-opacity duration-[var(--duration-fast)]"
                       style={{ opacity: placeholder.visible ? 1 : 0 }}
                     >
                       {placeholder.text}
@@ -687,7 +687,7 @@ function PromptView({
                       )}
                     </div>
                     <button className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Attach file">
-                      <Plus size={16} strokeWidth={1.5} className="text-[#1C2024]" />
+                      <Plus size={16} strokeWidth={1.5} className="text-[var(--color-neutral-12)]" />
                     </button>
                     {prompt.trim() && (
                       <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] select-none">
@@ -697,7 +697,7 @@ function PromptView({
                   </div>
                   <div className="flex items-center gap-2">
                     <button className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-[var(--color-neutral-4)] transition-colors duration-[var(--duration-fast)] cursor-pointer" aria-label="Voice input">
-                      <Mic size={16} strokeWidth={1.5} className="text-[#1C2024]" />
+                      <Mic size={16} strokeWidth={1.5} className="text-[var(--color-neutral-12)]" />
                     </button>
                     <button
                       onClick={handleSend}
@@ -717,10 +717,10 @@ function PromptView({
               <button
                 onClick={() => setIntegrationsOpen(true)}
                 className="flex items-center px-4 pt-3 pb-3 -mb-2 gap-2.5 w-full cursor-pointer rounded-b-2xl transition-opacity duration-[var(--duration-fast)]"
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'linear-gradient(to bottom, transparent, #E8E8EC)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'linear-gradient(to bottom, transparent, var(--color-neutral-4))' }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = '' }}
               >
-                <span className="text-[length:var(--font-size-sm)] font-medium text-[#60646C] flex-1 text-left">Connect your tools to Studio</span>
+                <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)] flex-1 text-left">Connect your tools to Studio</span>
                 <div className="flex items-center gap-1">
                   <div className="flex items-center">
                     {integrations.slice(0, 5).map((ig) => (
@@ -728,7 +728,7 @@ function PromptView({
                         key={ig.id}
                         className="flex items-center justify-center w-[26px] h-[26px] bg-white rounded-full relative"
                         style={{
-                          border: '0.5px solid #E0E1E6',
+                          border: '0.5px solid var(--color-neutral-5)',
                           boxShadow: '-1px 1px 5px rgba(0,0,0,0.12)',
                           marginLeft: '-4px',
                         }}
@@ -737,7 +737,7 @@ function PromptView({
                       </span>
                     ))}
                   </div>
-                  <ChevronRight size={16} strokeWidth={1} className="text-[#1C2024]" />
+                  <ChevronRight size={16} strokeWidth={1} className="text-[var(--color-neutral-12)]" />
                 </div>
               </button>
             </div>
@@ -785,7 +785,7 @@ function PromptView({
               >
                 <div className="flex items-center justify-between px-6 pt-5 pb-1 shrink-0">
                   <div>
-                    <Dialog.Title className="text-lg font-semibold text-[var(--color-neutral-12)]">Integrations</Dialog.Title>
+                    <Dialog.Title className="text-[length:var(--font-size-lg)] font-semibold text-[var(--color-neutral-12)]">Integrations</Dialog.Title>
                     <Dialog.Description className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)] mt-0.5">
                       Connect your tools to build apps powered by your data.
                     </Dialog.Description>
@@ -850,8 +850,8 @@ function PromptView({
                                 <span className="absolute inset-0 flex items-center justify-center rounded-full bg-[var(--color-success)] transition-opacity duration-150 group-hover/card:opacity-0">
                                   <Check size={12} strokeWidth={3} className="text-white" />
                                 </span>
-                                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-[#FFF0F0] opacity-0 transition-opacity duration-150 group-hover/card:opacity-100">
-                                  <X size={12} strokeWidth={2.5} className="text-[#E5484D]" />
+                                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-[var(--color-error-light)] opacity-0 transition-opacity duration-150 group-hover/card:opacity-100">
+                                  <X size={12} strokeWidth={2.5} className="text-[var(--color-error)]" />
                                 </span>
                               </button>
                             ) : isConnecting ? (
@@ -898,7 +898,7 @@ function PromptView({
               className="flex flex-col w-full max-w-[888px] opacity-0"
               style={{ animation: 'fadeInUp 0.6s var(--ease-default) 0.3s forwards' }}
             >
-              <h3 className="text-base font-semibold text-[var(--color-neutral-12)] mb-[var(--space-md)]">Your Agents</h3>
+              <h3 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)] mb-[var(--space-md)]">Your Agents</h3>
               <div className="grid grid-cols-3 gap-[var(--space-md)]">
                 {myPersonalAgents.map((agent, i) => (
                   <button
@@ -914,7 +914,7 @@ function PromptView({
                     <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed">{agent.description}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {agent.capabilities.map((cap) => (
-                        <span key={cap} className="text-[10px] font-medium px-2 py-0.5 rounded-[var(--radius-md)] bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)]">{cap}</span>
+                        <span key={cap} className="text-[length:var(--font-size-xs)] font-medium px-2 py-0.5 rounded-[var(--radius-md)] bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)]">{cap}</span>
                       ))}
                     </div>
                   </button>
@@ -930,7 +930,7 @@ function PromptView({
               style={{ animation: 'fadeInUp 0.6s var(--ease-default) 0.3s forwards' }}
             >
               <div className="flex items-center justify-between mb-[var(--space-md)]">
-                <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Feature Templates</h3>
+                <h3 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">Feature Templates</h3>
                 <div className="flex items-center gap-2">
                   <Collapsible.Trigger asChild>
                     <button className="flex items-center gap-1 px-1.5 py-1 text-[length:var(--font-size-sm)] font-medium text-[var(--color-accent-9)] rounded hover:bg-[rgba(59,91,219,0.08)] transition-colors duration-[var(--duration-fast)] cursor-pointer">
@@ -1007,7 +1007,7 @@ function PromptView({
             data-dialog-content
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)] shrink-0">
-              <h2 className="text-lg font-semibold text-[var(--color-neutral-12)]">All Templates</h2>
+              <h2 className="text-[length:var(--font-size-lg)] font-semibold text-[var(--color-neutral-12)]">All Templates</h2>
               <Dialog.Close asChild>
                 <button className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]" aria-label="Close">
                   <X size={18} className="text-[var(--color-neutral-9)]" />
@@ -1361,7 +1361,7 @@ function PublishSuccessOverlay({ appTitle, onDismiss }: { appTitle: string; onDi
 
         {/* Title */}
         <p
-          className="text-lg font-semibold text-white"
+          className="text-[length:var(--font-size-lg)] font-semibold text-white"
           style={{ opacity: 0, animation: 'success-text-fade-up 250ms ease-out 750ms forwards' }}
         >
           Published!
@@ -1443,7 +1443,7 @@ function PublishRatingPrompt({ onDismiss }: { onDismiss: () => void }) {
       >
         {submitted ? (
           <div className="flex flex-col items-center gap-1 px-4 py-2">
-            <span className="text-base">🙏</span>
+            <span className="text-[length:var(--font-size-md)]">🙏</span>
             <p className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)]">Thanks for your feedback!</p>
           </div>
         ) : (
@@ -1921,7 +1921,7 @@ function BuilderView({
                 <div className="fixed inset-0 z-[var(--z-overlay)] bg-black/10" onClick={() => setPublishOpen(false)} />
                 <div className="absolute right-0 top-full mt-2 z-[var(--z-modal)] w-[360px] bg-[var(--surface-primary)] rounded-2xl shadow-[var(--shadow-xl)] p-6 flex flex-col gap-5 dropdown-animate">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-[var(--color-neutral-12)]">Publish</h3>
+                    <h3 className="text-[length:var(--font-size-lg)] font-semibold text-[var(--color-neutral-12)]">Publish</h3>
                     <button
                       onClick={() => setPublishOpen(false)}
                       className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
@@ -2473,7 +2473,7 @@ function BuilderView({
             >
               <div className="flex items-center justify-between px-6 pt-5 pb-1 shrink-0">
                 <div>
-                  <Dialog.Title className="text-lg font-semibold text-[var(--color-neutral-12)]">Integrations</Dialog.Title>
+                  <Dialog.Title className="text-[length:var(--font-size-lg)] font-semibold text-[var(--color-neutral-12)]">Integrations</Dialog.Title>
                   <Dialog.Description className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)] mt-0.5">
                     Connect your tools to build apps powered by your data.
                   </Dialog.Description>
@@ -2538,8 +2538,8 @@ function BuilderView({
                               <span className="absolute inset-0 flex items-center justify-center rounded-full bg-[var(--color-success)] transition-opacity duration-150 group-hover/card:opacity-0">
                                 <Check size={12} strokeWidth={3} className="text-white" />
                               </span>
-                              <span className="absolute inset-0 flex items-center justify-center rounded-full bg-[#FFF0F0] opacity-0 transition-opacity duration-150 group-hover/card:opacity-100">
-                                <X size={12} strokeWidth={2.5} className="text-[#E5484D]" />
+                              <span className="absolute inset-0 flex items-center justify-center rounded-full bg-[var(--color-error-light)] opacity-0 transition-opacity duration-150 group-hover/card:opacity-100">
+                                <X size={12} strokeWidth={2.5} className="text-[var(--color-error)]" />
                               </span>
                             </button>
                           ) : isConnecting ? (
@@ -2593,7 +2593,7 @@ function BuilderView({
             >
               {/* Settings header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)] shrink-0">
-                <h2 className="text-lg font-semibold text-[var(--color-neutral-12)]">Settings</h2>
+                <h2 className="text-[length:var(--font-size-lg)] font-semibold text-[var(--color-neutral-12)]">Settings</h2>
                 <button
                   onClick={() => setSettingsOpen(false)}
                   className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
@@ -2609,7 +2609,7 @@ function BuilderView({
                 <div className="flex flex-col gap-4 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
                   <div className="flex items-start justify-between">
                     <div className="flex flex-col gap-0.5">
-                      <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Published app access</h3>
+                      <h3 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">Published app access</h3>
                       <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Changing audience will take effect immediately</p>
                     </div>
                     <button className="flex items-center gap-1.5 text-[length:var(--font-size-base)] font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0">
@@ -2688,7 +2688,7 @@ function BuilderView({
 
                 {/* App Details card */}
                 <div className="flex flex-col gap-5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
-                  <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">App Details</h3>
+                  <h3 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">App Details</h3>
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Name</label>
@@ -2786,7 +2786,7 @@ function BuilderView({
 
                 {/* Images card */}
                 <div className="flex flex-col gap-5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
-                  <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Images</h3>
+                  <h3 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">Images</h3>
 
                   {/* Favicon */}
                   <div className="flex flex-col gap-2">
@@ -3010,7 +3010,7 @@ function GeneratedAppPreview({ prompt }: { prompt: string }) {
                 ].map((kpi) => (
                   <div key={kpi.label} className="flex flex-col gap-1 p-3 rounded-lg bg-[var(--color-neutral-2)] border border-[var(--border-default)]">
                     <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-8)] uppercase tracking-wider">{kpi.label}</span>
-                    <span className="text-lg font-bold text-[var(--color-neutral-12)]">{kpi.value}</span>
+                    <span className="text-[length:var(--font-size-lg)] font-bold text-[var(--color-neutral-12)]">{kpi.value}</span>
                     <span className="text-[length:var(--font-size-xs)] font-medium text-[var(--color-accent-9)]">{kpi.trend}</span>
                   </div>
                 ))}

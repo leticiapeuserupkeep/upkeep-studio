@@ -27,6 +27,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/edge/gateways')) return 'Gateways'
   if (pathname.startsWith('/edge/alerts')) return 'Alerts'
   if (pathname.startsWith('/edge/settings')) return 'Settings'
+  if (pathname.startsWith('/scheduler')) return 'Scheduler'
   return 'Dashboard'
 }
 
@@ -64,6 +65,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isRuntimeDetail = /^\/edge\/runtime\/[^/]+/.test(pathname)
   const isWorkOrders = pathname.startsWith('/work-orders')
   const isFleetDetail = /^\/fleet\/vehicles\/[^/]+/.test(pathname)
+  const isScheduler = pathname.startsWith('/scheduler')
 
   function getActions() {
     if (isStudioAgents) {
@@ -133,7 +135,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             onTimeRangeChange={setTimeRange}
             onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
             sites={sites}
-            minimal={isEdge || isStudioSection || pathname.startsWith('/exports') || pathname.startsWith('/files') || isWorkOrders}
+            minimal={isEdge || isStudioSection || pathname.startsWith('/exports') || pathname.startsWith('/files') || isWorkOrders || pathname.startsWith('/scheduler')}
             backHref={isRuntimeDetail ? '/edge/runtime' : undefined}
             afterTitle={isWorkOrders ? (
               <button className="inline-flex items-center gap-1.5 ml-2 px-2.5 py-1 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-secondary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] cursor-pointer hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)]">
@@ -141,6 +143,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 Table
                 <ChevronDown size={12} className="text-[var(--color-neutral-7)]" />
               </button>
+            ) : isScheduler ? (
+              <div id="scheduler-after-title" className="flex items-center" />
             ) : (pathname.startsWith('/exports') || pathname.startsWith('/files')) ? (
               <div className="flex items-center gap-0 ml-4 self-stretch">
                 {[
@@ -164,7 +168,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 })}
               </div>
             ) : undefined}
-            actions={getActions()}
+            actions={isScheduler ? (
+              <div id="scheduler-header-actions" className="flex items-center gap-[var(--space-sm)]" />
+            ) : getActions()}
           />
         )}
         {(isWorkOrders || pathname.startsWith('/exports')) && <div id="table-toolbar-portal" />}

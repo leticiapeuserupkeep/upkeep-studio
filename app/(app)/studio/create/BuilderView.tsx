@@ -462,7 +462,7 @@ export function BuilderView({
                 <div className="fixed inset-0 z-[var(--z-overlay)] bg-black/10" onClick={() => dispatch({ type: 'SET_PUBLISH_OPEN', open: false })} />
                 <div className="absolute right-0 top-full mt-2 z-[var(--z-modal)] w-[360px] bg-[var(--surface-primary)] rounded-2xl shadow-[var(--shadow-xl)] p-6 flex flex-col gap-5 dropdown-animate">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-[var(--color-neutral-12)]">Publish</h3>
+                    <h3 className="text-[length:var(--font-size-lg)] font-semibold text-[var(--color-neutral-12)]">Publish</h3>
                     <button
                       onClick={() => dispatch({ type: 'SET_PUBLISH_OPEN', open: false })}
                       className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
@@ -891,7 +891,7 @@ export function BuilderView({
             >
               {/* Settings header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)] shrink-0">
-                <h2 className="text-lg font-semibold text-[var(--color-neutral-12)]">Settings</h2>
+                <h2 className="text-[length:var(--font-size-lg)] font-semibold text-[var(--color-neutral-12)]">Settings</h2>
                 <button
                   onClick={() => dispatch({ type: 'SET_SETTINGS_OPEN', open: false })}
                   className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors duration-[var(--duration-fast)]"
@@ -907,7 +907,7 @@ export function BuilderView({
                 <div className="flex flex-col gap-4 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
                   <div className="flex items-start justify-between">
                     <div className="flex flex-col gap-0.5">
-                      <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Published app access</h3>
+                      <h3 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">Published app access</h3>
                       <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">Changing audience will take effect immediately</p>
                     </div>
                     <button className="flex items-center gap-1.5 text-[length:var(--font-size-base)] font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] transition-colors duration-[var(--duration-fast)] cursor-pointer shrink-0">
@@ -986,7 +986,7 @@ export function BuilderView({
 
                 {/* App Details card */}
                 <div className="flex flex-col gap-5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
-                  <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">App Details</h3>
+                  <h3 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">App Details</h3>
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)]">Name</label>
@@ -1083,7 +1083,7 @@ export function BuilderView({
 
                 {/* Images card */}
                 <div className="flex flex-col gap-5 rounded-xl border border-[var(--border-default)] bg-[var(--surface-primary)] p-5">
-                  <h3 className="text-base font-semibold text-[var(--color-neutral-12)]">Images</h3>
+                  <h3 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">Images</h3>
 
                   {/* Favicon */}
                   <div className="flex flex-col gap-2">
@@ -1223,7 +1223,7 @@ function VersionHistoryPanel({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-[var(--color-neutral-12)]">Version History</h2>
+          <h2 className="text-[length:var(--font-size-lg)] font-semibold text-[var(--color-neutral-12)]">Version History</h2>
           <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)] mt-0.5">
             {versions.length} version{versions.length !== 1 ? 's' : ''} · Select two to compare
           </p>
@@ -1378,7 +1378,7 @@ function AnalyticsPanel({ publishStatus, appTitle }: { publishStatus: string; ap
   return (
     <div className="flex flex-col gap-6 h-full">
       <div>
-        <h2 className="text-lg font-semibold text-[var(--color-neutral-12)]">Analytics</h2>
+        <h2 className="text-[length:var(--font-size-lg)] font-semibold text-[var(--color-neutral-12)]">Analytics</h2>
         <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-8)] mt-0.5">{appTitle} · Last 14 days</p>
       </div>
 
