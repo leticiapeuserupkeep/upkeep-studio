@@ -456,7 +456,7 @@ export default function AgentsPage() {
           {/* New Assistant button */}
           <div className="px-4 pb-3">
             <Button
-              variant="outline"
+              variant="primary"
               size="md"
               className="w-full justify-center"
               onClick={() => { setSelectedId('new'); resetToWelcome() }}
@@ -858,7 +858,7 @@ function MessageBubble({
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[80%] bg-[var(--color-accent-9)] text-white px-4 py-3 rounded-2xl rounded-br-md text-[length:var(--font-size-sm)] leading-relaxed">
+        <div className="max-w-[80%] bg-[var(--color-neutral-3)] text-[var(--color-neutral-12)] px-4 py-3 rounded-2xl rounded-br-md text-[length:var(--font-size-sm)] leading-relaxed">
           {message.content}
         </div>
       </div>
