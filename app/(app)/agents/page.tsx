@@ -261,13 +261,14 @@ export default function AgentsPage() {
         case 'access_company': {
           setOnboardingStep('complete')
           setAddedTeammates(prev => new Set([...prev, pendingTeammate.id]))
+          setSelectedId(pendingTeammate.id)
 
           addAssistantMessage({
             content: `🎉 **${pendingTeammate.firstName} ${pendingTeammate.lastName}** has joined your team!\n\nThey're ready to help. You can adjust settings anytime.`,
             profileCard: pendingTeammate,
             options: [
               { id: 'chat', label: `Start working with ${pendingTeammate.firstName}`, action: 'start_chat' },
-              { id: 'another', label: 'Add another teammate', action: 'add_another' },
+              { id: 'another', label: 'Create another agent', action: 'add_another' },
             ],
           })
           break
