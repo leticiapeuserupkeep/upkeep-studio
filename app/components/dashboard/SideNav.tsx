@@ -53,6 +53,16 @@ const sections: NavSection[] = [
     ],
   },
   {
+    title: 'SUPERNOVA',
+    badge: 'NEW',
+    items: [
+      { label: 'Chat', icon: MessageCircle, href: '/agents' },
+      { label: 'Apps', icon: Sparkles },
+      { label: 'Workflows', icon: Bot },
+      { label: 'Settings', icon: Settings },
+    ],
+  },
+  {
     title: 'STUDIO',
     badge: 'NEW',
     items: [

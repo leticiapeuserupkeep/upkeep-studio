@@ -54,6 +54,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const title = getPageTitle(pathname)
   const isCreateApp = pathname === '/studio/create'
+  const isAgents = pathname.startsWith('/agents')
   const isBilling = pathname.startsWith('/billing')
   const isStudioBrowse = pathname.startsWith('/studio/browse')
   const isStudioInstalled = pathname.startsWith('/studio/installed')
@@ -124,7 +125,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <SideNav collapsed={sidebarCollapsed} />
 
       <div className="flex flex-col flex-1 min-w-0 min-h-screen">
-        {!isCreateApp && !isBilling && !isFleetDetail && (
+        {!isCreateApp && !isAgents && !isBilling && !isFleetDetail && (
           <TopBar
             title={title}
             role={role}
@@ -178,7 +179,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {isEdge && <div id="runtime-sensor-bar-portal" />}
         {isEdge && <div id="runtime-kpi-portal" />}
         <div id="page-toolbar-portal" />
-        {isCreateApp ? (
+        {isCreateApp || isAgents ? (
           children
         ) : (
           <DashboardProvider role={role} site={site}>
