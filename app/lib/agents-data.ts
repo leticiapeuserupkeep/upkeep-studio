@@ -81,7 +81,7 @@ export interface SuggestedChip {
 
 const avatarBase = (seed: string) => `https://i.pravatar.cc/150?u=${seed}`
 
-export const TEAMMATES: Teammate[] = [
+export const EXISTING_AGENTS: Teammate[] = [
   {
     id: 'sofia',
     firstName: 'Sofia',
@@ -140,6 +140,9 @@ export const TEAMMATES: Teammate[] = [
     access: { level: 'private', assignedTo: [] },
     availability: 'available',
   },
+]
+
+export const AVAILABLE_AGENTS: Teammate[] = [
   {
     id: 'elena',
     firstName: 'Elena',
@@ -229,6 +232,8 @@ export const TEAMMATES: Teammate[] = [
   },
 ]
 
+export const TEAMMATES: Teammate[] = [...EXISTING_AGENTS, ...AVAILABLE_AGENTS]
+
 /* ── Intent Matching ── */
 
 const INTENT_MAPPING: Record<string, string[]> = {
@@ -253,15 +258,15 @@ const INTENT_MAPPING: Record<string, string[]> = {
   'clean': ['sofia'],
 }
 
-export function suggestTeammate(userInput: string): Teammate {
+export function suggestTeammate(userInput: string, pool: Teammate[] = TEAMMATES): Teammate {
   const input = userInput.toLowerCase()
   for (const [keyword, teammateIds] of Object.entries(INTENT_MAPPING)) {
     if (input.includes(keyword)) {
-      const match = TEAMMATES.find((t) => t.id === teammateIds[0])
+      const match = pool.find((t) => teammateIds.includes(t.id))
       if (match) return match
     }
   }
-  return TEAMMATES[0]
+  return pool[0]
 }
 
 /* ── Default Chips ── */

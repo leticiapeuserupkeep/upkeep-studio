@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import {
-  TEAMMATES, DEFAULT_CHIPS, BUILDER_CHIPS,
+  TEAMMATES, EXISTING_AGENTS, AVAILABLE_AGENTS, DEFAULT_CHIPS, BUILDER_CHIPS,
   suggestTeammate, getTeammateGreeting, getTeammateWelcomeActions,
 } from '@/app/lib/agents-data'
 import type {
@@ -51,11 +51,11 @@ export default function AgentsPage() {
   const [chatInput, setChatInput] = useState('')
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>('idle')
   const [pendingTeammate, setPendingTeammate] = useState<Teammate | null>(null)
-  const [addedTeammates, setAddedTeammates] = useState<Set<string>>(new Set(TEAMMATES.map(t => t.id)))
+  const [addedTeammates, setAddedTeammates] = useState<Set<string>>(new Set(EXISTING_AGENTS.map(t => t.id)))
   const [isThinking, setIsThinking] = useState(false)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
-  const [unreadIds] = useState<Set<string>>(() => new Set([TEAMMATES[0]?.id, TEAMMATES[2]?.id].filter(Boolean)))
+  const [unreadIds] = useState<Set<string>>(() => new Set([EXISTING_AGENTS[0]?.id].filter(Boolean)))
 
   const [lastSentPrompt, setLastSentPrompt] = useState('')
 
@@ -175,7 +175,9 @@ export default function AgentsPage() {
     }])
 
     simulateThinking(() => {
-      const teammate = suggestTeammate(input)
+      const notYetAdded = AVAILABLE_AGENTS.filter(t => !addedTeammates.has(t.id))
+      const pool = notYetAdded.length > 0 ? notYetAdded : AVAILABLE_AGENTS
+      const teammate = suggestTeammate(input, pool)
       setPendingTeammate(teammate)
       setOnboardingStep('meet')
 
@@ -185,11 +187,11 @@ export default function AgentsPage() {
         options: [
           { id: 'add', label: `Yes, add ${teammate.firstName} to my team`, action: 'add_teammate' },
           { id: 'skills', label: 'Tell me more about their skills', action: 'show_skills' },
-          { id: 'other', label: 'Show me other teammates', action: 'show_other' },
+          { id: 'other', label: 'Show me other agents', action: 'show_other' },
         ],
       })
     })
-  }, [simulateThinking, addAssistantMessage])
+  }, [simulateThinking, addAssistantMessage, addedTeammates])
 
   const handleOnboardingOption = useCallback((option: ActionOption) => {
     setMessages(prev => [...prev, {
@@ -282,9 +284,9 @@ export default function AgentsPage() {
         }
 
         case 'show_other': {
-          const otherTeammates = TEAMMATES.filter(t => t.id !== pendingTeammate.id)
+          const otherTeammates = AVAILABLE_AGENTS.filter(t => t.id !== pendingTeammate.id)
           addAssistantMessage({
-            content: `Here are some other teammates who might help:\n\n${otherTeammates.map(t => `• **${t.firstName} ${t.lastName}** — ${t.jobTitle}`).join('\n')}`,
+            content: `Here are some other agents you could create:\n\n${otherTeammates.map(t => `• **${t.firstName} ${t.lastName}** — ${t.jobTitle}`).join('\n')}`,
             options: otherTeammates.slice(0, 3).map(t => ({
               id: t.id,
               label: `Meet ${t.firstName} ${t.lastName}`,
@@ -297,7 +299,7 @@ export default function AgentsPage() {
         default: {
           if (option.action.startsWith('meet_')) {
             const meetId = option.action.replace('meet_', '')
-            const newTeammate = TEAMMATES.find(t => t.id === meetId)
+            const newTeammate = AVAILABLE_AGENTS.find(t => t.id === meetId)
             if (newTeammate) {
               setPendingTeammate(newTeammate)
               setOnboardingStep('meet')
@@ -467,49 +469,6 @@ export default function AgentsPage() {
 
           {/* Roster list */}
           <div className="flex-1 overflow-y-auto px-2">
-            {/* Multi Agent */}
-            <button
-              onClick={() => setSelectedId('team')}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-[var(--radius-xl)] mb-1 cursor-pointer transition-all duration-[var(--duration-fast)] ${
-                isTeamChat
-                  ? 'bg-[var(--color-accent-1)] border border-[var(--color-accent-7)] shadow-[0_0_0_1px_var(--color-accent-3)]'
-                  : 'border border-transparent hover:bg-[var(--color-neutral-2)]'
-              }`}
-            >
-              <div className="flex items-center shrink-0 -space-x-2">
-                {TEAMMATES.slice(0, 3).map((t) => (
-                  <img
-                    key={t.id}
-                    src={t.photo}
-                    alt={t.firstName}
-                    className="w-8 h-8 rounded-full object-cover border-2 border-[var(--surface-primary)]"
-                  />
-                ))}
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-12)] truncate">{TEAM_CHAT.name}</p>
-                <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] truncate">{TEAM_CHAT.subtitle}</p>
-              </div>
-              {isTeamChat && <ChevronRight size={14} className="text-[var(--color-accent-9)] shrink-0" />}
-            </button>
-
-            {/* New Agent — only visible when actively creating */}
-            {isNewAgent && (
-              <button
-                onClick={() => { setSelectedId('new'); resetToWelcome() }}
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-[var(--radius-xl)] mb-1 cursor-pointer transition-colors duration-[var(--duration-fast)] bg-[var(--color-neutral-3)]"
-              >
-                <span className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--color-accent-9)] shrink-0">
-                  <span className="text-[length:var(--font-size-md)] font-bold text-white">A</span>
-                </span>
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-12)] truncate">New Agent</p>
-                  <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] truncate">Skills</p>
-                </div>
-                <ChevronRight size={14} className="text-[var(--color-neutral-5)] shrink-0" />
-              </button>
-            )}
-
             {/* Favorites */}
             {filteredTeammates.filter(t => favorites.has(t.id)).length > 0 && (
               <>
@@ -531,9 +490,50 @@ export default function AgentsPage() {
               </>
             )}
 
-            {/* Teammates */}
-            {filteredTeammates.filter(t => favorites.has(t.id)).length > 0 && filteredTeammates.filter(t => !favorites.has(t.id)).length > 0 && (
-              <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-neutral-7)]">Agents</p>
+            {/* All Agents */}
+            <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-neutral-7)]">All Agents</p>
+
+            {/* Multi Agent */}
+            <button
+              onClick={() => setSelectedId('team')}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-[var(--radius-xl)] mb-1 cursor-pointer transition-all duration-[var(--duration-fast)] ${
+                isTeamChat
+                  ? 'bg-[var(--color-accent-1)] border border-[var(--color-accent-7)] shadow-[0_0_0_1px_var(--color-accent-3)]'
+                  : 'border border-transparent hover:bg-[var(--color-neutral-2)]'
+              }`}
+            >
+              <div className="flex items-center shrink-0 -space-x-2">
+                {EXISTING_AGENTS.map((t) => (
+                  <img
+                    key={t.id}
+                    src={t.photo}
+                    alt={t.firstName}
+                    className="w-8 h-8 rounded-full object-cover border-2 border-[var(--surface-primary)]"
+                  />
+                ))}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-12)] truncate">{TEAM_CHAT.name}</p>
+                <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] truncate">{TEAM_CHAT.subtitle}</p>
+              </div>
+              {isTeamChat && <ChevronRight size={14} className="text-[var(--color-accent-9)] shrink-0" />}
+            </button>
+
+            {/* New Agent — only visible when actively creating */}
+            {isNewAgent && (
+              <button
+                onClick={() => { setSelectedId('new'); resetToWelcome() }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-[var(--radius-xl)] mb-1 cursor-pointer transition-all duration-[var(--duration-fast)] bg-[var(--color-accent-1)] border border-[var(--color-accent-7)] shadow-[0_0_0_1px_var(--color-accent-3)]"
+              >
+                <span className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--color-accent-9)] shrink-0">
+                  <span className="text-[length:var(--font-size-md)] font-bold text-white">A</span>
+                </span>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-12)] truncate">New Agent</p>
+                  <p className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] truncate">Skills</p>
+                </div>
+                <ChevronRight size={14} className="text-[var(--color-neutral-5)] shrink-0" />
+              </button>
             )}
             {filteredTeammates.filter(t => !favorites.has(t.id)).map((teammate) => (
               <TeammateRosterCard
@@ -589,7 +589,7 @@ export default function AgentsPage() {
                 <>
                   {/* Multi Assistant: overlapping avatars */}
                   <div className="flex items-center -space-x-4">
-                    {TEAMMATES.slice(0, 3).map((t) => (
+                    {EXISTING_AGENTS.map((t) => (
                       <img
                         key={t.id}
                         src={t.photo}
@@ -766,7 +766,7 @@ function TeammateRosterCard({
   return (
     <div
       className={`group relative w-full flex items-center gap-3 px-3 py-3 rounded-[var(--radius-xl)] mb-1 cursor-pointer transition-colors duration-[var(--duration-fast)] ${
-        isSelected ? 'bg-[var(--color-neutral-3)]' : 'hover:bg-[var(--color-neutral-2)]'
+        isSelected ? 'bg-[var(--color-accent-1)] border border-[var(--color-accent-7)] shadow-[0_0_0_1px_var(--color-accent-3)]' : 'border border-transparent hover:bg-[var(--color-neutral-2)]'
       }`}
       onClick={onSelect}
     >
@@ -796,8 +796,8 @@ function TeammateRosterCard({
           onClick={(e) => { e.stopPropagation(); onToggleFavorite() }}
           className={`flex items-center justify-center w-7 h-7 rounded-[var(--radius-md)] transition-all duration-[var(--duration-fast)] ${
             isFavorite
-              ? 'text-amber-400 hover:bg-[var(--color-neutral-4)]'
-              : 'text-[var(--color-neutral-8)] opacity-0 group-hover:opacity-100 hover:bg-[var(--color-neutral-4)] hover:text-amber-400'
+              ? 'text-[var(--color-accent-9)] hover:bg-[var(--color-neutral-4)]'
+              : 'text-[var(--color-neutral-8)] opacity-0 group-hover:opacity-100 hover:bg-[var(--color-neutral-4)] hover:text-[var(--color-accent-9)]'
           }`}
           aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
@@ -878,7 +878,7 @@ function MessageBubble({
             <img src={photo} alt={name || ''} className="w-8 h-8 rounded-full object-cover shrink-0" />
           ) : (
             <div className="flex items-center shrink-0 -space-x-1.5">
-              {TEAMMATES.slice(0, 3).map((t) => (
+              {EXISTING_AGENTS.map((t) => (
                 <img
                   key={t.id}
                   src={t.photo}
