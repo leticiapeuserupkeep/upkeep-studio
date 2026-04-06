@@ -1,6 +1,6 @@
 'use client'
 
-import { ClipboardList, Shield, AlertTriangle, Package, TrendingDown, TrendingUp, Sparkles, Clock, DollarSign } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Package, TrendingDown, TrendingUp, Clock, DollarSign } from 'lucide-react'
 
 interface MetricCard {
   label: string
@@ -19,12 +19,6 @@ const metrics: MetricCard[] = [
     value: 47,
     icon: <ClipboardList size={18} className="text-[var(--color-accent-9)]" />,
     trend: { text: '↓ 8 from yesterday', type: 'success', icon: <TrendingDown size={12} /> },
-  },
-  {
-    label: 'SLA compliance',
-    value: '94%',
-    icon: <Shield size={18} className="text-[var(--color-success)]" />,
-    trend: { text: 'Target: 95%', type: 'neutral' },
   },
   {
     label: 'Overdue PMs',
@@ -48,11 +42,11 @@ const trendColors = {
 
 export function SystemPulse() {
   return (
-    <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 1.5fr' }}>
+    <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr 1fr 1.5fr' }}>
       {metrics.map((m) => (
         <div
           key={m.label}
-          className="flex flex-col gap-1 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4"
+          className="flex flex-col gap-1 rounded-[var(--radius-2xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4"
         >
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium text-[var(--color-neutral-8)]">{m.label}</span>
@@ -75,35 +69,30 @@ export function SystemPulse() {
 
 function SupernovaSavingsCard() {
   return (
-    <div className="flex flex-col gap-3 rounded-[var(--radius-lg)] border border-indigo-200 bg-gradient-to-br from-indigo-50/60 to-white p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-[12px] font-semibold text-indigo-600">Supernova savings</span>
-        <Sparkles size={18} className="text-indigo-500" />
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <Clock size={13} className="text-indigo-400 shrink-0" />
-            <span className="text-[20px] font-semibold text-[var(--color-neutral-12)] leading-tight">128h</span>
-          </div>
-          <span className="text-[11px] text-[var(--color-neutral-7)]">time saved this month</span>
+    <div className="flex flex-col gap-3 rounded-[var(--radius-2xl)] border border-white/15 bg-gradient-to-br from-[var(--color-accent-9)] via-[var(--color-accent-10)] to-[var(--color-accent-12)] p-4 shadow-sm">
+      <div className="flex items-stretch gap-4">
+        <div className="flex flex-1 min-w-0 flex-col gap-1">
+          <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-white/75">
+            <Clock size={16} className="text-white shrink-0" strokeWidth={2} />
+            Time Saved
+          </span>
+          <span className="text-[24px] font-semibold text-white leading-tight">-128h</span>
         </div>
 
-        <div className="w-px h-9 bg-[var(--border-default)]" />
+        <div className="w-px shrink-0 self-stretch bg-white/20" />
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <DollarSign size={13} className="text-emerald-500 shrink-0" />
-            <span className="text-[20px] font-semibold text-[var(--color-neutral-12)] leading-tight">$12.4k</span>
-          </div>
-          <span className="text-[11px] text-[var(--color-neutral-7)]">cost reduction</span>
+        <div className="flex flex-1 min-w-0 flex-col gap-1">
+          <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-white/75">
+            <DollarSign size={16} className="text-white shrink-0" strokeWidth={2} />
+            Cost Reduction
+          </span>
+          <span className="text-[24px] font-semibold text-white leading-tight">-$12.4k</span>
         </div>
       </div>
 
-      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--color-success)]">
-        <TrendingUp size={11} />
-        ↑ 23% vs last month
+      <span className="inline-flex items-center gap-1 text-[12px] font-medium text-white/90">
+        <TrendingDown size={12} className="shrink-0" />
+        23% vs last month
       </span>
     </div>
   )

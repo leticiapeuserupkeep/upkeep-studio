@@ -28,10 +28,10 @@ const aiMates: AIMatePreview[] = [
     skill: 'Scheduling',
     skillColor: 'text-blue-700',
     skillBg: 'bg-blue-50 border-blue-200',
-    activity: 'Assigned 14 WOs today',
+    activity: "Assigned 14 WO's",
     mode: 'Auto-assign',
     integrations: [
-      { name: 'Google Calendar', logo: '/images/integrations/google-calendar.png' },
+      { name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' },
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
     ],
   },
@@ -59,7 +59,7 @@ const aiMates: AIMatePreview[] = [
     activity: '8 requests sorted',
     mode: 'Auto-escalate · 4h threshold',
     integrations: [
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
     ],
   },
@@ -77,7 +77,7 @@ interface HandledAction {
 }
 
 const handledActions: HandledAction[] = [
-  { id: 'h1', photo: aiMates[0].photo, mateName: 'Sofia', count: 14, noun: 'work orders', verb: 'assigned', timeAgo: '6h ago', via: { name: 'Google Calendar', logo: '/images/integrations/google-calendar.png' } },
+  { id: 'h1', photo: aiMates[0].photo, mateName: 'Sofia', count: 14, noun: 'work orders', verb: 'assigned', timeAgo: '6h ago', via: { name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' } },
   { id: 'h2', photo: aiMates[1].photo, mateName: 'Elena', count: 3, noun: 'parts', verb: 'reordered', timeAgo: '8h ago', via: { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' } },
   { id: 'h3', photo: aiMates[2].photo, mateName: 'Marcus', count: 1, noun: 'request', verb: 'escalated', timeAgo: '12h ago', via: { name: 'Slack', logo: '/images/integrations/slack.svg' } },
 ]
@@ -90,10 +90,10 @@ interface AIMatesColumnProps {
 export function AIMatesColumn({ onOpenChat, onManage }: AIMatesColumnProps) {
   return (
     <div className="flex flex-col gap-6">
-      {/* AIMates */}
+      {/* AI-Mates */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">AIMates</h3>
+          <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">AI-Mates</h3>
           <button
             onClick={onManage}
             className="inline-flex items-center gap-1 text-[12px] font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] cursor-pointer transition-colors"
@@ -106,7 +106,7 @@ export function AIMatesColumn({ onOpenChat, onManage }: AIMatesColumnProps) {
           {aiMates.map((mate) => (
             <div
               key={mate.id}
-              className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-3 hover:shadow-sm transition-shadow duration-150"
+              className="flex items-center gap-3 rounded-[var(--radius-2xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4 hover:shadow-sm transition-shadow duration-150"
             >
               <div className="relative shrink-0">
                 <img
@@ -116,7 +116,7 @@ export function AIMatesColumn({ onOpenChat, onManage }: AIMatesColumnProps) {
                 />
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[var(--color-success)] border-2 border-white" />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className="text-[13px] font-medium text-[var(--color-neutral-12)]">{mate.name}</span>
                   <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${mate.skillBg} ${mate.skillColor}`}>
@@ -130,8 +130,8 @@ export function AIMatesColumn({ onOpenChat, onManage }: AIMatesColumnProps) {
                     </span>
                   )}
                 </div>
-                <span className="text-[11px] text-[var(--color-neutral-8)]">{mate.activity}</span>
-                <span className="text-[11px] text-[var(--color-neutral-7)]">Mode: {mate.mode}</span>
+                <span className="text-[11px] text-[var(--color-neutral-8)] truncate">{mate.activity}</span>
+                <span className="text-[11px] text-[var(--color-neutral-7)] w-full truncate">Mode: {mate.mode}</span>
               </div>
               <button
                 onClick={() => onOpenChat?.(mate.id)}
@@ -151,7 +151,7 @@ export function AIMatesColumn({ onOpenChat, onManage }: AIMatesColumnProps) {
           <span className="text-[12px] font-medium text-[var(--color-neutral-8)]">25 actions</span>
         </div>
 
-        <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] overflow-hidden">
+        <div className="rounded-[var(--radius-2xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] overflow-hidden">
           {handledActions.map((action, i) => (
             <div
               key={action.id}

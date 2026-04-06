@@ -43,7 +43,7 @@ const aiMates: AIMateRow[] = [
     mode: 'Auto-assign',
     status: 'active',
     integrations: [
-      { name: 'Google Calendar', logo: '/images/integrations/google-calendar.png' },
+      { name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' },
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
     ],
     tasksToday: 14,
@@ -60,7 +60,7 @@ const aiMates: AIMateRow[] = [
     mode: 'Auto-escalate · 4h threshold',
     status: 'active',
     integrations: [
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
     ],
     tasksToday: 8,
@@ -111,7 +111,7 @@ const aiMates: AIMateRow[] = [
     status: 'learning',
     integrations: [
       { name: 'Google Sheets', logo: '/images/integrations/google-sheets.svg' },
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
     ],
     tasksToday: 0,
     totalTasks: 12,
@@ -147,7 +147,7 @@ export default function AIMatesPage() {
               style={{ animation: 'fadeInUp 0.35s var(--ease-default) 0.02s forwards' }}
             >
               <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4">
-                <p className="text-[12px] font-medium text-[var(--color-neutral-8)] mb-1">Total AIMates</p>
+                <p className="text-[12px] font-medium text-[var(--color-neutral-8)] mb-1">Total AI-Mates</p>
                 <p className="text-[24px] font-semibold text-[var(--color-neutral-12)]">{aiMates.length}</p>
               </div>
               <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4">
@@ -168,19 +168,19 @@ export default function AIMatesPage() {
               {/* Toolbar */}
               <div className="flex items-center justify-between px-5 py-2.5 border-b border-[var(--border-subtle)]">
                 <span className="text-[var(--font-size-sm)] text-[var(--color-neutral-8)] font-medium">
-                  {filtered.length} AIMates
+                  {filtered.length} AI-Mates
                 </span>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search AIMates…"
+                    placeholder="Search AI-Mates…"
                     className="h-8 px-3 text-[13px] rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-6)] focus:outline-none focus:border-[var(--color-accent-8)] transition-colors w-[200px]"
                   />
                   <Button variant="primary" size="sm" className="gap-1.5">
                     <Plus size={14} />
-                    Create AIMate
+                    Create AI-Mate
                   </Button>
                 </div>
               </div>
@@ -188,7 +188,7 @@ export default function AIMatesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>AIMate</TableHead>
+                    <TableHead>AI-Mate</TableHead>
                     <TableHead>Skill</TableHead>
                     <TableHead>Mode</TableHead>
                     <TableHead>Status</TableHead>

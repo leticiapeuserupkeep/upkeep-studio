@@ -72,7 +72,7 @@ export default function CommandCenterPage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 w-full min-h-0">
+    <div className="flex flex-col flex-1 w-full min-h-0 h-full overflow-hidden">
       {/* ── Header ── */}
       <header className="sticky top-0 z-30 flex items-center justify-between h-14 px-6 bg-[var(--surface-primary)] border-b border-[var(--border-default)] shrink-0">
         <div className="flex items-center gap-3">
@@ -107,7 +107,7 @@ export default function CommandCenterPage() {
             }`}
           >
             <MessageCircle size={15} />
-            Ask AI Team
+            Ask AI-Team
           </button>
         </div>
       </header>
@@ -115,7 +115,7 @@ export default function CommandCenterPage() {
       {/* ── Body: Main + Sidebar inline ── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto min-w-0">
+        <main className="flex-1 min-h-0 overflow-y-auto min-w-0 overscroll-y-contain">
           <div className="w-full max-w-[1400px] mx-auto px-6 py-6 space-y-6">
             {/* Greeting */}
             <div

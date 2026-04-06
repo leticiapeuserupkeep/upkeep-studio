@@ -30,7 +30,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/scheduler')) return 'Scheduler'
   if (pathname.startsWith('/command-center')) return 'Command Center'
   if (pathname.startsWith('/workflows')) return 'Workflows'
-  if (pathname.startsWith('/aimates')) return 'AIMates'
+  if (pathname.startsWith('/aimates')) return 'AI-Mates'
   return 'Dashboard'
 }
 
@@ -128,7 +128,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-[var(--surface-canvas)]">
       <SideNav collapsed={sidebarCollapsed} />
 
-      <div className="flex flex-col flex-1 min-w-0 min-h-screen">
+      <div
+        className={`flex flex-col flex-1 min-w-0 min-h-0 ${
+          isCommandCenter ? 'h-screen overflow-hidden' : 'min-h-screen'
+        }`}
+      >
         {!isCreateApp && !isAgents && !isBilling && !isFleetDetail && !isCommandCenter && (
           <TopBar
             title={title}
@@ -187,7 +191,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           children
         ) : (
           <DashboardProvider role={role} site={site}>
-            <div className="flex flex-col flex-1 w-full">
+            <div
+              className={`flex flex-col flex-1 w-full min-h-0 ${
+                isCommandCenter ? 'overflow-hidden' : ''
+              }`}
+            >
               {children}
             </div>
           </DashboardProvider>

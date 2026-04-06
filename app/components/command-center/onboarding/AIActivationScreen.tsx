@@ -41,7 +41,7 @@ const mateConfigs: MateConfig[] = [
     learningSummary: 'Learned your team\'s schedules and SLA rules. Found 12 technicians.',
     milestones: ['Scanning work orders…', 'Analyzing scheduling patterns…', 'Learning SLA thresholds…', 'Mapping technician skills…'],
     integrations: [
-      { id: 'google-calendar', name: 'Google Calendar', logo: '/images/integrations/google-calendar.png' },
+      { id: 'google-calendar', name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' },
       { id: 'slack', name: 'Slack', logo: '/images/integrations/slack.svg' },
     ],
     inputQuestion: 'How should I handle work order assignments?',
@@ -85,7 +85,7 @@ const mateConfigs: MateConfig[] = [
     learningSummary: 'Reviewed 892 historical requests. Learned your escalation patterns.',
     milestones: ['Scanning request history…', 'Analyzing priority patterns…', 'Learning escalation rules…', 'Mapping response times…'],
     integrations: [
-      { id: 'gmail', name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { id: 'gmail', name: 'Gmail', logo: '/images/integrations/gmail.svg' },
       { id: 'slack', name: 'Slack', logo: '/images/integrations/slack.svg' },
     ],
     inputQuestion: 'When should I escalate requests?',
@@ -172,7 +172,7 @@ export function AIActivationScreen({ aiMates, onUpdateMate, onSetPreference, onC
           style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.05s forwards' }}
         >
           <h2 className="text-[20px] font-semibold text-[var(--color-neutral-12)]">
-            Creating your AIMates
+            Creating your AI-Mates
           </h2>
           <span className="text-[13px] font-medium text-[var(--color-neutral-8)] bg-[var(--color-neutral-2)] px-2.5 py-1 rounded-full">
             4 / 6

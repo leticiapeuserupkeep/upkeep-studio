@@ -33,7 +33,7 @@ const workflows: Workflow[] = [
     aiMate: { name: 'Sofia', photo: 'https://i.pravatar.cc/150?u=sofia-chen-upkeep' },
     integrations: [
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
     ],
     status: 'active',
     lastRun: '2 hours ago',
@@ -62,7 +62,7 @@ const workflows: Workflow[] = [
     aiMate: { name: 'Sofia', photo: 'https://i.pravatar.cc/150?u=sofia-chen-upkeep' },
     integrations: [
       { name: 'Google Sheets', logo: '/images/integrations/google-sheets.svg' },
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
     ],
     status: 'active',
     lastRun: '18 hours ago',
@@ -77,7 +77,7 @@ const workflows: Workflow[] = [
     aiMate: { name: 'Elena', photo: 'https://i.pravatar.cc/150?u=elena-rodriguez-upkeep' },
     integrations: [
       { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' },
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
     ],
     status: 'paused',
     lastRun: '1 week ago',
@@ -106,7 +106,7 @@ const workflows: Workflow[] = [
     aiMate: { name: 'Marcus', photo: 'https://i.pravatar.cc/150?u=marcus-johnson-upkeep' },
     integrations: [
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
     ],
     status: 'active',
     lastRun: '30 min ago',
@@ -120,7 +120,7 @@ const workflows: Workflow[] = [
     steps: 3,
     aiMate: null,
     integrations: [
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
     ],
     status: 'draft',
     lastRun: null,
@@ -135,7 +135,7 @@ const workflows: Workflow[] = [
     aiMate: { name: 'Sofia', photo: 'https://i.pravatar.cc/150?u=sofia-chen-upkeep' },
     integrations: [
       { name: 'Google Sheets', logo: '/images/integrations/google-sheets.svg' },
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
     ],
     status: 'active',
@@ -221,7 +221,7 @@ export default function WorkflowsPage() {
                     <TableHead>Workflow</TableHead>
                     <TableHead>Trigger</TableHead>
                     <TableHead className="text-center">Steps</TableHead>
-                    <TableHead>AIMate</TableHead>
+                    <TableHead>AI-Mate</TableHead>
                     <TableHead>Integrations</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Last Run</TableHead>

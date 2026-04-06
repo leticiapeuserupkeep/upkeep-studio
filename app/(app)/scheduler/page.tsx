@@ -1250,7 +1250,8 @@ export default function SchedulerPage() {
                     const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].filter(d => activeDaysSet.has(d))
                     return (
                       <div key={tpl.id} className={`rounded-xl border bg-white transition-all duration-500 ${highlightedTemplateId === tpl.id ? 'border-[#3b82f6] ring-2 ring-[#3b82f6]/20 bg-[#f0f6ff]' : tpl.active ? 'border-[#e5e7eb]' : 'border-[#f3f4f6] opacity-60'}`}>
-                        <div className="flex items-center gap-3 px-5 pt-4">
+                        {/* Row 1: Title + controls */}
+                        <div className="flex items-center gap-3 px-5 pt-4 pb-2">
                           <div className="min-w-0 flex-1 cursor-pointer" onClick={() => { setIsNewTemplate(false); setEditingTemplateId(tpl.id); setTemplateName(tpl.name); setScheduleActive(tpl.active); setTemplateFormOpen(true); setEditingShift(null); setAddingShift(false) }}>
                             <p className="text-[15px] font-semibold text-[#111827] hover:text-[#3b82f6] transition-colors">{tpl.name || 'Untitled Template'}</p>
                           </div>
@@ -1279,47 +1280,51 @@ export default function SchedulerPage() {
                             </>)}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 px-5 pb-3">
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {dayLabels.length > 0 ? dayLabels.map(d => (
-                              <span key={d} className="text-[12px] text-[#9ca3af]">{d}</span>
-                            )) : <span className="text-[12px] text-[#9ca3af]">No days</span>}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {assignedMembers.length === 0 ? (
-                              <span className="text-[12px] text-[#9ca3af]">No members assigned</span>
-                            ) : (() => {
-                              const show = assignedMembers.slice(0, 3)
-                              const more = assignedMembers.length - 3
-                              return (
-                                <div className="flex items-center">
-                                  {show.map((m, i) => {
-                                    const idx = m.name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % avColors.length
-                                    return <span key={m.id} className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-white text-[8px] font-semibold border-2 border-white shrink-0" style={{ backgroundColor: avColors[idx], marginLeft: i > 0 ? -6 : 0, zIndex: 10 - i }}>{m.avatar}</span>
-                                  })}
-                                  {more > 0 && <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-[#f3f4f6] text-[8px] font-semibold text-[#374151] border-2 border-white shrink-0" style={{ marginLeft: -6, zIndex: 6 }}>+{more}</span>}
-                                </div>
-                              )
-                            })()}
-                          </div>
-                        </div>
-                        <div className="px-5 pb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
-                          {tplShifts.map(st => (
-                            <button key={st.id}
-                              onClick={() => { setEditingTemplateId(tpl.id); setTemplateName(tpl.name); setScheduleActive(tpl.active); setTemplateFormOpen(true); setEditingShift({ ...st }); setAddingShift(false); setIsNewTemplate(false) }}
-                              className={`flex items-center gap-2 text-[12px] cursor-pointer transition-colors ${st.active ? 'text-[#374151] hover:text-[#111827]' : 'text-[#9ca3af]'}`}>
-                              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: st.color }} />
-                              <span>{st.name || 'Unnamed'}</span>
-                              <span className="text-[#9ca3af]">{shiftTimeLabel(st)}</span>
-                            </button>
-                          ))}
-                          {tplShifts.length < 6 && (
-                            <button onClick={() => { setEditingTemplateId(tpl.id); setTemplateName(tpl.name); setScheduleActive(tpl.active); setTemplateFormOpen(true); setNewShiftDraft({ id: '', name: '', color: '#3b82f6', startTime: '08:00', endTime: '17:00', spansMidnight: false, activeDays: [], breakMinutes: 0, notes: '', active: true, templateId: tpl.id }); setAddingShift(true); setEditingShift(null); setIsNewTemplate(false) }}
-                              className="text-[12px] text-[#3b82f6] underline cursor-pointer transition-colors hover:text-[#2563eb]">
-                              Add shift
-                            </button>
+
+                        {/* Row 2: Meta — days · avatars · shift count */}
+                        <div className="flex items-center gap-2.5 px-5 pb-3">
+                          <span className="text-[12px] text-[#6b7280]">
+                            {activeDaysSet.size === 7 ? 'Every day' : activeDaysSet.size === 5 && ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].every(d => activeDaysSet.has(d)) ? 'Weekdays' : activeDaysSet.size === 0 ? 'No days' : dayLabels.join(', ')}
+                          </span>
+                          <span className="text-[10px] text-[#d1d5db]">·</span>
+                          {assignedMembers.length === 0 ? (
+                            <span className="text-[12px] text-[#9ca3af]">No members</span>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex items-center">
+                                {assignedMembers.slice(0, 3).map((m, i) => {
+                                  const idx = m.name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % avColors.length
+                                  return <span key={m.id} className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full text-white text-[7px] font-semibold border-[1.5px] border-white shrink-0" style={{ backgroundColor: avColors[idx], marginLeft: i > 0 ? -5 : 0, zIndex: 10 - i }}>{m.avatar}</span>
+                                })}
+                                {assignedMembers.length > 3 && <span className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-[#f3f4f6] text-[7px] font-semibold text-[#374151] border-[1.5px] border-white shrink-0" style={{ marginLeft: -5, zIndex: 6 }}>+{assignedMembers.length - 3}</span>}
+                              </div>
+                              <span className="text-[11px] text-[#9ca3af]">{assignedMembers.length} member{assignedMembers.length !== 1 ? 's' : ''}</span>
+                            </div>
                           )}
+                          <span className="text-[10px] text-[#d1d5db]">·</span>
+                          <span className="text-[12px] text-[#6b7280]">{tplShifts.length} shift{tplShifts.length !== 1 ? 's' : ''}</span>
                         </div>
+
+                        {/* Row 3: Shift tags */}
+                        {(tplShifts.length > 0 || tplShifts.length < 6) && (
+                          <div className="flex flex-wrap items-center gap-2 px-5 pb-4 border-t border-[#f3f4f6] pt-3">
+                            {tplShifts.map(st => (
+                              <button key={st.id}
+                                onClick={() => { setEditingTemplateId(tpl.id); setTemplateName(tpl.name); setScheduleActive(tpl.active); setTemplateFormOpen(true); setEditingShift({ ...st }); setAddingShift(false); setIsNewTemplate(false) }}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border transition-all duration-150 cursor-pointer hover:shadow-sm ${st.active ? 'bg-white border-[#e5e7eb] text-[#374151] hover:border-[#d1d5db]' : 'bg-[#f9fafb] border-[#f3f4f6] text-[#9ca3af]'}`}>
+                                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: st.color }} />
+                                <span className="truncate max-w-[100px]">{st.name || 'Unnamed'}</span>
+                                <span className="text-[10px] text-[#9ca3af] font-normal">{shiftTimeLabel(st)}</span>
+                              </button>
+                            ))}
+                            {tplShifts.length < 6 && (
+                              <button onClick={() => { setEditingTemplateId(tpl.id); setTemplateName(tpl.name); setScheduleActive(tpl.active); setTemplateFormOpen(true); setNewShiftDraft({ id: '', name: '', color: '#3b82f6', startTime: '08:00', endTime: '17:00', spansMidnight: false, activeDays: [], breakMinutes: 0, notes: '', active: true, templateId: tpl.id }); setAddingShift(true); setEditingShift(null); setIsNewTemplate(false) }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium border border-dashed border-[#d1d5db] text-[#6b7280] hover:border-[#3b82f6] hover:text-[#3b82f6] cursor-pointer transition-colors">
+                                <Plus size={11} /> Add shift
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )
                   })}

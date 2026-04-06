@@ -76,7 +76,7 @@ const items: AttentionItem[] = [
     primaryAction: { label: 'Schedule PM', variant: 'warning' },
     secondaryAction: 'History',
     suggestedBy: { name: 'Marcus', photo: 'https://i.pravatar.cc/150?u=marcus-johnson-upkeep' },
-    source: { name: 'Google Calendar', logo: '/images/integrations/google-calendar.png' },
+    source: { name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' },
   },
   {
     id: '3',
@@ -119,7 +119,7 @@ export function AttentionQueue() {
           return (
             <div
               key={item.id}
-              className={`rounded-[var(--radius-lg)] border border-[var(--border-default)] border-l-[3px] ${badge.border} bg-[var(--surface-primary)] p-4 transition-shadow duration-150 hover:shadow-md`}
+              className={`rounded-l-none rounded-r-[var(--radius-2xl)] border border-[var(--border-default)] border-l-[3px] ${badge.border} bg-[var(--surface-primary)] p-4 transition-shadow duration-150 hover:shadow-md`}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">

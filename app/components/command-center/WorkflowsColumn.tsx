@@ -1,7 +1,6 @@
 'use client'
 
-import { ArrowRight, Plus, Zap } from 'lucide-react'
-import { Button } from '@/app/components/ui/Button'
+import { ArrowRight } from 'lucide-react'
 
 interface IntegrationRef {
   name: string
@@ -26,7 +25,7 @@ const workflows: WorkflowItem[] = [
     description: 'Sends PM summary to maintenance leads',
     integrations: [
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
     ],
   },
   {
@@ -47,7 +46,7 @@ const workflows: WorkflowItem[] = [
     description: 'Calculates SLA % and alerts on misses',
     integrations: [
       { name: 'Google Sheets', logo: '/images/integrations/google-sheets.svg' },
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
     ],
   },
   {
@@ -58,7 +57,7 @@ const workflows: WorkflowItem[] = [
     description: 'Imports invoices from connected vendors',
     integrations: [
       { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' },
-      { name: 'Gmail', logo: '/images/integrations/gmail.png' },
+      { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
     ],
   },
 ]
@@ -84,14 +83,11 @@ export function WorkflowsColumn({ onOpenWorkflows }: WorkflowsColumnProps) {
         {workflows.map((wf) => (
           <div
             key={wf.id}
-            className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-3 hover:shadow-sm transition-shadow duration-150"
+            className="flex items-start gap-3 rounded-[var(--radius-2xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4 hover:shadow-sm transition-shadow duration-150"
           >
-            <span className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] bg-[var(--color-neutral-2)] shrink-0 mt-0.5">
-              <Zap size={14} className="text-[var(--color-neutral-8)]" />
-            </span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="text-[13px] font-medium text-[var(--color-neutral-12)] leading-tight">{wf.title}</p>
+                <p className="text-[13px] font-medium text-[var(--color-neutral-12)] leading-tight w-full">{wf.title}</p>
                 {wf.integrations.length > 0 && (
                   <span className="inline-flex items-center gap-0.5">
                     {wf.integrations.map((integ) => (
@@ -109,10 +105,9 @@ export function WorkflowsColumn({ onOpenWorkflows }: WorkflowsColumnProps) {
         ))}
       </div>
 
-      <Button variant="secondary" size="md" className="w-full justify-center gap-1.5 mt-1">
-        <Plus size={14} />
+      <button className="w-full text-center text-[13px] font-medium text-[#3b82f6] hover:text-[#2563eb] cursor-pointer transition-colors mt-1 py-1">
         New workflow
-      </Button>
+      </button>
     </div>
   )
 }

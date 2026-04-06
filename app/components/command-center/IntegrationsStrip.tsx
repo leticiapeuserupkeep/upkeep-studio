@@ -6,9 +6,7 @@ interface Integration {
   id: string
   name: string
   logo: string
-  description: string
   connected: boolean
-  usedBy: string[]
 }
 
 const integrations: Integration[] = [
@@ -16,49 +14,37 @@ const integrations: Integration[] = [
     id: 'slack',
     name: 'Slack',
     logo: '/images/integrations/slack.svg',
-    description: 'Notifications & alerts',
     connected: true,
-    usedBy: ['Sofia', 'Marcus'],
   },
   {
     id: 'google-calendar',
     name: 'Google Calendar',
-    logo: '/images/integrations/google-calendar.png',
-    description: 'Schedules & availability',
+    logo: '/images/integrations/google-calendar.svg',
     connected: true,
-    usedBy: ['Sofia'],
   },
   {
     id: 'gmail',
     name: 'Gmail',
-    logo: '/images/integrations/gmail.png',
-    description: 'Requests & reports',
+    logo: '/images/integrations/gmail.svg',
     connected: true,
-    usedBy: ['Marcus', 'Elena'],
   },
   {
     id: 'quickbooks',
     name: 'QuickBooks',
     logo: '/images/integrations/quickbooks.svg',
-    description: 'Invoices & POs',
     connected: true,
-    usedBy: ['Elena'],
   },
   {
     id: 'microsoft-teams',
     name: 'Microsoft Teams',
     logo: '/images/integrations/teams.svg',
-    description: 'Team collaboration',
     connected: false,
-    usedBy: ['Sofia', 'Marcus'],
   },
   {
     id: 'google-sheets',
     name: 'Google Sheets',
     logo: '/images/integrations/google-sheets.svg',
-    description: 'Data export & import',
     connected: false,
-    usedBy: ['Elena'],
   },
 ]
 
@@ -78,35 +64,27 @@ export function IntegrationsStrip() {
         {connected.map((integ) => (
           <div
             key={integ.id}
-            className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-3 hover:shadow-sm transition-shadow duration-150"
+            className="flex flex-col items-center gap-2 rounded-[var(--radius-2xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-3 hover:shadow-sm transition-shadow duration-150"
           >
-            <div className="relative">
-              <img src={integ.logo} alt={integ.name} className="w-9 h-9 rounded-[var(--radius-md)] object-cover" />
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-sm ring-1 ring-[var(--border-subtle)]">
+              <img src={integ.logo} alt={integ.name} className="h-full w-full object-contain" />
               <span className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-[var(--color-success)] border-2 border-white">
                 <Check size={9} strokeWidth={3} className="text-white" />
               </span>
             </div>
             <div className="text-center">
-              <p className="text-[12px] font-medium text-[var(--color-neutral-12)] leading-tight">{integ.name}</p>
-              <p className="text-[10px] text-[var(--color-neutral-7)] mt-0.5">{integ.description}</p>
-            </div>
-            <div className="flex items-center gap-0.5">
-              {integ.usedBy.map((name) => (
-                <span key={name} className="text-[9px] text-[var(--color-neutral-7)] bg-[var(--color-neutral-2)] px-1.5 py-0.5 rounded-full">
-                  {name}
-                </span>
-              ))}
+              <p className="text-[10px] font-medium text-[var(--color-neutral-12)] leading-tight">{integ.name}</p>
             </div>
           </div>
         ))}
 
         {/* Add new integration card */}
-        <div className="flex flex-col items-center justify-center gap-2 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-neutral-5)] bg-[var(--color-neutral-1)] p-3 hover:border-[var(--color-accent-7)] hover:bg-[var(--color-accent-1)] cursor-pointer transition-all duration-150 group">
+        <div className="flex flex-col items-center justify-center gap-2 rounded-[var(--radius-2xl)] border border-dashed border-[var(--color-neutral-5)] bg-[var(--color-neutral-1)] p-3 hover:border-[var(--color-accent-7)] hover:bg-[var(--color-accent-1)] cursor-pointer transition-all duration-150 group">
           <div className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-md)] bg-[var(--color-neutral-3)] group-hover:bg-[var(--color-accent-2)] transition-colors">
             <Plus size={18} className="text-[var(--color-neutral-8)] group-hover:text-[var(--color-accent-9)] transition-colors" />
           </div>
-          <p className="text-[12px] font-medium text-[var(--color-neutral-8)] group-hover:text-[var(--color-accent-9)] transition-colors">
-            Add integration
+          <p className="text-[10px] font-medium text-[var(--color-neutral-8)] group-hover:text-[var(--color-accent-9)] transition-colors">
+            New integration
           </p>
         </div>
       </div>

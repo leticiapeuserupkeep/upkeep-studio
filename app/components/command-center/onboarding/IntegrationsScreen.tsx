@@ -30,7 +30,7 @@ const integrations: IntegrationConfig[] = [
     id: 'google-calendar',
     name: 'Google Calendar',
     description: 'Sync schedules, PM dates, and technician availability',
-    logo: '/images/integrations/google-calendar.png',
+    logo: '/images/integrations/google-calendar.svg',
     recommended: true,
     usedBy: ['Sofia'],
   },
@@ -38,7 +38,7 @@ const integrations: IntegrationConfig[] = [
     id: 'gmail',
     name: 'Gmail',
     description: 'Import requests, send reports, and vendor comms',
-    logo: '/images/integrations/gmail.png',
+    logo: '/images/integrations/gmail.svg',
     recommended: true,
     usedBy: ['Marcus', 'Elena'],
   },
@@ -117,7 +117,7 @@ export function IntegrationsScreen({ integrationState, onToggle, onComplete }: I
           className="text-[14px] text-[var(--color-neutral-8)] mb-6 opacity-0"
           style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
         >
-          Your AIMates work better with the tools you already use.
+          Your AI-Mates work better with the tools you already use.
         </p>
 
         {/* Recommended */}

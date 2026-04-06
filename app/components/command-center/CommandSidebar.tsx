@@ -46,7 +46,7 @@ export function CommandSidebar({ view, isOpen, onClose, onChangeView, initialCha
   if (!isOpen) return null
 
   return (
-    <div className="w-[380px] shrink-0 border-l border-[var(--border-default)] bg-[var(--surface-primary)] flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
+    <div className="w-[380px] shrink-0 border-l border-[var(--border-default)] bg-[var(--surface-primary)] flex flex-col overflow-hidden h-full min-h-0 max-h-[calc(100vh-3.5rem)] sticky top-0 z-20">
       {view === 'chat' && <ChatView onClose={onClose} initialMateId={initialChatMateId} />}
       {view === 'aimates' && <AIMatesView onClose={onClose} onSelectMate={(id) => { onChangeView('chat') }} />}
       {view === 'workflows' && <WorkflowsView onClose={onClose} />}
@@ -128,20 +128,20 @@ function ChatView({ onClose, initialMateId }: { onClose: () => void; initialMate
   return (
     <div className="flex h-full">
       {/* Left: Agent selector (vertical) */}
-      <div className="flex flex-col items-center gap-1 py-2 px-1.5 border-r border-[var(--border-subtle)] bg-[var(--surface-primary)] shrink-0 w-[52px]">
+      <div className="flex flex-col items-center gap-1.5 py-2 px-1.5 border-r border-[var(--border-subtle)] bg-[var(--surface-primary)] shrink-0 w-[68px]">
         {/* Multi-agent */}
         <button
           onClick={() => setSelectedId(null)}
-          className={`flex flex-col items-center gap-0.5 w-10 py-1.5 rounded-[var(--radius-lg)] cursor-pointer transition-all ${
+          className={`flex flex-col items-center gap-1 w-12 py-2 rounded-[var(--radius-lg)] cursor-pointer transition-all ${
             isMulti
               ? 'bg-[var(--color-accent-1)] border border-[var(--color-accent-7)]'
               : 'hover:bg-[var(--color-neutral-2)] border border-transparent'
           }`}
-          title="All AIMates"
+          title="All AI-Mates"
         >
-          <div className="flex -space-x-1.5">
+          <div className="flex -space-x-2">
             {EXISTING_AGENTS.slice(0, 2).map(a => (
-              <img key={a.id} src={a.photo} alt={a.firstName} className="w-5 h-5 rounded-full object-cover border border-white" />
+              <img key={a.id} src={a.photo} alt={a.firstName} className="w-7 h-7 rounded-full object-cover border-2 border-white" />
             ))}
           </div>
           <span className={`text-[9px] font-semibold ${isMulti ? 'text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-7)]'}`}>All</span>
@@ -152,7 +152,7 @@ function ChatView({ onClose, initialMateId }: { onClose: () => void; initialMate
           <button
             key={agent.id}
             onClick={() => setSelectedId(agent.id)}
-            className={`flex flex-col items-center gap-0.5 w-10 py-1.5 rounded-[var(--radius-lg)] cursor-pointer transition-all ${
+            className={`flex flex-col items-center gap-1 w-12 py-2 rounded-[var(--radius-lg)] cursor-pointer transition-all ${
               selectedId === agent.id
                 ? 'bg-[var(--color-accent-1)] border border-[var(--color-accent-7)]'
                 : 'hover:bg-[var(--color-neutral-2)] border border-transparent'
@@ -160,8 +160,8 @@ function ChatView({ onClose, initialMateId }: { onClose: () => void; initialMate
             title={`${agent.firstName} — ${agent.jobTitle}`}
           >
             <div className="relative">
-              <img src={agent.photo} alt={agent.firstName} className="w-6 h-6 rounded-full object-cover" />
-              <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${availabilityDot[agent.availability]}`} />
+              <img src={agent.photo} alt={agent.firstName} className="w-9 h-9 rounded-full object-cover" />
+              <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${availabilityDot[agent.availability]}`} />
             </div>
             <span className={`text-[9px] font-medium truncate max-w-full ${selectedId === agent.id ? 'text-[var(--color-accent-9)]' : 'text-[var(--color-neutral-7)]'}`}>{agent.firstName}</span>
           </button>
@@ -173,7 +173,7 @@ function ChatView({ onClose, initialMateId }: { onClose: () => void; initialMate
         {/* Header — pinned top */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-[var(--border-default)] bg-[var(--surface-primary)] shrink-0 z-10">
           <span className="text-[14px] font-semibold text-[var(--color-neutral-12)]">
-            {selectedMate ? `${selectedMate.firstName} ${selectedMate.lastName}` : 'AITeam Chat'}
+            {selectedMate ? `${selectedMate.firstName} ${selectedMate.lastName}` : 'AI-Team Chat'}
           </span>
           <button onClick={onClose} className="flex items-center justify-center w-7 h-7 rounded-[var(--radius-md)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors">
             <X size={15} className="text-[var(--color-neutral-7)]" />
@@ -236,7 +236,7 @@ function ChatView({ onClose, initialMateId }: { onClose: () => void; initialMate
                 onKeyDown={handleKeyDown}
                 rows={1}
                 className="flex-1 resize-none bg-transparent text-[13px] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-6)] outline-none! ring-0! shadow-none!"
-                placeholder={selectedMate ? `Ask ${selectedMate.firstName}…` : 'Ask your AITeam…'}
+                placeholder={selectedMate ? `Ask ${selectedMate.firstName}…` : 'Ask AI-Team…'}
               />
               <button className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-[var(--color-neutral-3)] cursor-pointer shrink-0">
                 <Mic size={15} className="text-[var(--color-neutral-7)]" />
@@ -274,7 +274,7 @@ function AIMatesView({ onClose, onSelectMate }: { onClose: () => void; onSelectM
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-5 h-14 border-b border-[var(--border-default)] shrink-0">
-        <h2 className="text-[16px] font-semibold text-[var(--color-neutral-12)]">AIMates</h2>
+        <h2 className="text-[16px] font-semibold text-[var(--color-neutral-12)]">AI-Mates</h2>
         <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors">
           <X size={16} className="text-[var(--color-neutral-7)]" />
         </button>
@@ -294,19 +294,19 @@ function AIMatesView({ onClose, onSelectMate }: { onClose: () => void; onSelectM
         </div>
       </div>
 
-      {/* New AIMate */}
+      {/* New AI-Mate */}
       <div className="px-5 pb-3">
         <Button variant="primary" size="md" className="w-full justify-center">
           <Plus size={14} />
-          New AIMate
+          New AI-Mate
         </Button>
       </div>
 
       {/* List */}
       <div className="flex-1 overflow-y-auto px-3">
-        <p className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-neutral-7)]">All AIMates</p>
+        <p className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-neutral-7)]">All AI-Mates</p>
 
-        {/* Multi AIMate */}
+        {/* Multi AI-Mate */}
         <button
           onClick={() => onSelectMate('team')}
           className="w-full flex items-center gap-3 px-3 py-3 rounded-[var(--radius-xl)] mb-1 cursor-pointer transition-all bg-[var(--color-accent-1)] border border-[var(--color-accent-7)] shadow-[0_0_0_1px_var(--color-accent-3)]"
@@ -317,8 +317,8 @@ function AIMatesView({ onClose, onSelectMate }: { onClose: () => void; onSelectM
             ))}
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <p className="text-[13px] font-semibold text-[var(--color-neutral-12)] truncate">Multi AIMate</p>
-            <p className="text-[11px] text-[var(--color-neutral-7)] truncate">All your AIMates</p>
+            <p className="text-[13px] font-semibold text-[var(--color-neutral-12)] truncate">Multi AI-Mate</p>
+            <p className="text-[11px] text-[var(--color-neutral-7)] truncate">All your AI-Mates</p>
           </div>
           <ChevronRight size={14} className="text-[var(--color-accent-9)] shrink-0" />
         </button>
