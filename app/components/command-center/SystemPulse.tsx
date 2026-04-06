@@ -1,6 +1,6 @@
 'use client'
 
-import { ClipboardList, Shield, AlertTriangle, Package, TrendingDown, TrendingUp } from 'lucide-react'
+import { ClipboardList, Shield, AlertTriangle, Package, TrendingDown, TrendingUp, Sparkles, Clock, DollarSign } from 'lucide-react'
 
 interface MetricCard {
   label: string
@@ -48,7 +48,7 @@ const trendColors = {
 
 export function SystemPulse() {
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 1.5fr' }}>
       {metrics.map((m) => (
         <div
           key={m.label}
@@ -67,6 +67,44 @@ export function SystemPulse() {
           </span>
         </div>
       ))}
+
+      <SupernovaSavingsCard />
+    </div>
+  )
+}
+
+function SupernovaSavingsCard() {
+  return (
+    <div className="flex flex-col gap-3 rounded-[var(--radius-lg)] border border-indigo-200 bg-gradient-to-br from-indigo-50/60 to-white p-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[12px] font-semibold text-indigo-600">Supernova savings</span>
+        <Sparkles size={18} className="text-indigo-500" />
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <Clock size={13} className="text-indigo-400 shrink-0" />
+            <span className="text-[20px] font-semibold text-[var(--color-neutral-12)] leading-tight">128h</span>
+          </div>
+          <span className="text-[11px] text-[var(--color-neutral-7)]">time saved this month</span>
+        </div>
+
+        <div className="w-px h-9 bg-[var(--border-default)]" />
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <DollarSign size={13} className="text-emerald-500 shrink-0" />
+            <span className="text-[20px] font-semibold text-[var(--color-neutral-12)] leading-tight">$12.4k</span>
+          </div>
+          <span className="text-[11px] text-[var(--color-neutral-7)]">cost reduction</span>
+        </div>
+      </div>
+
+      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--color-success)]">
+        <TrendingUp size={11} />
+        ↑ 23% vs last month
+      </span>
     </div>
   )
 }

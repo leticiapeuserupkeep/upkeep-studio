@@ -46,7 +46,7 @@ export function CommandSidebar({ view, isOpen, onClose, onChangeView, initialCha
   if (!isOpen) return null
 
   return (
-    <div className="w-[380px] shrink-0 border-l border-[var(--border-default)] bg-[var(--surface-primary)] flex flex-col h-full overflow-hidden">
+    <div className="w-[380px] shrink-0 border-l border-[var(--border-default)] bg-[var(--surface-primary)] flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 56px)' }}>
       {view === 'chat' && <ChatView onClose={onClose} initialMateId={initialChatMateId} />}
       {view === 'aimates' && <AIMatesView onClose={onClose} onSelectMate={(id) => { onChangeView('chat') }} />}
       {view === 'workflows' && <WorkflowsView onClose={onClose} />}
@@ -169,9 +169,9 @@ function ChatView({ onClose, initialMateId }: { onClose: () => void; initialMate
       </div>
 
       {/* Right: Chat area */}
-      <div className="flex flex-col flex-1 min-w-0" style={{ background: 'linear-gradient(357deg, #F0F4FF 5%, #FFFFFF 98%)' }}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 h-12 border-b border-[var(--border-default)] bg-[var(--surface-primary)] shrink-0">
+      <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden" style={{ background: 'linear-gradient(357deg, #F0F4FF 5%, #FFFFFF 98%)' }}>
+        {/* Header — pinned top */}
+        <div className="flex items-center justify-between px-4 h-12 border-b border-[var(--border-default)] bg-[var(--surface-primary)] shrink-0 z-10">
           <span className="text-[14px] font-semibold text-[var(--color-neutral-12)]">
             {selectedMate ? `${selectedMate.firstName} ${selectedMate.lastName}` : 'AITeam Chat'}
           </span>
@@ -181,7 +181,7 @@ function ChatView({ onClose, initialMateId }: { onClose: () => void; initialMate
         </div>
 
         {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5 flex flex-col gap-4">
           {showWelcome ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-5">
               <div className="flex items-center -space-x-4">
@@ -222,8 +222,8 @@ function ChatView({ onClose, initialMateId }: { onClose: () => void; initialMate
           )}
         </div>
 
-        {/* Input bar — always at bottom */}
-        <div className="px-4 pb-4 pt-2 shrink-0">
+        {/* Input bar — pinned bottom */}
+        <div className="px-4 pb-4 pt-2 shrink-0 z-10">
           <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-sm focus-within:border-[var(--color-accent-8)] focus-within:shadow-[0_0_0_3px_rgba(59,91,219,0.12)] transition-all">
             <div className="flex items-center px-3 py-2.5 gap-2">
               <button className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-[var(--color-neutral-3)] cursor-pointer shrink-0">

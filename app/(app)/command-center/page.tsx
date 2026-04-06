@@ -21,7 +21,7 @@ function getDateString(): string {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
-const ONBOARDING_DONE_KEY = 'upkeep-supernova-onboarding-done'
+const ONBOARDING_KEY = 'supernova_onboarded'
 
 export default function CommandCenterPage() {
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null)
@@ -30,13 +30,13 @@ export default function CommandCenterPage() {
   const [chatMateId, setChatMateId] = useState<string | null>(null)
 
   useEffect(() => {
-    localStorage.removeItem(ONBOARDING_DONE_KEY)
-    localStorage.removeItem('upkeep-supernova-onboarding')
-    setShowOnboarding(true)
+    const done = localStorage.getItem(ONBOARDING_KEY) === 'true'
+    setShowOnboarding(!done)
+    if (done) setSkipAnimations(false)
   }, [])
 
   const handleOnboardingComplete = useCallback(() => {
-    localStorage.setItem(ONBOARDING_DONE_KEY, '1')
+    localStorage.setItem(ONBOARDING_KEY, 'true')
     window.dispatchEvent(new Event('supernova-onboarding-complete'))
     setSkipAnimations(true)
     setShowOnboarding(false)
@@ -86,17 +86,30 @@ export default function CommandCenterPage() {
           <h1 className="text-[18px] font-medium text-[var(--color-neutral-12)]">Command Center</h1>
         </div>
 
-        <button
-          onClick={() => toggleSidebar('chat')}
-          className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[var(--radius-lg)] text-[13px] font-semibold cursor-pointer transition-all duration-150 ${
-            activeSidebar === 'chat'
-              ? 'bg-[var(--color-accent-10)] text-white shadow-sm'
-              : 'bg-[var(--color-accent-9)] text-white hover:bg-[var(--color-accent-10)]'
-          }`}
-        >
-          <MessageCircle size={15} />
-          Ask AI Team
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              localStorage.removeItem(ONBOARDING_KEY)
+              localStorage.removeItem('upkeep-supernova-onboarding')
+              setSkipAnimations(false)
+              setShowOnboarding(true)
+            }}
+            className="text-[12px] font-medium text-[var(--color-neutral-7)] hover:text-[var(--color-neutral-9)] cursor-pointer transition-colors"
+          >
+            Test Onboarding
+          </button>
+          <button
+            onClick={() => toggleSidebar('chat')}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[var(--radius-lg)] text-[13px] font-semibold cursor-pointer transition-all duration-150 ${
+              activeSidebar === 'chat'
+                ? 'bg-[var(--color-accent-10)] text-white shadow-sm'
+                : 'bg-[var(--color-accent-9)] text-white hover:bg-[var(--color-accent-10)]'
+            }`}
+          >
+            <MessageCircle size={15} />
+            Ask AI Team
+          </button>
+        </div>
       </header>
 
       {/* ── Body: Main + Sidebar inline ── */}

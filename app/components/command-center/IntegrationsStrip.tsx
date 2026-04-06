@@ -18,7 +18,7 @@ const integrations: Integration[] = [
     logo: '/images/integrations/slack.svg',
     description: 'Notifications & alerts',
     connected: true,
-    usedBy: ['Sam', 'Marcus'],
+    usedBy: ['Sofia', 'Marcus'],
   },
   {
     id: 'google-calendar',
@@ -26,7 +26,7 @@ const integrations: Integration[] = [
     logo: '/images/integrations/google-calendar.png',
     description: 'Schedules & availability',
     connected: true,
-    usedBy: ['Sam'],
+    usedBy: ['Sofia'],
   },
   {
     id: 'gmail',
@@ -50,7 +50,7 @@ const integrations: Integration[] = [
     logo: '/images/integrations/teams.svg',
     description: 'Team collaboration',
     connected: false,
-    usedBy: ['Sam', 'Marcus'],
+    usedBy: ['Sofia', 'Marcus'],
   },
   {
     id: 'google-sheets',

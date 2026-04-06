@@ -51,7 +51,7 @@ export default function AgentsPage() {
   const [chatInput, setChatInput] = useState('')
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>('idle')
   const [pendingTeammate, setPendingTeammate] = useState<Teammate | null>(null)
-  const [addedTeammates, setAddedTeammates] = useState<Set<string>>(new Set(EXISTING_AGENTS.map(t => t.id)))
+  const [addedTeammates, setAddedTeammates] = useState<Set<string>>(new Set([...EXISTING_AGENTS.map(t => t.id), 'elena']))
   const [isThinking, setIsThinking] = useState(false)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)

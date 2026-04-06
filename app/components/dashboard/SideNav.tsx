@@ -163,14 +163,14 @@ function CollapsedIcon({ item, active, label }: { item: NavItem; active: boolean
   return inner
 }
 
-const ONBOARDING_DONE_KEY = 'upkeep-supernova-onboarding-done'
+const ONBOARDING_KEY = 'supernova_onboarded'
 
 export function SideNav({ collapsed }: SideNavProps) {
   const pathname = usePathname()
   const [supernovaUnlocked, setSupernovaUnlocked] = useState(false)
 
   useEffect(() => {
-    const check = () => setSupernovaUnlocked(localStorage.getItem(ONBOARDING_DONE_KEY) === '1')
+    const check = () => setSupernovaUnlocked(localStorage.getItem(ONBOARDING_KEY) === 'true')
     check()
     window.addEventListener('supernova-onboarding-complete', check)
     window.addEventListener('storage', check)
@@ -179,6 +179,13 @@ export function SideNav({ collapsed }: SideNavProps) {
       window.removeEventListener('storage', check)
     }
   }, [])
+
+  const handleReplaySetup = () => {
+    localStorage.removeItem(ONBOARDING_KEY)
+    localStorage.removeItem('upkeep-supernova-onboarding')
+    setSupernovaUnlocked(false)
+    window.location.href = '/command-center'
+  }
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -259,17 +266,11 @@ export function SideNav({ collapsed }: SideNavProps) {
                     </Collapsible.Trigger>
                     <Collapsible.Content className="nav-collapsible-content overflow-hidden">
                       {section.items.map((item) => {
-                        const isSupernova = section.title === 'SUPERNOVA'
-                        const isEntryPoint = item.label === 'AI Dashboard'
-                        const locked = isSupernova && !isEntryPoint && !supernovaUnlocked
-
-                        const active = !locked && isActive(pathname, item.href, item.label)
+                        const active = isActive(pathname, item.href, item.label)
                         const classes = `flex items-center gap-2 w-full px-2 h-8 rounded-[var(--radius-sm)] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-default)] ${
-                          locked
-                            ? 'opacity-40 cursor-not-allowed font-medium text-[var(--color-neutral-8)]'
-                            : active
-                              ? 'bg-[var(--color-neutral-5)] font-semibold text-[var(--color-neutral-12)] cursor-pointer'
-                              : 'font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-4)] cursor-pointer'
+                          active
+                            ? 'bg-[var(--color-neutral-5)] font-semibold text-[var(--color-neutral-12)] cursor-pointer'
+                            : 'font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-4)] cursor-pointer'
                         }`
 
                         const inner = (
@@ -278,19 +279,11 @@ export function SideNav({ collapsed }: SideNavProps) {
                             <span className="flex-1 text-left text-[length:var(--font-size-base)] leading-5 truncate">
                               {item.label}
                             </span>
-                            {item.dot && !locked && (
+                            {item.dot && (
                               <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent-9)] shrink-0" />
                             )}
                           </>
                         )
-
-                        if (locked) {
-                          return (
-                            <span key={item.label} className={classes} aria-disabled="true">
-                              {inner}
-                            </span>
-                          )
-                        }
 
                         if (item.href) {
                           return (
@@ -306,6 +299,14 @@ export function SideNav({ collapsed }: SideNavProps) {
                           </button>
                         )
                       })}
+                      {section.title === 'SUPERNOVA' && supernovaUnlocked && (
+                        <button
+                          onClick={handleReplaySetup}
+                          className="flex items-center gap-2 w-full px-2 h-7 mt-1 text-[11px] font-medium text-[var(--color-neutral-7)] hover:text-[var(--color-neutral-9)] cursor-pointer transition-colors"
+                        >
+                          Replay setup
+                        </button>
+                      )}
                     </Collapsible.Content>
                   </Collapsible.Root>
                 )

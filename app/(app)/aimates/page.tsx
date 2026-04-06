@@ -24,6 +24,7 @@ interface AIMateRow {
   skill: string
   skillColor: string
   skillBg: string
+  mode: string
   status: 'active' | 'learning' | 'inactive'
   integrations: IntegrationRef[]
   tasksToday: number
@@ -39,6 +40,7 @@ const aiMates: AIMateRow[] = [
     skill: 'Scheduling',
     skillColor: 'text-blue-700',
     skillBg: 'bg-blue-50 border-blue-200',
+    mode: 'Auto-assign',
     status: 'active',
     integrations: [
       { name: 'Google Calendar', logo: '/images/integrations/google-calendar.png' },
@@ -55,6 +57,7 @@ const aiMates: AIMateRow[] = [
     skill: 'Triage',
     skillColor: 'text-amber-700',
     skillBg: 'bg-amber-50 border-amber-200',
+    mode: 'Auto-escalate · 4h threshold',
     status: 'active',
     integrations: [
       { name: 'Gmail', logo: '/images/integrations/gmail.png' },
@@ -71,6 +74,7 @@ const aiMates: AIMateRow[] = [
     skill: 'Inventory',
     skillColor: 'text-emerald-700',
     skillBg: 'bg-emerald-50 border-emerald-200',
+    mode: 'Auto-reorder · approval >$500',
     status: 'active',
     integrations: [
       { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' },
@@ -87,6 +91,7 @@ const aiMates: AIMateRow[] = [
     skill: 'Inventory',
     skillColor: 'text-emerald-700',
     skillBg: 'bg-emerald-50 border-emerald-200',
+    mode: 'Suggest only',
     status: 'active',
     integrations: [
       { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' },
@@ -102,6 +107,7 @@ const aiMates: AIMateRow[] = [
     skill: 'Compliance',
     skillColor: 'text-purple-700',
     skillBg: 'bg-purple-50 border-purple-200',
+    mode: 'Suggest only',
     status: 'learning',
     integrations: [
       { name: 'Google Sheets', logo: '/images/integrations/google-sheets.svg' },
@@ -184,6 +190,7 @@ export default function AIMatesPage() {
                   <TableRow>
                     <TableHead>AIMate</TableHead>
                     <TableHead>Skill</TableHead>
+                    <TableHead>Mode</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Integrations</TableHead>
                     <TableHead className="text-center">Today</TableHead>
@@ -212,6 +219,9 @@ export default function AIMatesPage() {
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${mate.skillBg} ${mate.skillColor}`}>
                             {mate.skill}
                           </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-[11px] text-[var(--color-neutral-7)]">{mate.mode}</span>
                         </TableCell>
                         <TableCell>
                           <span className={`text-[12px] font-medium ${status.text}`}>{status.label}</span>

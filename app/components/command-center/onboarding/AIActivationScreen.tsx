@@ -33,11 +33,11 @@ interface MateConfig {
 const mateConfigs: MateConfig[] = [
   {
     id: 'sam',
-    name: 'Sam',
+    name: 'Sofia',
     skill: 'Scheduling',
     skillColor: 'text-blue-700',
     skillBg: 'bg-blue-50 border-blue-200',
-    photo: 'https://i.pravatar.cc/150?u=sam-scheduler-upkeep',
+    photo: 'https://i.pravatar.cc/150?u=sofia-chen-upkeep',
     learningSummary: 'Learned your team\'s schedules and SLA rules. Found 12 technicians.',
     milestones: ['Scanning work orders…', 'Analyzing scheduling patterns…', 'Learning SLA thresholds…', 'Mapping technician skills…'],
     integrations: [
@@ -82,7 +82,7 @@ const mateConfigs: MateConfig[] = [
     skillColor: 'text-amber-700',
     skillBg: 'bg-amber-50 border-amber-200',
     photo: 'https://i.pravatar.cc/150?u=marcus-johnson-upkeep',
-    learningSummary: 'Learned request categories and escalation rules. 8 priority tiers mapped.',
+    learningSummary: 'Reviewed 892 historical requests. Learned your escalation patterns.',
     milestones: ['Scanning request history…', 'Analyzing priority patterns…', 'Learning escalation rules…', 'Mapping response times…'],
     integrations: [
       { id: 'gmail', name: 'Gmail', logo: '/images/integrations/gmail.png' },

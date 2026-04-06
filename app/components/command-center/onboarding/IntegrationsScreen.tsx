@@ -24,7 +24,7 @@ const integrations: IntegrationConfig[] = [
     description: 'Notifications, alerts, and work order updates',
     logo: '/images/integrations/slack.svg',
     recommended: true,
-    usedBy: ['Sam', 'Marcus'],
+    usedBy: ['Sofia', 'Marcus'],
   },
   {
     id: 'google-calendar',
@@ -32,7 +32,7 @@ const integrations: IntegrationConfig[] = [
     description: 'Sync schedules, PM dates, and technician availability',
     logo: '/images/integrations/google-calendar.png',
     recommended: true,
-    usedBy: ['Sam'],
+    usedBy: ['Sofia'],
   },
   {
     id: 'gmail',
@@ -48,7 +48,7 @@ const integrations: IntegrationConfig[] = [
     description: 'Team notifications and work order collaboration',
     logo: '/images/integrations/teams.svg',
     recommended: false,
-    usedBy: ['Sam', 'Marcus'],
+    usedBy: ['Sofia', 'Marcus'],
   },
   {
     id: 'google-sheets',

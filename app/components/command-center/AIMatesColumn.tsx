@@ -16,6 +16,7 @@ interface AIMatePreview {
   skillColor: string
   skillBg: string
   activity: string
+  mode: string
   integrations: IntegrationRef[]
 }
 
@@ -28,6 +29,7 @@ const aiMates: AIMatePreview[] = [
     skillColor: 'text-blue-700',
     skillBg: 'bg-blue-50 border-blue-200',
     activity: 'Assigned 14 WOs today',
+    mode: 'Auto-assign',
     integrations: [
       { name: 'Google Calendar', logo: '/images/integrations/google-calendar.png' },
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
@@ -41,6 +43,7 @@ const aiMates: AIMatePreview[] = [
     skillColor: 'text-emerald-700',
     skillBg: 'bg-emerald-50 border-emerald-200',
     activity: 'Reordered 3 parts',
+    mode: 'Auto-reorder · approval >$500',
     integrations: [
       { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' },
       { name: 'Google Sheets', logo: '/images/integrations/google-sheets.svg' },
@@ -54,6 +57,7 @@ const aiMates: AIMatePreview[] = [
     skillColor: 'text-amber-700',
     skillBg: 'bg-amber-50 border-amber-200',
     activity: '8 requests sorted',
+    mode: 'Auto-escalate · 4h threshold',
     integrations: [
       { name: 'Gmail', logo: '/images/integrations/gmail.png' },
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
@@ -127,6 +131,7 @@ export function AIMatesColumn({ onOpenChat, onManage }: AIMatesColumnProps) {
                   )}
                 </div>
                 <span className="text-[11px] text-[var(--color-neutral-8)]">{mate.activity}</span>
+                <span className="text-[11px] text-[var(--color-neutral-7)]">Mode: {mate.mode}</span>
               </div>
               <button
                 onClick={() => onOpenChat?.(mate.id)}

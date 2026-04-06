@@ -292,7 +292,7 @@ export function getTeammateGreeting(teammate: Teammate): string {
     case 'marcus':
       return `Hey Leti. I'm ${teammate.firstName} — I focus on maintenance analytics and PM scheduling. I like keeping things efficient and data-driven. Let's optimize your operations.`
     case 'elena':
-      return `Hi Leti! I'm ${teammate.firstName}. I handle request coordination and make sure nothing falls through the cracks. I'm responsive and always keeping stakeholders in the loop.`
+      return `Hi Leti! I'm Elena. I manage inventory, track stock levels, and handle reorders. I'll flag anything that needs your attention before it becomes a stockout.`
     case 'david':
       return `Hello Leti. I'm ${teammate.firstName}. I track inventory levels, optimize reorder points, and make sure you never run out of critical parts. Every detail matters.`
     case 'amanda':
@@ -318,9 +318,9 @@ export function getTeammateWelcomeActions(teammate: Teammate): ActionOption[] {
       ]
     case 'elena':
       return [
-        { id: '1', label: 'Show me pending requests', action: 'show_requests' },
-        { id: '2', label: 'Triage today\'s incoming requests', action: 'triage_today' },
-        { id: '3', label: 'Update stakeholders on critical items', action: 'update_stakeholders' },
+        { id: '1', label: 'What parts are running low?', action: 'check_low_stock' },
+        { id: '2', label: 'Show me recent reorders', action: 'show_reorders' },
+        { id: '3', label: 'Any vendor issues this week?', action: 'vendor_issues' },
       ]
     case 'david':
       return [
