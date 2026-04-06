@@ -25,17 +25,20 @@ const ONBOARDING_DONE_KEY = 'upkeep-supernova-onboarding-done'
 
 export default function CommandCenterPage() {
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null)
+  const [skipAnimations, setSkipAnimations] = useState(false)
   const [activeSidebar, setActiveSidebar] = useState<SidebarView | null>(null)
   const [chatMateId, setChatMateId] = useState<string | null>(null)
 
   useEffect(() => {
-    const done = localStorage.getItem(ONBOARDING_DONE_KEY) === '1'
-    setShowOnboarding(!done)
+    localStorage.removeItem(ONBOARDING_DONE_KEY)
+    localStorage.removeItem('upkeep-supernova-onboarding')
+    setShowOnboarding(true)
   }, [])
 
   const handleOnboardingComplete = useCallback(() => {
     localStorage.setItem(ONBOARDING_DONE_KEY, '1')
     window.dispatchEvent(new Event('supernova-onboarding-complete'))
+    setSkipAnimations(true)
     setShowOnboarding(false)
   }, [])
 
@@ -103,8 +106,8 @@ export default function CommandCenterPage() {
           <div className="w-full max-w-[1400px] mx-auto px-6 py-6 space-y-6">
             {/* Greeting */}
             <div
-              className="opacity-0"
-              style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.05s forwards' }}
+              className={skipAnimations ? '' : 'opacity-0'}
+              style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.05s forwards' }}
             >
               <h2 className="text-[22px] font-medium text-[var(--color-neutral-12)]">
                 {getGreeting()}, Leti
@@ -116,18 +119,18 @@ export default function CommandCenterPage() {
 
             {/* System Pulse */}
             <div
-              className="opacity-0"
-              style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
+              className={skipAnimations ? '' : 'opacity-0'}
+              style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
             >
               <SystemPulse />
             </div>
 
             {/* 3-Column Grid */}
             <div
-              className="grid gap-5 opacity-0"
+              className={`grid gap-8 ${skipAnimations ? '' : 'opacity-0'}`}
               style={{
                 gridTemplateColumns: '1.3fr 1fr 0.9fr',
-                animation: 'fadeInUp 0.4s var(--ease-default) 0.15s forwards',
+                ...(skipAnimations ? {} : { animation: 'fadeInUp 0.4s var(--ease-default) 0.15s forwards' }),
               }}
             >
               <AttentionQueue />
@@ -137,8 +140,8 @@ export default function CommandCenterPage() {
 
             {/* Integrations */}
             <div
-              className="opacity-0"
-              style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.2s forwards' }}
+              className={skipAnimations ? '' : 'opacity-0'}
+              style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.2s forwards' }}
             >
               <IntegrationsStrip />
             </div>
