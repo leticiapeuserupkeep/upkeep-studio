@@ -2,6 +2,7 @@
 
 import { ArrowRight, MessageCircle } from 'lucide-react'
 import { EXISTING_AGENTS } from '@/app/lib/agents-data'
+import { WorkflowsColumn } from './WorkflowsColumn'
 
 interface IntegrationRef {
   name: string
@@ -85,9 +86,10 @@ const handledActions: HandledAction[] = [
 interface AIMatesColumnProps {
   onOpenChat?: (mateId?: string) => void
   onManage?: () => void
+  onOpenWorkflows?: () => void
 }
 
-export function AIMatesColumn({ onOpenChat, onManage }: AIMatesColumnProps) {
+export function AIMatesColumn({ onOpenChat, onManage, onOpenWorkflows }: AIMatesColumnProps) {
   return (
     <div className="flex flex-col gap-6">
       {/* AI-Mates */}
@@ -102,7 +104,7 @@ export function AIMatesColumn({ onOpenChat, onManage }: AIMatesColumnProps) {
           </button>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           {aiMates.map((mate) => (
             <div
               key={mate.id}
@@ -180,6 +182,9 @@ export function AIMatesColumn({ onOpenChat, onManage }: AIMatesColumnProps) {
           </div>
         </div>
       </div>
+
+      {/* Scheduled Workflows */}
+      <WorkflowsColumn onOpenWorkflows={onOpenWorkflows} />
     </div>
   )
 }

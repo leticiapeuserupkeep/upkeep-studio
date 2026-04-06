@@ -5,8 +5,8 @@ import { PanelLeft, MessageCircle } from 'lucide-react'
 import { SystemPulse } from '@/app/components/command-center/SystemPulse'
 import { AttentionQueue } from '@/app/components/command-center/AttentionQueue'
 import { AIMatesColumn } from '@/app/components/command-center/AIMatesColumn'
-import { WorkflowsColumn } from '@/app/components/command-center/WorkflowsColumn'
-import { IntegrationsStrip } from '@/app/components/command-center/IntegrationsStrip'
+// WorkflowsColumn is now rendered inside AIMatesColumn
+// IntegrationsStrip is now rendered inside AttentionQueue
 import { CommandSidebar, type SidebarView } from '@/app/components/command-center/CommandSidebar'
 import { OnboardingFlow } from '@/app/components/command-center/onboarding/OnboardingFlow'
 
@@ -28,6 +28,7 @@ export default function CommandCenterPage() {
   const [skipAnimations, setSkipAnimations] = useState(false)
   const [activeSidebar, setActiveSidebar] = useState<SidebarView | null>(null)
   const [chatMateId, setChatMateId] = useState<string | null>(null)
+  const [chatInitialMessage, setChatInitialMessage] = useState<string | null>(null)
 
   useEffect(() => {
     const done = localStorage.getItem(ONBOARDING_KEY) === 'true'
@@ -50,10 +51,12 @@ export default function CommandCenterPage() {
   const closeSidebar = useCallback(() => {
     setActiveSidebar(null)
     setChatMateId(null)
+    setChatInitialMessage(null)
   }, [])
 
-  const openChatWith = useCallback((mateId?: string) => {
+  const openChatWith = useCallback((mateId?: string, initialMessage?: string) => {
     setChatMateId(mateId ?? null)
+    setChatInitialMessage(initialMessage ?? null)
     setActiveSidebar('chat')
   }, [])
 
@@ -138,25 +141,16 @@ export default function CommandCenterPage() {
               <SystemPulse />
             </div>
 
-            {/* 3-Column Grid */}
+            {/* 2-Column Grid */}
             <div
               className={`grid gap-8 ${skipAnimations ? '' : 'opacity-0'}`}
               style={{
-                gridTemplateColumns: '1.3fr 1fr 0.9fr',
-                ...(skipAnimations ? {} : { animation: 'fadeInUp 0.4s var(--ease-default) 0.15s forwards' }),
+                gridTemplateColumns: '1.6fr 1fr',
+                ...(skipAnimations ? {} : { animation: 'fadeInUp 0.4s var(--ease-default) 0.18s forwards' }),
               }}
             >
-              <AttentionQueue />
-              <AIMatesColumn onOpenChat={openChatWith} onManage={openManage} />
-              <WorkflowsColumn onOpenWorkflows={openWorkflows} />
-            </div>
-
-            {/* Integrations */}
-            <div
-              className={skipAnimations ? '' : 'opacity-0'}
-              style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.2s forwards' }}
-            >
-              <IntegrationsStrip />
+              <AttentionQueue onOpenChat={openChatWith} />
+              <AIMatesColumn onOpenChat={openChatWith} onManage={openManage} onOpenWorkflows={openWorkflows} />
             </div>
           </div>
         </main>
@@ -168,6 +162,7 @@ export default function CommandCenterPage() {
           onClose={closeSidebar}
           onChangeView={setActiveSidebar}
           initialChatMateId={chatMateId}
+          initialChatMessage={chatInitialMessage}
         />
       </div>
     </div>

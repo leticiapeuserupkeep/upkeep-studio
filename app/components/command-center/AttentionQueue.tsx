@@ -1,38 +1,24 @@
 'use client'
 
-import { ArrowUpRight, ChevronDown, Clock } from 'lucide-react'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from '@/app/components/ui/DropdownMenu'
+import { useState } from 'react'
+import { Clock, ChevronDown, Check, MessageCircle, User, Mail, Calendar, Package } from 'lucide-react'
+import { IntegrationsStrip } from './IntegrationsStrip'
 
-interface IntegrationRef {
-  name: string
-  logo: string
-}
+/* ── Types ── */
 
-interface SuggestedBy {
-  name: string
-  photo: string
-}
+interface IntegrationRef { name: string; logo: string }
+interface SuggestedBy { name: string; photo: string }
 
-interface Assignee {
+interface Suggestion {
   id: string
-  name: string
-  photo: string
-  role: string
-  recommended?: boolean
-}
-
-interface PrimaryAction {
-  label: string
-  variant: 'danger' | 'warning' | 'info'
-  type?: 'assign' | 'default'
-  assignees?: Assignee[]
+  icon: 'assign' | 'email' | 'schedule' | 'inventory'
+  title: string
+  badge?: string
+  reasoning: string
+  emailDraft?: { to: string; subject: string; body: string }
+  acceptLabel: string
+  altLabel?: string
+  status: 'pending' | 'accepted' | 'rejected'
 }
 
 interface AttentionItem {
@@ -42,18 +28,14 @@ interface AttentionItem {
   title: string
   description: string
   timeLeft?: string
-  primaryAction: PrimaryAction
-  secondaryAction?: string
-  suggestedBy?: SuggestedBy
-  source?: IntegrationRef
+  suggestedBy: SuggestedBy
+  source?: IntegrationRef[]
+  pillLabel: string
+  suggestions: Suggestion[]
+  chatOpener: string
 }
 
-const teamMembers: Assignee[] = [
-  { id: 'maria', name: 'Maria Santos', photo: 'https://i.pravatar.cc/150?u=maria-santos-upkeep', role: 'HVAC Technician', recommended: true },
-  { id: 'james', name: 'James Park', photo: 'https://i.pravatar.cc/150?u=james-park-upkeep', role: 'Senior Technician' },
-  { id: 'alex', name: 'Alex Rivera', photo: 'https://i.pravatar.cc/150?u=alex-rivera-upkeep', role: 'Maintenance Tech' },
-  { id: 'sarah', name: 'Sarah Chen', photo: 'https://i.pravatar.cc/150?u=sarah-chen-upkeep', role: 'Facilities Lead' },
-]
+/* ── Data ── */
 
 const items: AttentionItem[] = [
   {
@@ -63,9 +45,26 @@ const items: AttentionItem[] = [
     title: 'HVAC unit failure — Building A',
     description: 'Cooling system down. Immediate assignment needed.',
     timeLeft: '2h left',
-    primaryAction: { label: 'Assign to', variant: 'danger', type: 'assign', assignees: teamMembers },
     suggestedBy: { name: 'Sofia', photo: 'https://i.pravatar.cc/150?u=sofia-chen-upkeep' },
-    source: { name: 'Slack', logo: '/images/integrations/slack.svg' },
+    source: [
+      { name: 'Slack', logo: '/images/integrations/slack.svg' },
+      { name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' },
+    ],
+    pillLabel: 'Sofia has suggestions',
+    suggestions: [
+      {
+        id: 's1', icon: 'assign', title: 'Assign to John Reeves', badge: '⏱ 2h SLA',
+        reasoning: '**John is available now** and **0.8 mi** from Building A. His last 3 WOs of this type were HVAC jobs — all resolved within SLA.',
+        acceptLabel: 'Assign John', altLabel: 'Assign', status: 'pending',
+      },
+      {
+        id: 's2', icon: 'email', title: 'Notify by Email',
+        reasoning: "I'll send a heads-up to the Building A manager so tenants know HVAC is being addressed. Helps prevent duplicate reports.",
+        emailDraft: { to: 'mgr-buildingA@company.com', subject: 'HVAC repair in progress — Building A', body: 'Hi — a technician has been assigned to the HVAC unit failure in Building A. ETA is within 2 hours. We\'ll update you once resolved.' },
+        acceptLabel: 'Send email', altLabel: 'Edit', status: 'pending',
+      },
+    ],
+    chatOpener: "I flagged WO-4521 because the SLA window is closing in 2 hours. I've identified John Reeves as the best available technician — he's nearby and has HVAC experience. Want me to assign him?",
   },
   {
     id: '2',
@@ -73,10 +72,19 @@ const items: AttentionItem[] = [
     reference: 'Asset #1847',
     title: 'Compressor #4 vibration pattern',
     description: 'Bearing wear detected. Failure predicted in 2–3 weeks.',
-    primaryAction: { label: 'Schedule PM', variant: 'warning' },
-    secondaryAction: 'History',
     suggestedBy: { name: 'Marcus', photo: 'https://i.pravatar.cc/150?u=marcus-johnson-upkeep' },
-    source: { name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' },
+    source: [
+      { name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' },
+    ],
+    pillLabel: 'Marcus has suggestions',
+    suggestions: [
+      {
+        id: 's3', icon: 'schedule', title: 'Schedule preventive maintenance',
+        reasoning: "Vibration data shows **bearing degradation at 73%**. Historical pattern suggests failure within **2–3 weeks**. Scheduling a PM now avoids unplanned downtime estimated at **$4,200/day**.",
+        acceptLabel: 'Schedule PM', altLabel: 'Pick date', status: 'pending',
+      },
+    ],
+    chatOpener: "I detected an anomaly in Compressor #4's vibration signature. The bearing wear pattern matches 3 previous failures in your fleet. I'd recommend scheduling preventive maintenance within the next week.",
   },
   {
     id: '3',
@@ -84,10 +92,20 @@ const items: AttentionItem[] = [
     reference: 'PO-892',
     title: 'Part reorder — $1,240',
     description: '15× filters above auto-approval threshold.',
-    primaryAction: { label: 'Approve', variant: 'info' },
-    secondaryAction: 'Modify',
     suggestedBy: { name: 'Elena', photo: 'https://i.pravatar.cc/150?u=elena-rodriguez-upkeep' },
-    source: { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' },
+    source: [
+      { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' },
+      { name: 'Slack', logo: '/images/integrations/slack.svg' },
+    ],
+    pillLabel: 'Elena recommends approval',
+    suggestions: [
+      {
+        id: 's4', icon: 'inventory', title: 'Approve filter reorder', badge: '$1,240',
+        reasoning: "Current stock is **3 units** — below the **15-unit minimum**. Usage rate is **4/week**, so you'll run out in **5 days**. Vendor price is **8% below** market average. Recommended qty: 15.",
+        acceptLabel: 'Approve reorder', altLabel: 'Adjust qty', status: 'pending',
+      },
+    ],
+    chatOpener: "PO-892 is a reorder for 15 air filters at $1,240. Current stock will last about 5 days at your usage rate. The vendor's price is competitive — 8% below average. Want me to approve it?",
   },
 ]
 
@@ -97,128 +115,268 @@ const badgeConfig = {
   approval: { label: 'Approval', bg: 'bg-blue-50 text-blue-700 border-blue-200', border: 'border-l-blue-500' },
 }
 
-const actionBg = {
-  danger: 'bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)] text-white',
-  warning: 'bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)] text-white',
-  info: 'bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)] text-white',
+const suggestionIconConfig = {
+  assign: { bg: 'bg-blue-100', color: 'text-blue-600', Icon: User, image: null },
+  email: { bg: 'bg-transparent', color: '', Icon: Mail, image: '/images/integrations/gmail.svg' },
+  schedule: { bg: 'bg-amber-100', color: 'text-amber-600', Icon: Calendar, image: null },
+  inventory: { bg: 'bg-green-100', color: 'text-green-600', Icon: Package, image: null },
 }
 
-export function AttentionQueue() {
+/* ── Component ── */
+
+interface AttentionQueueProps {
+  onOpenChat?: (mateId: string, initialMessage?: string) => void
+}
+
+export function AttentionQueue({ onOpenChat }: AttentionQueueProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [suggestions, setSuggestions] = useState<Record<string, Suggestion[]>>(
+    Object.fromEntries(items.map(i => [i.id, i.suggestions.map(s => ({ ...s }))]))
+  )
+
+  const handleAccept = (itemId: string, sugId: string) => {
+    setSuggestions(p => ({
+      ...p,
+      [itemId]: p[itemId].map(s => s.id === sugId ? { ...s, status: 'accepted' as const } : s),
+    }))
+  }
+
+  const handleReject = (itemId: string, sugId: string) => {
+    setSuggestions(p => ({
+      ...p,
+      [itemId]: p[itemId].map(s => s.id === sugId ? { ...s, status: 'rejected' as const } : s),
+    }))
+    setTimeout(() => {
+      setSuggestions(p => ({
+        ...p,
+        [itemId]: p[itemId].filter(s => s.id !== sugId),
+      }))
+    }, 200)
+  }
+
+  const handleAcceptAll = (itemId: string) => {
+    setSuggestions(p => ({
+      ...p,
+      [itemId]: p[itemId].map(s => ({ ...s, status: 'accepted' as const })),
+    }))
+  }
+
+  const openChat = (item: AttentionItem) => {
+    const mateId = item.suggestedBy.name.toLowerCase()
+    onOpenChat?.(mateId, item.chatOpener)
+  }
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">Needs your attention</h3>
-          <span className="text-[12px] font-medium text-[var(--color-neutral-8)]">{items.length} items</span>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">Needs your attention</h3>
+            <span className="text-[12px] font-medium text-[var(--color-neutral-8)]">{items.length} items</span>
+          </div>
         </div>
-      </div>
 
-      <div className="flex flex-col gap-2.5">
-        {items.map((item) => {
-          const badge = badgeConfig[item.type]
-          return (
-            <div
-              key={item.id}
-              className={`rounded-l-none rounded-r-[var(--radius-2xl)] border border-[var(--border-default)] border-l-[3px] ${badge.border} bg-[var(--surface-primary)] p-4 transition-shadow duration-150 hover:shadow-md`}
-            >
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${badge.bg}`}>
-                    {badge.label}
-                  </span>
-                  <span className="text-[12px] font-medium text-[var(--color-neutral-8)]">{item.reference}</span>
+        <div className="flex flex-col gap-2.5">
+          {items.map((item) => {
+            const badge = badgeConfig[item.type]
+            const isExpanded = expandedId === item.id
+            const itemSugs = suggestions[item.id] || []
+            const pendingSugs = itemSugs.filter(s => s.status === 'pending')
+
+            return (
+              <div
+                key={item.id}
+                className={`rounded-l-none rounded-r-[var(--radius-2xl)] border border-l-[3px] ${badge.border} bg-[var(--surface-primary)] transition-all duration-200 ${
+                  isExpanded ? 'border-[var(--border-default)] ring-2 ring-[#d1d5db] shadow-[0_4px_24px_rgba(0,0,0,0.08)]' : 'border-[var(--border-default)] hover:shadow-md'
+                }`}
+              >
+                {/* Header */}
+                <div
+                  className="p-4 cursor-pointer"
+                  onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${badge.bg}`}>
+                        {badge.label}
+                      </span>
+                      <span className="text-[12px] font-medium text-[var(--color-neutral-8)]">{item.reference}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {item.timeLeft && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600">
+                          <Clock size={11} />
+                          {item.timeLeft}
+                        </span>
+                      )}
+                      <ChevronDown size={14} className={`text-[var(--color-neutral-7)] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </div>
+                  </div>
+
+                  <h4 className="text-[14px] font-medium text-[var(--color-neutral-12)] mb-1">{item.title}</h4>
+                  <p className="text-[13px] text-[var(--color-neutral-8)] mb-3">{item.description}</p>
+
+                  {/* AI-Mate pill + source */}
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={e => { e.stopPropagation(); setExpandedId(isExpanded ? null : item.id) }}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-accent-1)] border border-[var(--color-accent-3)] text-[12px] font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-2)] cursor-pointer transition-colors"
+                    >
+                      <img src={item.suggestedBy.photo} alt={item.suggestedBy.name} className="w-5 h-5 rounded-full object-cover" />
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-accent-9)] opacity-40" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-accent-9)]" />
+                      </span>
+                      {item.suggestedBy.name} has {pendingSugs.length} suggestion{pendingSugs.length !== 1 ? 's' : ''}
+                    </button>
+                    {item.source && item.source.length > 0 && (
+                      <span className="inline-flex items-center gap-1">
+                        {item.source.map(s => (
+                          <img key={s.name} src={s.logo} alt={s.name} title={s.name} className="w-4 h-4 rounded-[3px] object-cover" />
+                        ))}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                {item.timeLeft && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600">
-                    <Clock size={11} />
-                    {item.timeLeft}
-                  </span>
+
+                {/* Expanded suggestions */}
+                {isExpanded && (
+                  <div className="bg-[#f3f4f6] border-t border-[#e5e7eb] px-4 py-3.5 space-y-2.5" style={{ animation: 'fadeInUp 0.2s ease-out forwards' }}>
+                    {itemSugs.map(sug => (
+                      <SuggestionCard
+                        key={sug.id}
+                        sug={sug}
+                        onAccept={() => handleAccept(item.id, sug.id)}
+                        onReject={() => handleReject(item.id, sug.id)}
+                      />
+                    ))}
+
+                    {/* Accept all + Chat row */}
+                    {pendingSugs.length > 1 && (
+                      <div className="flex items-center gap-2.5 pt-1">
+                        <button
+                          onClick={() => handleAcceptAll(item.id)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[var(--color-accent-11)] text-white text-[12px] font-semibold hover:bg-[var(--color-accent-12)] cursor-pointer transition-colors"
+                        >
+                          <Check size={13} /> Accept all suggestions
+                        </button>
+                        <button
+                          onClick={() => openChat(item)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-[var(--color-accent-3)] bg-white text-[12px] font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] cursor-pointer transition-colors"
+                        >
+                          <MessageCircle size={13} /> Continue in chat
+                        </button>
+                      </div>
+                    )}
+                    {pendingSugs.length <= 1 && (
+                      <div className="pt-1">
+                        <button
+                          onClick={() => openChat(item)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-[var(--color-accent-3)] bg-white text-[12px] font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-1)] cursor-pointer transition-colors"
+                        >
+                          <MessageCircle size={13} /> Continue in chat
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
+            )
+          })}
+        </div>
 
-              <h4 className="text-[14px] font-medium text-[var(--color-neutral-12)] mb-1">{item.title}</h4>
-              <p className="text-[13px] text-[var(--color-neutral-8)] mb-3">{item.description}</p>
+        {/* Integrations */}
+        <IntegrationsStrip />
+      </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {item.primaryAction.type === 'assign' && item.primaryAction.assignees ? (
-                    <AssignDropdown action={item.primaryAction} />
-                  ) : (
-                    <button className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] text-[12px] font-semibold cursor-pointer transition-colors ${actionBg[item.primaryAction.variant]}`}>
-                      {item.primaryAction.label}
-                      <ArrowUpRight size={12} />
-                    </button>
-                  )}
-                  {item.secondaryAction && (
-                    <button className="px-3 py-1.5 rounded-[var(--radius-md)] text-[12px] font-medium text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors">
-                      {item.secondaryAction}
-                    </button>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {item.source && (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-[var(--color-neutral-7)]">
-                      <img src={item.source.logo} alt={item.source.name} className="w-3.5 h-3.5 rounded-[2px] object-cover" />
-                      via {item.source.name}
-                    </span>
-                  )}
-                  {item.suggestedBy && (
-                    <img
-                      src={item.suggestedBy.photo}
-                      alt={item.suggestedBy.name}
-                      title={`Suggested by ${item.suggestedBy.name}`}
-                      className="w-5 h-5 rounded-full object-cover border border-[var(--border-subtle)]"
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-          )
-        })}
+    </div>
+  )
+}
+
+/* ── Suggestion Card ── */
+
+function SuggestionCard({ sug, onAccept, onReject }: {
+  sug: Suggestion
+  onAccept: () => void
+  onReject: () => void
+}) {
+  const iconCfg = suggestionIconConfig[sug.icon]
+  const IconComp = iconCfg.Icon
+
+  if (sug.status === 'rejected') {
+    return (
+      <div className="rounded-[10px] border border-[var(--color-accent-3)] bg-white p-[11px_13px] opacity-0 scale-[0.97] transition-all duration-200" />
+    )
+  }
+
+  if (sug.status === 'accepted') {
+    return (
+      <div className="rounded-[10px] border border-[#bbf7d0] bg-[#f0fdf4] p-[11px_13px] transition-all duration-200">
+        <div className="flex items-center gap-2">
+          <div className={`flex items-center justify-center w-[22px] h-[22px] rounded-md shrink-0 ${iconCfg.bg}`}>
+            {iconCfg.image ? <img src={iconCfg.image} alt="" className="w-[16px] h-[16px] object-contain" /> : <IconComp size={12} className={iconCfg.color} />}
+          </div>
+          <span className="text-[12px] font-bold text-[var(--color-neutral-12)]">{sug.title}</span>
+          <span className="ml-auto text-[12px] font-semibold text-[#16a34a] flex items-center gap-1">
+            <Check size={13} /> Accepted
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-[10px] border border-[var(--color-accent-3)] bg-white p-[11px_13px] space-y-2.5">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <div className={`flex items-center justify-center w-[22px] h-[22px] rounded-md shrink-0 ${iconCfg.bg}`}>
+          {iconCfg.image ? <img src={iconCfg.image} alt="" className="w-[16px] h-[16px] object-contain" /> : <IconComp size={12} className={iconCfg.color} />}
+        </div>
+        <span className="text-[12px] font-bold text-[var(--color-neutral-12)]">{sug.title}</span>
+        {sug.badge && (
+          <span className="ml-auto text-[11px] font-semibold text-[var(--color-neutral-8)] bg-[var(--color-neutral-2)] px-2 py-0.5 rounded-md">{sug.badge}</span>
+        )}
+      </div>
+
+      {/* Reasoning */}
+      <p
+        className="text-[11px] text-[#6b7280] leading-relaxed pl-[30px]"
+        dangerouslySetInnerHTML={{ __html: sug.reasoning.replace(/\*\*(.*?)\*\*/g, '<strong class="text-[var(--color-neutral-11)] font-semibold">$1</strong>') }}
+      />
+
+      {/* Email draft preview */}
+      {sug.emailDraft && (
+        <div className="ml-[30px] rounded-lg bg-[#f9fafb] border border-[#e5e7eb] p-2.5">
+          <p className="text-[10px] font-semibold text-[var(--color-neutral-7)] uppercase tracking-wide mb-1">Draft · To: {sug.emailDraft.to}</p>
+          <p className="text-[11px] font-medium text-[var(--color-neutral-12)] mb-0.5">{sug.emailDraft.subject}</p>
+          <p className="text-[11px] text-[var(--color-neutral-8)] line-clamp-2">{sug.emailDraft.body}</p>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 pl-[30px]">
+        <button
+          onClick={onAccept}
+          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-[11px] font-semibold text-white cursor-pointer transition-colors ${
+            sug.icon === 'inventory' ? 'bg-[#16a34a] hover:bg-[#15803d]' : 'bg-[var(--color-accent-9)] hover:bg-[var(--color-accent-10)]'
+          }`}
+        >
+          {sug.acceptLabel}
+        </button>
+        {sug.altLabel && (
+          <button className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-[11px] font-medium text-[var(--color-neutral-9)] border border-[var(--border-default)] bg-white hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors">
+            {sug.altLabel}
+          </button>
+        )}
+        <button
+          onClick={onReject}
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium text-[var(--color-neutral-8)] border border-[var(--border-default)] bg-white hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors"
+        >
+          Dismiss
+        </button>
       </div>
     </div>
   )
 }
 
-function AssignDropdown({ action }: { action: PrimaryAction }) {
-  const recommended = action.assignees?.filter(a => a.recommended) ?? []
-  const others = action.assignees?.filter(a => !a.recommended) ?? []
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-md)] text-[12px] font-semibold cursor-pointer transition-colors ${actionBg[action.variant]}`}>
-          {action.label}
-          <ChevronDown size={12} />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent minWidth="220px" align="start">
-        {recommended.length > 0 && (
-          <>
-            <DropdownMenuLabel>Recommended</DropdownMenuLabel>
-            {recommended.map((person) => (
-              <DropdownMenuItem key={person.id}>
-                <img src={person.photo} alt={person.name} className="w-6 h-6 rounded-full object-cover shrink-0" />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[13px] font-medium text-[var(--color-neutral-12)] leading-tight">{person.name}</span>
-                  <span className="text-[10px] text-[var(--color-neutral-7)] leading-tight">{person.role}</span>
-                </div>
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-          </>
-        )}
-        <DropdownMenuLabel>Team</DropdownMenuLabel>
-        {others.map((person) => (
-          <DropdownMenuItem key={person.id}>
-            <img src={person.photo} alt={person.name} className="w-6 h-6 rounded-full object-cover shrink-0" />
-            <div className="flex flex-col min-w-0">
-              <span className="text-[13px] font-medium text-[var(--color-neutral-12)] leading-tight">{person.name}</span>
-              <span className="text-[10px] text-[var(--color-neutral-7)] leading-tight">{person.role}</span>
-            </div>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
+ 

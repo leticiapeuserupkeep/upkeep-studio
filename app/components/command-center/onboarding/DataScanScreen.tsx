@@ -49,7 +49,7 @@ export function DataScanScreen({ scanState, onUpdateScan, onComplete }: DataScan
 
       onUpdateScan(config.key, { status: 'scanning' })
 
-      await delay(1500 + Math.random() * 800)
+      await delay(600 + Math.random() * 400)
 
       onUpdateScan(config.key, {
         status: 'complete',
@@ -58,7 +58,7 @@ export function DataScanScreen({ scanState, onUpdateScan, onComplete }: DataScan
       })
     }
 
-    await delay(600)
+    await delay(400)
     onComplete()
   }, [scanState, onUpdateScan, onComplete])
 

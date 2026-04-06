@@ -20,6 +20,7 @@ interface CommandSidebarProps {
   onClose: () => void
   onChangeView: (view: SidebarView) => void
   initialChatMateId?: string | null
+  initialChatMessage?: string | null
 }
 
 const ALL_AGENTS = [...EXISTING_AGENTS, ...AVAILABLE_AGENTS]
@@ -42,12 +43,12 @@ const sidebarWorkflows = [
 
 /* ── Main sidebar (inline drawer) ── */
 
-export function CommandSidebar({ view, isOpen, onClose, onChangeView, initialChatMateId }: CommandSidebarProps) {
+export function CommandSidebar({ view, isOpen, onClose, onChangeView, initialChatMateId, initialChatMessage }: CommandSidebarProps) {
   if (!isOpen) return null
 
   return (
     <div className="w-[380px] shrink-0 border-l border-[var(--border-default)] bg-[var(--surface-primary)] flex flex-col overflow-hidden h-full min-h-0 max-h-[calc(100vh-3.5rem)] sticky top-0 z-20">
-      {view === 'chat' && <ChatView onClose={onClose} initialMateId={initialChatMateId} />}
+      {view === 'chat' && <ChatView onClose={onClose} initialMateId={initialChatMateId} initialMessage={initialChatMessage} />}
       {view === 'aimates' && <AIMatesView onClose={onClose} onSelectMate={(id) => { onChangeView('chat') }} />}
       {view === 'workflows' && <WorkflowsView onClose={onClose} />}
     </div>
@@ -56,7 +57,7 @@ export function CommandSidebar({ view, isOpen, onClose, onChangeView, initialCha
 
 /* ── Chat View ── */
 
-function ChatView({ onClose, initialMateId }: { onClose: () => void; initialMateId?: string | null }) {
+function ChatView({ onClose, initialMateId, initialMessage }: { onClose: () => void; initialMateId?: string | null; initialMessage?: string | null }) {
   const [selectedId, setSelectedId] = useState<string | null>(initialMateId ?? null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [chatInput, setChatInput] = useState('')
@@ -73,12 +74,12 @@ function ChatView({ onClose, initialMateId }: { onClose: () => void; initialMate
 
   useEffect(() => {
     if (selectedMate) {
-      const greeting = getTeammateGreeting(selectedMate)
-      const actions = getTeammateWelcomeActions(selectedMate)
+      const content = initialMessage ?? getTeammateGreeting(selectedMate)
+      const actions = initialMessage ? [] : getTeammateWelcomeActions(selectedMate)
       setMessages([{
         id: 'welcome',
         role: 'teammate',
-        content: greeting,
+        content,
         teammate: selectedMate,
         timestamp: new Date(),
         options: actions,
@@ -86,7 +87,7 @@ function ChatView({ onClose, initialMateId }: { onClose: () => void; initialMate
     } else {
       setMessages([])
     }
-  }, [selectedMate])
+  }, [selectedMate, initialMessage])
 
   const handleSend = useCallback(() => {
     const text = chatInput.trim()
