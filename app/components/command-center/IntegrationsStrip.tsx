@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, Check, ExternalLink } from 'lucide-react'
+import { ArrowRight, Check, Plus } from 'lucide-react'
 
 interface Integration {
   id: string
@@ -64,7 +64,6 @@ const integrations: Integration[] = [
 
 export function IntegrationsStrip() {
   const connected = integrations.filter(i => i.connected)
-  const available = integrations.filter(i => !i.connected)
 
   return (
     <div className="flex flex-col gap-3">
@@ -101,22 +100,15 @@ export function IntegrationsStrip() {
           </div>
         ))}
 
-        {available.map((integ) => (
-          <div
-            key={integ.id}
-            className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-neutral-5)] bg-[var(--color-neutral-1)] p-3 hover:border-[var(--color-neutral-7)] hover:bg-[var(--color-neutral-2)] cursor-pointer transition-all duration-150 group"
-          >
-            <img src={integ.logo} alt={integ.name} className="w-9 h-9 rounded-[var(--radius-md)] object-cover opacity-50 group-hover:opacity-75 transition-opacity" />
-            <div className="text-center">
-              <p className="text-[12px] font-medium text-[var(--color-neutral-9)] leading-tight">{integ.name}</p>
-              <p className="text-[10px] text-[var(--color-neutral-7)] mt-0.5">{integ.description}</p>
-            </div>
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[var(--color-accent-9)] opacity-0 group-hover:opacity-100 transition-opacity">
-              <ExternalLink size={9} />
-              Connect
-            </span>
+        {/* Add new integration card */}
+        <div className="flex flex-col items-center justify-center gap-2 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-neutral-5)] bg-[var(--color-neutral-1)] p-3 hover:border-[var(--color-accent-7)] hover:bg-[var(--color-accent-1)] cursor-pointer transition-all duration-150 group">
+          <div className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-md)] bg-[var(--color-neutral-3)] group-hover:bg-[var(--color-accent-2)] transition-colors">
+            <Plus size={18} className="text-[var(--color-neutral-8)] group-hover:text-[var(--color-accent-9)] transition-colors" />
           </div>
-        ))}
+          <p className="text-[12px] font-medium text-[var(--color-neutral-8)] group-hover:text-[var(--color-accent-9)] transition-colors">
+            Add integration
+          </p>
+        </div>
       </div>
     </div>
   )

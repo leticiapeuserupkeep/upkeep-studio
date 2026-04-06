@@ -21,7 +21,7 @@ function getDateString(): string {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
-const ONBOARDING_KEY = 'upkeep-supernova-onboarding'
+const ONBOARDING_DONE_KEY = 'upkeep-supernova-onboarding-done'
 
 export default function CommandCenterPage() {
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null)
@@ -29,8 +29,14 @@ export default function CommandCenterPage() {
   const [chatMateId, setChatMateId] = useState<string | null>(null)
 
   useEffect(() => {
-    localStorage.removeItem(ONBOARDING_KEY)
-    setShowOnboarding(true)
+    const done = localStorage.getItem(ONBOARDING_DONE_KEY) === '1'
+    setShowOnboarding(!done)
+  }, [])
+
+  const handleOnboardingComplete = useCallback(() => {
+    localStorage.setItem(ONBOARDING_DONE_KEY, '1')
+    window.dispatchEvent(new Event('supernova-onboarding-complete'))
+    setShowOnboarding(false)
   }, [])
 
   const toggleSidebar = useCallback((view: SidebarView) => {
@@ -59,7 +65,7 @@ export default function CommandCenterPage() {
   if (showOnboarding === null) return null
 
   if (showOnboarding) {
-    return <OnboardingFlow onComplete={() => setShowOnboarding(false)} />
+    return <OnboardingFlow onComplete={handleOnboardingComplete} />
   }
 
   return (

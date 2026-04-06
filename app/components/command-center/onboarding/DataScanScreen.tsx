@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { Check, AlertTriangle, Loader2, Lightbulb } from 'lucide-react'
+import { useEffect, useRef, useCallback } from 'react'
+import { Check, AlertTriangle, Loader2 } from 'lucide-react'
 import { ProgressDots } from './ProgressDots'
 import type { ScanStatus, ScanCategory } from '@/app/lib/hooks/use-onboarding-state'
 
@@ -23,15 +23,6 @@ const scanOrder: ScanConfig[] = [
   { key: 'teamMembers', label: 'Team Members', mockCount: 24, insight: '12 technicians, 4 supervisors' },
 ]
 
-const tips = [
-  'Your work order history will help your AI team understand maintenance patterns.',
-  'Asset data lets AIMates predict failures before they happen.',
-  'Inventory patterns help auto-manage reorder points.',
-  'PM schedules help optimize technician workload.',
-  'Vendor history enables smarter procurement suggestions.',
-  'Team data personalizes assignments and schedules.',
-]
-
 /* ── Props ── */
 
 interface DataScanScreenProps {
@@ -43,7 +34,6 @@ interface DataScanScreenProps {
 /* ── Component ── */
 
 export function DataScanScreen({ scanState, onUpdateScan, onComplete }: DataScanScreenProps) {
-  const [activeTip, setActiveTip] = useState(0)
   const startedRef = useRef(false)
 
   const runScans = useCallback(async () => {
@@ -58,7 +48,6 @@ export function DataScanScreen({ scanState, onUpdateScan, onComplete }: DataScan
       }
 
       onUpdateScan(config.key, { status: 'scanning' })
-      setActiveTip(i)
 
       await delay(1500 + Math.random() * 800)
 
@@ -116,17 +105,6 @@ export function DataScanScreen({ scanState, onUpdateScan, onComplete }: DataScan
               isLast={i === scanOrder.length - 1}
             />
           ))}
-        </div>
-
-        {/* Tip */}
-        <div
-          className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-accent-3)] bg-[var(--color-accent-1)] p-4 mb-8 opacity-0"
-          style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.2s forwards' }}
-        >
-          <Lightbulb size={16} className="text-[var(--color-accent-9)] shrink-0 mt-0.5" />
-          <p className="text-[13px] text-[var(--color-neutral-9)] leading-relaxed transition-all duration-300">
-            {tips[activeTip]}
-          </p>
         </div>
 
         {/* Dots */}

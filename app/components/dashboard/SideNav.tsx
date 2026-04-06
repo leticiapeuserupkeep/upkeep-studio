@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -162,8 +163,22 @@ function CollapsedIcon({ item, active, label }: { item: NavItem; active: boolean
   return inner
 }
 
+const ONBOARDING_DONE_KEY = 'upkeep-supernova-onboarding-done'
+
 export function SideNav({ collapsed }: SideNavProps) {
   const pathname = usePathname()
+  const [supernovaUnlocked, setSupernovaUnlocked] = useState(false)
+
+  useEffect(() => {
+    const check = () => setSupernovaUnlocked(localStorage.getItem(ONBOARDING_DONE_KEY) === '1')
+    check()
+    window.addEventListener('supernova-onboarding-complete', check)
+    window.addEventListener('storage', check)
+    return () => {
+      window.removeEventListener('supernova-onboarding-complete', check)
+      window.removeEventListener('storage', check)
+    }
+  }, [])
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -244,11 +259,17 @@ export function SideNav({ collapsed }: SideNavProps) {
                     </Collapsible.Trigger>
                     <Collapsible.Content className="nav-collapsible-content overflow-hidden">
                       {section.items.map((item) => {
-                        const active = isActive(pathname, item.href, item.label)
-                        const classes = `flex items-center gap-2 w-full px-2 h-8 rounded-[var(--radius-sm)] cursor-pointer transition-colors duration-[var(--duration-fast)] ease-[var(--ease-default)] ${
-                          active
-                            ? 'bg-[var(--color-neutral-5)] font-semibold text-[var(--color-neutral-12)]'
-                            : 'font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-4)]'
+                        const isSupernova = section.title === 'SUPERNOVA'
+                        const isEntryPoint = item.label === 'AI Dashboard'
+                        const locked = isSupernova && !isEntryPoint && !supernovaUnlocked
+
+                        const active = !locked && isActive(pathname, item.href, item.label)
+                        const classes = `flex items-center gap-2 w-full px-2 h-8 rounded-[var(--radius-sm)] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-default)] ${
+                          locked
+                            ? 'opacity-40 cursor-not-allowed font-medium text-[var(--color-neutral-8)]'
+                            : active
+                              ? 'bg-[var(--color-neutral-5)] font-semibold text-[var(--color-neutral-12)] cursor-pointer'
+                              : 'font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-4)] cursor-pointer'
                         }`
 
                         const inner = (
@@ -257,11 +278,19 @@ export function SideNav({ collapsed }: SideNavProps) {
                             <span className="flex-1 text-left text-[length:var(--font-size-base)] leading-5 truncate">
                               {item.label}
                             </span>
-                            {item.dot && (
+                            {item.dot && !locked && (
                               <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent-9)] shrink-0" />
                             )}
                           </>
                         )
+
+                        if (locked) {
+                          return (
+                            <span key={item.label} className={classes} aria-disabled="true">
+                              {inner}
+                            </span>
+                          )
+                        }
 
                         if (item.href) {
                           return (

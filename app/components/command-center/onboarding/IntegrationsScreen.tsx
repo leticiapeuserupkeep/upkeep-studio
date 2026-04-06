@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, ExternalLink } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import { ProgressDots } from './ProgressDots'
 import type { IntegrationStatus } from '@/app/lib/hooks/use-onboarding-state'
@@ -117,7 +117,7 @@ export function IntegrationsScreen({ integrationState, onToggle, onComplete }: I
           className="text-[14px] text-[var(--color-neutral-8)] mb-6 opacity-0"
           style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
         >
-          Your AIMates work better with the tools you already use. Connect the ones you need.
+          Your AIMates work better with the tools you already use.
         </p>
 
         {/* Recommended */}
@@ -149,9 +149,9 @@ export function IntegrationsScreen({ integrationState, onToggle, onComplete }: I
           <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-neutral-7)] mb-2 px-1">
             More integrations
           </p>
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-3 gap-2.5">
             {others.map((integ) => (
-              <IntegrationRow
+              <IntegrationCard
                 key={integ.id}
                 config={integ}
                 isConnected={integrationState[integ.id]?.connected ?? false}
@@ -184,7 +184,7 @@ export function IntegrationsScreen({ integrationState, onToggle, onComplete }: I
   )
 }
 
-/* ── Integration Row ── */
+/* ── Integration Row (horizontal – recommended) ── */
 
 function IntegrationRow({
   config, isConnected, isConnecting, onConnect,
@@ -217,9 +217,6 @@ function IntegrationRow({
           )}
         </div>
         <p className="text-[12px] text-[var(--color-neutral-8)] mt-0.5">{config.description}</p>
-        <p className="text-[10px] text-[var(--color-neutral-7)] mt-0.5">
-          Used by {config.usedBy.join(', ')}
-        </p>
       </div>
 
       <button
@@ -244,10 +241,61 @@ function IntegrationRow({
             Connecting…
           </>
         ) : (
+          'Connect'
+        )}
+      </button>
+    </div>
+  )
+}
+
+/* ── Integration Card (vertical – more integrations) ── */
+
+function IntegrationCard({
+  config, isConnected, isConnecting, onConnect,
+}: {
+  config: IntegrationConfig
+  isConnected: boolean
+  isConnecting: boolean
+  onConnect: () => void
+}) {
+  return (
+    <div
+      className={`flex flex-col items-start gap-2.5 rounded-[var(--radius-lg)] border bg-[var(--surface-primary)] p-4 transition-all duration-200 ${
+        isConnected
+          ? 'border-[var(--color-success)] shadow-[0_0_0_1px_rgba(16,185,129,0.15)]'
+          : 'border-[var(--border-default)] hover:border-[var(--color-neutral-5)]'
+      }`}
+    >
+      <img
+        src={config.logo}
+        alt={config.name}
+        className="w-10 h-10 rounded-[var(--radius-md)] object-cover"
+      />
+      <span className="text-[13px] font-medium text-[var(--color-neutral-12)]">{config.name}</span>
+
+      <button
+        onClick={onConnect}
+        disabled={isConnecting}
+        className={`inline-flex items-center gap-1.5 text-[12px] font-semibold cursor-pointer transition-all duration-200 ${
+          isConnected
+            ? 'text-[var(--color-success)]'
+            : isConnecting
+              ? 'text-[var(--color-neutral-7)]'
+              : 'text-[var(--color-accent-9)] hover:text-[var(--color-accent-11)]'
+        }`}
+      >
+        {isConnected ? (
           <>
-            <ExternalLink size={12} />
-            Connect
+            <Check size={12} strokeWidth={3} />
+            Connected
           </>
+        ) : isConnecting ? (
+          <>
+            <span className="w-3 h-3 rounded-full border-2 border-[var(--color-neutral-5)] border-t-[var(--color-accent-9)] animate-spin" />
+            Connecting…
+          </>
+        ) : (
+          'Connect'
         )}
       </button>
     </div>
