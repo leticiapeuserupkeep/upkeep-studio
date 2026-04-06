@@ -28,6 +28,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/edge/alerts')) return 'Alerts'
   if (pathname.startsWith('/edge/settings')) return 'Settings'
   if (pathname.startsWith('/scheduler')) return 'Scheduler'
+  if (pathname.startsWith('/command-center')) return 'Command Center'
   return 'Dashboard'
 }
 
@@ -67,6 +68,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isWorkOrders = pathname.startsWith('/work-orders')
   const isFleetDetail = /^\/fleet\/vehicles\/[^/]+/.test(pathname)
   const isScheduler = pathname.startsWith('/scheduler')
+  const isCommandCenter = pathname.startsWith('/command-center')
 
   function getActions() {
     if (isStudioAgents) {
@@ -125,7 +127,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <SideNav collapsed={sidebarCollapsed} />
 
       <div className="flex flex-col flex-1 min-w-0 min-h-screen">
-        {!isCreateApp && !isAgents && !isBilling && !isFleetDetail && (
+        {!isCreateApp && !isAgents && !isBilling && !isFleetDetail && !isCommandCenter && (
           <TopBar
             title={title}
             role={role}

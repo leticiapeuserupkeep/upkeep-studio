@@ -47,17 +47,17 @@ const sections: NavSection[] = [
     items: [
       { label: 'Work Orders', icon: ClipboardList, href: '/work-orders' },
       { label: 'Preventive Maintenance', icon: CalendarClock },
-      { label: 'Intelligence', icon: Sparkles, dot: true },
+      { label: 'Intelligence', icon: Sparkles },
       { label: 'Scheduler', icon: CalendarClock, href: '/scheduler' },
       { label: 'Requests', icon: Inbox },
     ],
   },
   {
     title: 'SUPERNOVA',
-    badge: 'NEW',
     items: [
-      { label: 'Chat', icon: MessageCircle, href: '/agents' },
-      { label: 'Apps', icon: Sparkles },
+      { label: 'AI Dashboard', icon: Radar, href: '/command-center' },
+      { label: 'AITeam', icon: MessageCircle, href: '/agents' },
+      { label: 'Integrations', icon: Sparkles },
       { label: 'Workflows', icon: Bot },
       { label: 'Settings', icon: Settings },
     ],
