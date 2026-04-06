@@ -276,10 +276,9 @@ function MateCard({
           )}
 
           {/* Ready state */}
-          {mate.status === 'ready' && (
+          {mate.status === 'ready' && mate.summary && (
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-[12px] font-medium text-[var(--color-success)]">Ready</span>
-              {mate.summary && <span className="text-[12px] text-[var(--color-neutral-8)]">— {mate.summary}</span>}
+              <span className="text-[12px] text-[var(--color-neutral-8)]">{mate.summary}</span>
             </div>
           )}
 
