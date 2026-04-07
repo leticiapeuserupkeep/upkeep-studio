@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react'
 import {
   X, Search, Plus, Send, Mic, Settings, ChevronRight,
   Star, Zap, BarChart3, ClipboardList, Sparkles, Users,
@@ -74,7 +74,7 @@ export function CommandSidebar({ view, isOpen, onClose, onChangeView, initialCha
   if (!isOpen) return null
 
   return (
-    <div className="w-[380px] shrink-0 border-l border-[var(--border-default)] bg-[var(--surface-primary)] flex flex-col overflow-hidden h-full min-h-0 max-h-[calc(100vh-3.5rem)] sticky top-0 z-20">
+    <div className="w-[420px] shrink-0 border-l border-[var(--border-default)] bg-[var(--surface-primary)] flex flex-col overflow-hidden h-full min-h-0 max-h-[calc(100vh-3.5rem)] sticky top-0 z-20">
       {view === 'chat' && (
         <ChatView
           onClose={onClose}
@@ -90,6 +90,11 @@ export function CommandSidebar({ view, isOpen, onClose, onChangeView, initialCha
 }
 
 /* ── Chat View ── */
+
+/** Matches textarea `leading-5`; composer grows to this many lines then scrolls. */
+const CHAT_COMPOSER_LINE_HEIGHT_PX = 20
+const CHAT_COMPOSER_MAX_LINES = 4
+const CHAT_COMPOSER_MAX_HEIGHT_PX = CHAT_COMPOSER_LINE_HEIGHT_PX * CHAT_COMPOSER_MAX_LINES
 
 function ChatView({
   onClose,
@@ -143,6 +148,13 @@ function ChatView({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isThinking])
+
+  useLayoutEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = '0px'
+    el.style.height = `${Math.min(el.scrollHeight, CHAT_COMPOSER_MAX_HEIGHT_PX)}px`
+  }, [chatInput])
 
   useEffect(() => {
     if (selectedMate) {
@@ -457,8 +469,14 @@ function ChatView({
                   id: `magic-wf-prompt`,
                   role: 'teammate',
                   teammate: tElena,
-                  content:
-                    'This looks like a **strong workflow** to save and automate. Would you like me to save it and run it:',
+                  content: `This looks like a **strong workflow** to save and automate. Here's the idea:
+
+-> Revise periodically your inbox
+-> Check important messages
+-> View for history and older messages for context
+-> Create an email to answer and send
+
+**How often do you want me to trigger this workflow?**`,
                   timestamp: new Date(),
                   options: [
                     { id: 'ms30', label: 'Every 30 minutes', action: 'magic_sched_30' },
@@ -501,11 +519,11 @@ function ChatView({
           id: `magic-auth-req-${Date.now()}`,
           role: 'teammate',
           teammate: tElena,
-          content: 'To do that, I\'ll need access to your inbox.',
+          content: 'To do that, I\'ll need access to your inbox (**leti@mail.com**).',
           timestamp: new Date(),
           options: [
-            { id: 'magic-a1', label: 'Authorize once', action: 'magic_auth_once' },
-            { id: 'magic-a2', label: 'Authorize always', action: 'magic_auth_always' },
+            { id: 'magic-a1', label: 'Allow Once', action: 'magic_auth_once' },
+            { id: 'magic-a2', label: 'Allow Always', action: 'magic_auth_always' },
           ],
         },
       ])
@@ -650,7 +668,6 @@ function ChatView({
   const handleSend = useCallback(() => {
     const text = chatInput.trim()
     if (!text) return
-    if (inputLocked) return
     setChatInput('')
 
     const smartInboxIntent =
@@ -709,7 +726,7 @@ function ChatView({
         timestamp: new Date(),
       }])
     }, 1200)
-  }, [selectedMate, isMulti, smartInboxStep, inputLocked, beginMagicInboxDemo])
+  }, [selectedMate, isMulti, smartInboxStep, beginMagicInboxDemo, chatInput])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
@@ -720,11 +737,11 @@ function ChatView({
   return (
     <div className="flex h-full">
       {/* Left: Agent selector (vertical) */}
-      <div className="flex flex-col items-center gap-1.5 py-2 px-1.5 border-r border-[var(--border-subtle)] bg-[var(--surface-primary)] shrink-0 w-[68px]">
+      <div className="flex flex-col items-center gap-1.5 py-2 px-1.5 border-r border-[var(--border-subtle)] bg-[var(--surface-primary)] shrink-0 w-[73px]">
         {/* Multi-agent */}
         <button
           onClick={() => setSelectedId(null)}
-          className={`flex flex-col items-center gap-1 w-12 py-2 rounded-[var(--radius-lg)] cursor-pointer transition-all ${
+          className={`flex flex-col items-center gap-1 w-full py-2 rounded-[var(--radius-lg)] cursor-pointer transition-all ${
             isMulti
               ? 'bg-[var(--color-accent-1)] border border-[var(--color-accent-7)]'
               : 'hover:bg-[var(--color-neutral-2)] border border-transparent'
@@ -765,7 +782,7 @@ function ChatView({
         {/* Header — pinned top */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-[var(--border-default)] bg-[var(--surface-primary)] shrink-0 z-10">
           <span className="text-[14px] font-semibold text-[var(--color-neutral-12)]">
-            {selectedMate ? `${selectedMate.firstName} ${selectedMate.lastName}` : 'AI-Team Chat'}
+            {selectedMate ? `${selectedMate.firstName} ${selectedMate.lastName}` : 'Multi Agents Chat'}
           </span>
           <button onClick={onClose} className="flex items-center justify-center w-7 h-7 rounded-[var(--radius-md)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors">
             <X size={15} className="text-[var(--color-neutral-7)]" />
@@ -773,7 +790,7 @@ function ChatView({
         </div>
 
         {/* Scrollable content area */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5 flex flex-col gap-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5 flex flex-col gap-7">
           {showWelcome ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-5">
               <div className="flex items-center -space-x-4">
@@ -809,7 +826,7 @@ function ChatView({
         {/* Input bar — pinned bottom */}
         <div className="px-4 pb-4 pt-2 shrink-0 z-10">
           <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-sm focus-within:border-[var(--color-accent-8)] focus-within:shadow-[0_0_0_3px_rgba(59,91,219,0.12)] transition-all">
-            <div className="flex items-center px-3 py-2.5 gap-2">
+            <div className="flex items-end px-3 py-2.5 gap-2">
               <button className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-[var(--color-neutral-3)] cursor-pointer shrink-0">
                 <Plus size={15} className="text-[var(--color-neutral-7)]" />
               </button>
@@ -819,8 +836,12 @@ function ChatView({
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={1}
-                disabled={inputLocked}
-                className="flex-1 resize-none bg-transparent text-[13px] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-6)] outline-none! ring-0! shadow-none! disabled:opacity-50"
+                style={{ maxHeight: CHAT_COMPOSER_MAX_HEIGHT_PX }}
+                className={`flex-1 resize-none overflow-y-auto bg-transparent text-[13px] leading-5 placeholder:text-[var(--color-neutral-6)] outline-none! ring-0! shadow-none! ${
+                  chatInput.trim()
+                    ? 'text-[var(--color-neutral-12)]'
+                    : 'text-[var(--color-neutral-8)]'
+                }`}
                 placeholder={
                   inputLocked
                     ? 'Choose a suggestion or action above to continue…'
@@ -833,12 +854,13 @@ function ChatView({
                 <Mic size={15} className="text-[var(--color-neutral-7)]" />
               </button>
               <button
+                type="button"
                 onClick={handleSend}
-                disabled={!chatInput.trim() || inputLocked}
-                className={`flex items-center justify-center w-7 h-7 rounded-full cursor-pointer transition-colors shrink-0 ${
-                  chatInput.trim() && !inputLocked
-                    ? 'bg-[var(--color-accent-9)] text-white hover:bg-[var(--color-accent-10)]'
-                    : 'bg-[var(--color-neutral-3)] text-[var(--color-neutral-7)] opacity-40'
+                disabled={!chatInput.trim()}
+                className={`flex items-center justify-center w-7 h-7 rounded-full transition-colors shrink-0 ${
+                  chatInput.trim()
+                    ? 'bg-[var(--color-accent-9)] text-white hover:bg-[var(--color-accent-10)] cursor-pointer'
+                    : 'bg-[var(--color-neutral-3)] text-[var(--color-neutral-7)] opacity-40 cursor-not-allowed'
                 }`}
               >
                 <Send size={13} />
@@ -987,6 +1009,27 @@ function WorkflowsView({ onClose, workflows }: { onClose: () => void; workflows:
 
 /* ── Message Bubble ── */
 
+function formatSidebarMessageTime(d: Date): string {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return ''
+  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+}
+
+function isMagicInboxAuthOptions(opts: ActionOption[]) {
+  return (
+    opts.length === 2 &&
+    opts.some((o) => o.action === 'magic_auth_once') &&
+    opts.some((o) => o.action === 'magic_auth_always')
+  )
+}
+
+function sortMagicInboxAuthOptions(opts: ActionOption[]) {
+  return [...opts].sort((a, b) => {
+    if (a.action === 'magic_auth_always') return -1
+    if (b.action === 'magic_auth_always') return 1
+    return 0
+  })
+}
+
 function SidebarMessageBubble({
   message,
   onOptionClick,
@@ -1007,60 +1050,79 @@ function SidebarMessageBubble({
   }
 
   const photo = message.teammate?.photo
-  const name = message.teammate?.firstName
+  const firstName = message.teammate?.firstName
+  const displayName = message.teammate
+    ? [message.teammate.firstName, message.teammate.lastName].filter(Boolean).join(' ')
+    : 'Your team'
   const opts = message.options
   const loader = message.loaderLine
   const card = message.emailCard
   const cardDone = message.emailCardHandled
   const hasText = message.content.trim().length > 0
+  const timeLabel = formatSidebarMessageTime(message.timestamp)
 
   return (
-    <div className="flex flex-col gap-2 max-w-[90%]">
-      <div className="flex items-start gap-2.5">
+    <div className="flex w-full max-w-full flex-col gap-2">
+      <div className="flex w-full items-center gap-2">
         {photo ? (
-          <img src={photo} alt={name ?? ''} className="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5" />
+          <img
+            src={photo}
+            alt={firstName ?? ''}
+            className="h-6 w-6 shrink-0 rounded-full object-cover"
+          />
         ) : (
-          <div className="flex -space-x-1.5 shrink-0 mt-0.5">
+          <div className="flex shrink-0 -space-x-1">
             {EXISTING_AGENTS.map(a => (
-              <img key={a.id} src={a.photo} alt={a.firstName} className="w-5 h-5 rounded-full object-cover border border-white" />
+              <img
+                key={a.id}
+                src={a.photo}
+                alt={a.firstName}
+                className="h-3.5 w-3.5 rounded-full border border-white object-cover"
+              />
             ))}
           </div>
         )}
-        <div className="flex flex-col gap-2 min-w-0 flex-1">
-          {loader && (
-            <div className="flex items-center gap-2 text-[12px] text-[var(--color-neutral-9)]">
-              <span
-                className="h-3.5 w-3.5 rounded-full border-2 border-[var(--color-accent-9)] border-t-transparent animate-spin shrink-0"
-                aria-hidden
-              />
-              <span>{loader}</span>
-            </div>
-          )}
-          {hasText && (
-            <div className="text-[13px] text-[var(--color-neutral-12)] leading-relaxed whitespace-pre-line min-w-0">
-              <FormattedText text={message.content} />
-            </div>
-          )}
-        </div>
+        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[var(--color-neutral-12)]">
+          {displayName}
+        </span>
+        {timeLabel ? (
+          <span className="shrink-0 text-[10px] tabular-nums text-[var(--color-neutral-7)]">{timeLabel}</span>
+        ) : null}
       </div>
+      {loader && (
+        <div className="flex w-full items-center gap-2 text-[10px] text-[var(--color-neutral-9)]">
+          <span
+            className="h-3 w-3 shrink-0 rounded-full border-2 border-[var(--color-accent-9)] border-t-transparent animate-spin"
+            aria-hidden
+          />
+          <span>{loader}</span>
+        </div>
+      )}
+      {hasText && (
+        <div className="w-full min-w-0 text-[14px] leading-relaxed whitespace-pre-line text-[var(--color-neutral-12)]">
+          <FormattedText text={message.content} />
+        </div>
+      )}
       {card && !cardDone && onMagicEmailAction && (
-        <div className="pl-9 w-full max-w-[100%] rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-3 space-y-2">
+        <div className="w-full max-w-full space-y-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-3">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)]">Subject</p>
-          <p className="text-[12px] font-medium text-[var(--color-neutral-12)] leading-snug">{card.subject}</p>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)] pt-1">Draft reply</p>
-          <p className="text-[11px] text-[var(--color-neutral-9)] leading-relaxed">{card.draftReply}</p>
+          <p className="text-[10px] font-medium leading-snug text-[var(--color-neutral-12)]">{card.subject}</p>
+          <p className="pt-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)]">
+            Draft reply
+          </p>
+          <p className="text-[10px] leading-relaxed text-[var(--color-neutral-9)]">{card.draftReply}</p>
           <div className="flex flex-wrap gap-2 pt-1">
             <button
               type="button"
               onClick={() => onMagicEmailAction(card.id, 'accept')}
-              className="inline-flex items-center px-3 py-1.5 rounded-md bg-[var(--color-accent-9)] text-white text-[11px] font-semibold hover:bg-[var(--color-accent-10)] cursor-pointer transition-colors"
+              className="inline-flex items-center rounded-md bg-[var(--color-accent-9)] px-2.5 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-10)] cursor-pointer"
             >
               Accept and send
             </button>
             <button
               type="button"
               onClick={() => onMagicEmailAction(card.id, 'edit')}
-              className="inline-flex items-center px-3 py-1.5 rounded-md border border-[var(--border-default)] bg-white text-[11px] font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors"
+              className="inline-flex cursor-pointer items-center rounded-md border border-[var(--border-default)] bg-white px-2.5 py-1 text-[10px] font-medium text-[var(--color-neutral-12)] transition-colors hover:bg-[var(--color-neutral-2)]"
             >
               Edit
             </button>
@@ -1068,16 +1130,35 @@ function SidebarMessageBubble({
         </div>
       )}
       {card && cardDone && (
-        <p className="pl-9 text-[11px] font-medium text-[var(--color-neutral-7)]">Done</p>
+        <p className="text-[10px] font-medium text-[var(--color-neutral-7)]">Done</p>
       )}
-      {opts && opts.length > 0 && onOptionClick && (
-        <div className="flex flex-col gap-1.5 pl-9 w-full max-w-[100%]">
+      {opts && opts.length > 0 && onOptionClick && isMagicInboxAuthOptions(opts) && (
+        <div className="flex w-full max-w-full flex-row flex-wrap justify-end gap-2">
+          {sortMagicInboxAuthOptions(opts).map((opt) => {
+            const isPrimary = opt.action === 'magic_auth_once'
+            return (
+              <Button
+                key={opt.id}
+                type="button"
+                variant={isPrimary ? 'primary' : 'secondary'}
+                size="sm"
+                className="shrink-0 justify-center !text-[10px]"
+                onClick={() => onOptionClick(opt)}
+              >
+                {opt.label}
+              </Button>
+            )
+          })}
+        </div>
+      )}
+      {opts && opts.length > 0 && onOptionClick && !isMagicInboxAuthOptions(opts) && (
+        <div className="flex w-full max-w-full flex-col gap-1.5">
           {opts.map((opt) => (
             <button
               key={opt.id}
               type="button"
               onClick={() => onOptionClick(opt)}
-              className="text-left px-3 py-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[12px] text-[var(--color-accent-9)] font-medium hover:bg-[var(--color-accent-1)] hover:border-[var(--color-accent-5)] cursor-pointer transition-colors"
+              className="cursor-pointer rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3 py-2 text-left text-[10px] font-medium text-[var(--color-accent-9)] transition-colors hover:border-[var(--color-accent-5)] hover:bg-[var(--color-accent-1)]"
             >
               {opt.label}
             </button>

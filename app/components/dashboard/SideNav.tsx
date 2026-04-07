@@ -44,7 +44,6 @@ interface SideNavProps {
 const sections: NavSection[] = [
   {
     title: 'CORE',
-    badge: 'NEW',
     items: [
       { label: 'Work Orders', icon: ClipboardList, href: '/work-orders' },
       { label: 'Preventive Maintenance', icon: CalendarClock },
@@ -66,7 +65,6 @@ const sections: NavSection[] = [
   },
   {
     title: 'STUDIO',
-    badge: 'NEW',
     items: [
       { label: 'Create New App', icon: Wand2, href: '/studio/create', dot: true },
       { label: 'Browse Apps', icon: Gem, href: '/studio/browse' },
