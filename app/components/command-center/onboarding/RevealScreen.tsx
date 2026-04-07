@@ -109,9 +109,9 @@ export function RevealScreen({ onFinish }: RevealScreenProps) {
               })}
             </div>
 
-            {/* AIMates */}
+            {/* Agents */}
             <div className={`flex flex-col gap-2.5 transition-all duration-500 ${isRevealed('aimates') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <h3 className="text-[14px] font-semibold text-[var(--color-neutral-12)]">AI-Mates</h3>
+              <h3 className="text-[14px] font-semibold text-[var(--color-neutral-12)]">Agents</h3>
               {[
                 { name: 'Sofia', skill: 'Scheduling', photo: 'https://i.pravatar.cc/150?u=sofia-chen-upkeep', act: 'Assigned 14 WOs' },
                 { name: 'Elena', skill: 'Inventory', photo: 'https://i.pravatar.cc/150?u=elena-rodriguez-upkeep', act: 'Reordered 3 parts' },

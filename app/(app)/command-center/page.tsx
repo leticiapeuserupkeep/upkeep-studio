@@ -7,6 +7,7 @@ import { AttentionQueue } from '@/app/components/command-center/AttentionQueue'
 import { AIMatesColumn } from '@/app/components/command-center/AIMatesColumn'
 // WorkflowsColumn is now rendered inside AIMatesColumn
 // IntegrationsStrip is now rendered inside AttentionQueue
+import { UsagePanel } from '@/app/components/command-center/UsagePanel'
 import { CommandSidebar, type SidebarView } from '@/app/components/command-center/CommandSidebar'
 import { OnboardingFlow } from '@/app/components/command-center/onboarding/OnboardingFlow'
 
@@ -110,7 +111,7 @@ export default function CommandCenterPage() {
             }`}
           >
             <MessageCircle size={15} />
-            Ask AI-Team
+            Ask Agents
           </button>
         </div>
       </header>
@@ -129,7 +130,7 @@ export default function CommandCenterPage() {
                 {getGreeting()}, Leti
               </h2>
               <p className="text-[14px] text-[var(--color-neutral-8)] mt-0.5">
-                {getDateString()} · 3 items need your attention
+                {getDateString()} · 4 items need your attention
               </p>
             </div>
 
@@ -141,12 +142,20 @@ export default function CommandCenterPage() {
               <SystemPulse />
             </div>
 
+            {/* Usage Panel */}
+            <div
+              className={skipAnimations ? '' : 'opacity-0'}
+              style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.15s forwards' }}
+            >
+              <UsagePanel />
+            </div>
+
             {/* 2-Column Grid */}
             <div
               className={`grid gap-8 ${skipAnimations ? '' : 'opacity-0'}`}
               style={{
                 gridTemplateColumns: '1.6fr 1fr',
-                ...(skipAnimations ? {} : { animation: 'fadeInUp 0.4s var(--ease-default) 0.18s forwards' }),
+                ...(skipAnimations ? {} : { animation: 'fadeInUp 0.4s var(--ease-default) 0.22s forwards' }),
               }}
             >
               <AttentionQueue onOpenChat={openChatWith} />

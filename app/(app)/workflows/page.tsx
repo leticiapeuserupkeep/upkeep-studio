@@ -221,7 +221,7 @@ export default function WorkflowsPage() {
                     <TableHead>Workflow</TableHead>
                     <TableHead>Trigger</TableHead>
                     <TableHead className="text-center">Steps</TableHead>
-                    <TableHead>AI-Mate</TableHead>
+                    <TableHead>Agent</TableHead>
                     <TableHead>Integrations</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Last Run</TableHead>

@@ -206,7 +206,7 @@ export function AIActivationScreen({ aiMates, onUpdateMate, onSetPreference, onC
           style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.05s forwards' }}
         >
           <h2 className="text-[20px] font-semibold text-[var(--color-neutral-12)]">
-            Creating your AI-Mates
+            Creating your Agents
           </h2>
           <span className="text-[13px] font-medium text-[var(--color-neutral-8)] bg-[var(--color-neutral-2)] px-2.5 py-1 rounded-full">
             4 / 6

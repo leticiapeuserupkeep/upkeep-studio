@@ -92,10 +92,10 @@ interface AIMatesColumnProps {
 export function AIMatesColumn({ onOpenChat, onManage, onOpenWorkflows }: AIMatesColumnProps) {
   return (
     <div className="flex flex-col gap-6">
-      {/* AI-Mates */}
+      {/* Agents */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">AI-Mates</h3>
+          <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">Agents</h3>
           <button
             onClick={onManage}
             className="inline-flex items-center gap-1 text-[12px] font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] cursor-pointer transition-colors"

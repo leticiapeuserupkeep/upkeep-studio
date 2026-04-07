@@ -147,7 +147,7 @@ export default function AIMatesPage() {
               style={{ animation: 'fadeInUp 0.35s var(--ease-default) 0.02s forwards' }}
             >
               <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4">
-                <p className="text-[12px] font-medium text-[var(--color-neutral-8)] mb-1">Total AI-Mates</p>
+                <p className="text-[12px] font-medium text-[var(--color-neutral-8)] mb-1">Total Agents</p>
                 <p className="text-[24px] font-semibold text-[var(--color-neutral-12)]">{aiMates.length}</p>
               </div>
               <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4">
@@ -168,19 +168,19 @@ export default function AIMatesPage() {
               {/* Toolbar */}
               <div className="flex items-center justify-between px-5 py-2.5 border-b border-[var(--border-subtle)]">
                 <span className="text-[var(--font-size-sm)] text-[var(--color-neutral-8)] font-medium">
-                  {filtered.length} AI-Mates
+                  {filtered.length} Agents
                 </span>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search AI-Mates…"
+                    placeholder="Search Agents…"
                     className="h-8 px-3 text-[13px] rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-6)] focus:outline-none focus:border-[var(--color-accent-8)] transition-colors w-[200px]"
                   />
                   <Button variant="primary" size="sm" className="gap-1.5">
                     <Plus size={14} />
-                    Create AI-Mate
+                    Create Agent
                   </Button>
                 </div>
               </div>
@@ -188,7 +188,7 @@ export default function AIMatesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>AI-Mate</TableHead>
+                    <TableHead>Agent</TableHead>
                     <TableHead>Skill</TableHead>
                     <TableHead>Mode</TableHead>
                     <TableHead>Status</TableHead>

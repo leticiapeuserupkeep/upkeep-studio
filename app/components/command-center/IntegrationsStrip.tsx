@@ -35,6 +35,18 @@ const integrations: Integration[] = [
     connected: true,
   },
   {
+    id: 'sap',
+    name: 'SAP',
+    logo: '/images/integrations/sap.svg',
+    connected: true,
+  },
+  {
+    id: 'ignition',
+    name: 'Ignition',
+    logo: '/images/integrations/ignition.svg',
+    connected: true,
+  },
+  {
     id: 'microsoft-teams',
     name: 'Microsoft Teams',
     logo: '/images/integrations/teams.svg',

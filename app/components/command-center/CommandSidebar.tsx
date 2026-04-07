@@ -138,7 +138,7 @@ function ChatView({ onClose, initialMateId, initialMessage }: { onClose: () => v
               ? 'bg-[var(--color-accent-1)] border border-[var(--color-accent-7)]'
               : 'hover:bg-[var(--color-neutral-2)] border border-transparent'
           }`}
-          title="All AI-Mates"
+          title="All Agents"
         >
           <div className="flex -space-x-2">
             {EXISTING_AGENTS.slice(0, 2).map(a => (
@@ -237,7 +237,7 @@ function ChatView({ onClose, initialMateId, initialMessage }: { onClose: () => v
                 onKeyDown={handleKeyDown}
                 rows={1}
                 className="flex-1 resize-none bg-transparent text-[13px] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-6)] outline-none! ring-0! shadow-none!"
-                placeholder={selectedMate ? `Ask ${selectedMate.firstName}…` : 'Ask AI-Team…'}
+                placeholder={selectedMate ? `Ask ${selectedMate.firstName}…` : 'Ask Agents…'}
               />
               <button className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-[var(--color-neutral-3)] cursor-pointer shrink-0">
                 <Mic size={15} className="text-[var(--color-neutral-7)]" />
@@ -261,7 +261,7 @@ function ChatView({ onClose, initialMateId, initialMessage }: { onClose: () => v
   )
 }
 
-/* ── AIMates List View ── */
+/* ── Agents List View ── */
 
 function AIMatesView({ onClose, onSelectMate }: { onClose: () => void; onSelectMate: (id: string) => void }) {
   const [search, setSearch] = useState('')
@@ -275,7 +275,7 @@ function AIMatesView({ onClose, onSelectMate }: { onClose: () => void; onSelectM
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-5 h-14 border-b border-[var(--border-default)] shrink-0">
-        <h2 className="text-[16px] font-semibold text-[var(--color-neutral-12)]">AI-Mates</h2>
+        <h2 className="text-[16px] font-semibold text-[var(--color-neutral-12)]">Agents</h2>
         <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-[var(--radius-lg)] hover:bg-[var(--color-neutral-3)] cursor-pointer transition-colors">
           <X size={16} className="text-[var(--color-neutral-7)]" />
         </button>
@@ -295,19 +295,19 @@ function AIMatesView({ onClose, onSelectMate }: { onClose: () => void; onSelectM
         </div>
       </div>
 
-      {/* New AI-Mate */}
+      {/* New Agent */}
       <div className="px-5 pb-3">
         <Button variant="primary" size="md" className="w-full justify-center">
           <Plus size={14} />
-          New AI-Mate
+          New Agent
         </Button>
       </div>
 
       {/* List */}
       <div className="flex-1 overflow-y-auto px-3">
-        <p className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-neutral-7)]">All AI-Mates</p>
+        <p className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-neutral-7)]">All Agents</p>
 
-        {/* Multi AI-Mate */}
+        {/* Multi Agent */}
         <button
           onClick={() => onSelectMate('team')}
           className="w-full flex items-center gap-3 px-3 py-3 rounded-[var(--radius-xl)] mb-1 cursor-pointer transition-all bg-[var(--color-accent-1)] border border-[var(--color-accent-7)] shadow-[0_0_0_1px_var(--color-accent-3)]"
@@ -318,8 +318,8 @@ function AIMatesView({ onClose, onSelectMate }: { onClose: () => void; onSelectM
             ))}
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <p className="text-[13px] font-semibold text-[var(--color-neutral-12)] truncate">Multi AI-Mate</p>
-            <p className="text-[11px] text-[var(--color-neutral-7)] truncate">All your AI-Mates</p>
+            <p className="text-[13px] font-semibold text-[var(--color-neutral-12)] truncate">Multi Agent</p>
+            <p className="text-[11px] text-[var(--color-neutral-7)] truncate">All your Agents</p>
           </div>
           <ChevronRight size={14} className="text-[var(--color-accent-9)] shrink-0" />
         </button>

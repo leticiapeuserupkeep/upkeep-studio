@@ -51,20 +51,20 @@ const integrations: IntegrationConfig[] = [
     usedBy: ['Sofia', 'Marcus'],
   },
   {
-    id: 'google-sheets',
-    name: 'Google Sheets',
-    description: 'Export reports, import asset lists, sync data',
-    logo: '/images/integrations/google-sheets.svg',
+    id: 'sap',
+    name: 'SAP (ERP)',
+    description: 'Sync work orders, inventory, and procurement data',
+    logo: '/images/integrations/sap.svg',
     recommended: false,
-    usedBy: ['Elena'],
+    usedBy: ['Sofia', 'Elena'],
   },
   {
-    id: 'quickbooks',
-    name: 'QuickBooks',
-    description: 'Sync invoices, POs, and vendor payments',
-    logo: '/images/integrations/quickbooks.svg',
+    id: 'oracle',
+    name: 'Oracle',
+    description: 'Connect assets, maintenance records, and vendor data',
+    logo: '/images/integrations/oracle.svg',
     recommended: false,
-    usedBy: ['Elena'],
+    usedBy: ['Elena', 'Marcus'],
   },
 ]
 
@@ -117,7 +117,7 @@ export function IntegrationsScreen({ integrationState, onToggle, onComplete }: I
           className="text-[14px] text-[var(--color-neutral-8)] mb-6 opacity-0"
           style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
         >
-          Your AI-Mates work better with the tools you already use.
+          Your Agents work better with the tools you already use.
         </p>
 
         {/* Recommended */}

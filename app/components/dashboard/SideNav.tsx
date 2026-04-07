@@ -56,9 +56,9 @@ const sections: NavSection[] = [
   {
     title: 'SUPERNOVA',
     items: [
-      { label: 'AI Dashboard', icon: Radar, href: '/command-center' },
-      { label: 'Ask AI-Team', icon: MessageCircle, href: '/agents' },
-      { label: 'AI-Mates', icon: Users, href: '/aimates' },
+      { label: 'Command Center', icon: Radar, href: '/command-center' },
+      { label: 'Chat', icon: MessageCircle, href: '/agents' },
+      { label: 'Agents', icon: Users, href: '/aimates' },
       { label: 'Integrations', icon: Sparkles },
       { label: 'Workflows', icon: Bot, href: '/workflows' },
       { label: 'Settings', icon: Settings },

@@ -30,7 +30,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/scheduler')) return 'Scheduler'
   if (pathname.startsWith('/command-center')) return 'Command Center'
   if (pathname.startsWith('/workflows')) return 'Workflows'
-  if (pathname.startsWith('/aimates')) return 'AI-Mates'
+  if (pathname.startsWith('/aimates')) return 'Agents'
   return 'Dashboard'
 }
 

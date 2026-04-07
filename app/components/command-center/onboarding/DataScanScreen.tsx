@@ -15,12 +15,12 @@ interface ScanConfig {
 }
 
 const scanOrder: ScanConfig[] = [
-  { key: 'workOrders', label: 'Work Orders', mockCount: 2847, insight: '2 years of maintenance history' },
-  { key: 'assets', label: 'Assets', mockCount: 342, insight: 'Across 3 locations' },
-  { key: 'inventory', label: 'Inventory', mockCount: 1247, insight: '47 parts below reorder threshold' },
-  { key: 'preventiveMaintenance', label: 'Preventive Maintenance', mockCount: 156, insight: '12 active PM schedules' },
-  { key: 'vendors', label: 'Vendors & Providers', mockCount: 28, insight: '5 preferred vendors identified' },
-  { key: 'teamMembers', label: 'Team Members', mockCount: 24, insight: '12 technicians, 4 supervisors' },
+  { key: 'workOrders', label: 'UpKeep — Work Orders', mockCount: 2847, insight: '2 years of maintenance history' },
+  { key: 'assets', label: 'UpKeep — Assets', mockCount: 342, insight: 'Across 3 locations' },
+  { key: 'inventory', label: 'ERP — Inventory & Parts', mockCount: 1247, insight: '47 parts below reorder threshold' },
+  { key: 'preventiveMaintenance', label: 'MES — Production Schedules', mockCount: 156, insight: '12 active production lines' },
+  { key: 'vendors', label: 'ERP — Vendors & Suppliers', mockCount: 28, insight: '5 preferred vendors identified' },
+  { key: 'teamMembers', label: 'HRIS — Team Members', mockCount: 24, insight: '12 technicians, 4 supervisors' },
 ]
 
 /* ── Props ── */
@@ -78,7 +78,7 @@ export function DataScanScreen({ scanState, onUpdateScan, onComplete }: DataScan
           style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.05s forwards' }}
         >
           <h2 className="text-[20px] font-semibold text-[var(--color-neutral-12)]">
-            Setting up your Command Center
+            Connecting your systems
           </h2>
           <span className="text-[13px] font-medium text-[var(--color-neutral-8)] bg-[var(--color-neutral-2)] px-2.5 py-1 rounded-full">
             2 / 6
@@ -89,7 +89,7 @@ export function DataScanScreen({ scanState, onUpdateScan, onComplete }: DataScan
           className="text-[14px] text-[var(--color-neutral-8)] mb-6 opacity-0"
           style={{ animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
         >
-          We&apos;re scanning your UpKeep data to prepare your AI team.
+          We&apos;re scanning your connected systems to prepare your AI team.
         </p>
 
         {/* Scan rows */}

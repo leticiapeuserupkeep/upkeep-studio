@@ -1,6 +1,6 @@
 'use client'
 
-import { ClipboardList, AlertTriangle, Package, TrendingDown, TrendingUp, Clock, DollarSign } from 'lucide-react'
+import { Activity, ClipboardList, AlertTriangle, Package, TrendingDown, TrendingUp, Clock, DollarSign } from 'lucide-react'
 
 interface MetricCard {
   label: string
@@ -11,26 +11,37 @@ interface MetricCard {
     type: 'success' | 'warning' | 'neutral'
     icon?: React.ReactNode
   }
+  source: { name: string; logo: string }
 }
 
 const metrics: MetricCard[] = [
   {
-    label: 'Open work orders',
+    label: 'Production Uptime',
+    value: '97.4%',
+    icon: <Activity size={18} className="text-[var(--color-accent-9)]" />,
+    trend: { text: '↑ 1.2% vs last week', type: 'success', icon: <TrendingUp size={12} /> },
+    source: { name: 'Ignition', logo: '/images/integrations/ignition.svg' },
+  },
+  {
+    label: 'Open Work Orders',
     value: 47,
     icon: <ClipboardList size={18} className="text-[var(--color-accent-9)]" />,
     trend: { text: '↓ 8 from yesterday', type: 'success', icon: <TrendingDown size={12} /> },
+    source: { name: 'UpKeep', logo: '/images/integrations/upkeep.svg' },
+  },
+  {
+    label: 'ERP Inventory Alerts',
+    value: 5,
+    icon: <Package size={18} className="text-[var(--color-warning)]" />,
+    trend: { text: '3 parts below min threshold', type: 'warning' },
+    source: { name: 'SAP', logo: '/images/integrations/sap.svg' },
   },
   {
     label: 'Overdue PMs',
     value: 6,
     icon: <AlertTriangle size={18} className="text-[var(--color-warning)]" />,
     trend: { text: '2 critical assets', type: 'warning' },
-  },
-  {
-    label: 'Low stock alerts',
-    value: 3,
-    icon: <Package size={18} className="text-[var(--color-neutral-8)]" />,
-    trend: { text: 'Auto-reorder: 2', type: 'neutral', icon: <TrendingUp size={12} /> },
+    source: { name: 'UpKeep', logo: '/images/integrations/upkeep.svg' },
   },
 ]
 
@@ -42,7 +53,7 @@ const trendColors = {
 
 export function SystemPulse() {
   return (
-    <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr 1fr 1.5fr' }}>
+    <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 1.5fr' }}>
       {metrics.map((m) => (
         <div
           key={m.label}
@@ -58,6 +69,10 @@ export function SystemPulse() {
           <span className={`inline-flex items-center gap-1 text-[12px] font-medium ${trendColors[m.trend.type]}`}>
             {m.trend.icon}
             {m.trend.text}
+          </span>
+          <span className="inline-flex items-center gap-1 text-[10px] text-[var(--color-neutral-7)] mt-0.5">
+            <img src={m.source.logo} alt={m.source.name} className="w-3 h-3 rounded-[2px] object-cover" />
+            via {m.source.name}
           </span>
         </div>
       ))}

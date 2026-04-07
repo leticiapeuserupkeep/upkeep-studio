@@ -107,6 +107,26 @@ const items: AttentionItem[] = [
     ],
     chatOpener: "PO-892 is a reorder for 15 air filters at $1,240. Current stock will last about 5 days at your usage rate. The vendor's price is competitive — 8% below average. Want me to approve it?",
   },
+  {
+    id: '4',
+    type: 'anomaly',
+    reference: 'Line 3 — SAP',
+    title: 'Material shortage predicted — Line 3',
+    description: 'ERP stock forecast shows raw material depletion in ~4 days at current production rate.',
+    suggestedBy: { name: 'Elena', photo: 'https://i.pravatar.cc/150?u=elena-rodriguez-upkeep' },
+    source: [
+      { name: 'SAP', logo: '/images/integrations/sap.svg' },
+    ],
+    pillLabel: 'Elena has 1 suggestion',
+    suggestions: [
+      {
+        id: 's5', icon: 'inventory', title: 'Create emergency PO in SAP', badge: '~$3,200',
+        reasoning: "Current stock of **Material M-204** will run out in **4 days** based on Line 3's production rate of **120 units/day**. Lead time from preferred vendor is **3 days** — ordering now avoids a stoppage estimated at **$8,400/day**.",
+        acceptLabel: 'Create PO', altLabel: 'Review stock', status: 'pending',
+      },
+    ],
+    chatOpener: "I detected a material shortage risk on Line 3 based on SAP inventory data. At the current production rate, M-204 stock runs out in 4 days. I can create an emergency PO now — want me to proceed?",
+  },
 ]
 
 const badgeConfig = {
@@ -216,7 +236,7 @@ export function AttentionQueue({ onOpenChat }: AttentionQueueProps) {
                   <h4 className="text-[14px] font-medium text-[var(--color-neutral-12)] mb-1">{item.title}</h4>
                   <p className="text-[13px] text-[var(--color-neutral-8)] mb-3">{item.description}</p>
 
-                  {/* AI-Mate pill + source */}
+                  {/* Agent pill + source */}
                   <div className="flex items-center justify-between">
                     <button
                       onClick={e => { e.stopPropagation(); setExpandedId(isExpanded ? null : item.id) }}

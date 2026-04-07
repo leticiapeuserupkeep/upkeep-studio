@@ -38,8 +38,8 @@ type OnboardingStep =
 
 const TEAM_CHAT = {
   id: 'team',
-  name: 'Multi AI-Mate',
-  subtitle: 'All your AI-Mates',
+  name: 'Multi Agent',
+  subtitle: 'All your Agents',
 }
 
 /* ── Main page ── */

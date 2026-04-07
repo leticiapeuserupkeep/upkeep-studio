@@ -31,12 +31,12 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
 
         {/* Subtitle */}
         <p className="text-[18px] text-[var(--color-neutral-9)] leading-relaxed -mt-2">
-          Your AI maintenance team
+          Your AI operations command center
         </p>
 
         {/* Description */}
         <p className="text-[14px] text-[var(--color-neutral-8)] leading-relaxed">
-          We&apos;ll connect to your UpKeep data, set up your AI teammates, and have them ready to work alongside you in just a few minutes.
+          Supernova connects to your MES, ERP, CMMS, and existing tools — then sets up an AI team that works across all of them, so nothing falls through the cracks.
         </p>
 
         {/* CTA */}
