@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import type { CSSProperties } from 'react'
 
 const STYLES = `
   @keyframes orb-float-v2 {
@@ -76,8 +77,9 @@ export default function SupernovaOrb() {
 
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const ctxMaybe = canvas.getContext('2d')
+    if (!ctxMaybe) return
+    const ctx2d: CanvasRenderingContext2D = ctxMaybe
 
     const W = 100
     const H = 100
@@ -89,7 +91,7 @@ export default function SupernovaOrb() {
 
     function draw() {
       if (cancelled) return
-      const imageData = ctx.createImageData(W, H)
+      const imageData = ctx2d.createImageData(W, H)
       const data = imageData.data
 
       for (let py = 0; py < H; py++) {
@@ -174,7 +176,7 @@ export default function SupernovaOrb() {
         }
       }
 
-      ctx.putImageData(imageData, 0, 0)
+      ctx2d.putImageData(imageData, 0, 0)
       t += 0.014
       if (!cancelled) {
         rafRef.current = requestAnimationFrame(draw)
@@ -327,7 +329,6 @@ export default function SupernovaOrb() {
         >
           <div
             style={
-              // @ts-ignore --start-angle / --radius are consumed by orb-dot-orbit keyframes; not in CSSProperties
               {
                 width: size,
                 height: size,
@@ -337,7 +338,7 @@ export default function SupernovaOrb() {
                 '--start-angle': angle,
                 '--radius': radius,
                 animation: `orb-dot-orbit ${duration} linear infinite`,
-              }
+              } as unknown as CSSProperties
             }
           />
         </div>
