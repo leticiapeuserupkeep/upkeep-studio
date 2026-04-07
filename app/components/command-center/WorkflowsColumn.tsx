@@ -19,10 +19,10 @@ interface WorkflowItem {
 const workflows: WorkflowItem[] = [
   {
     id: 'wf1',
-    title: 'Weekly PM digest',
+    title: 'Weekly operations digest',
     schedule: 'Today 5pm',
     isToday: true,
-    description: 'Sends PM summary to maintenance leads',
+    description: 'Summarizes key metrics and sends to team leads',
     integrations: [
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
       { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
@@ -30,10 +30,10 @@ const workflows: WorkflowItem[] = [
   },
   {
     id: 'wf2',
-    title: 'Inventory check',
+    title: 'Resource level check',
     schedule: 'Mon 8am',
     isToday: false,
-    description: 'Scans all stock levels, flags low items',
+    description: 'Scans all levels, flags items below threshold',
     integrations: [
       { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' },
     ],
@@ -43,7 +43,7 @@ const workflows: WorkflowItem[] = [
     title: 'SLA compliance report',
     schedule: 'Daily 6am',
     isToday: false,
-    description: 'Calculates SLA % and alerts on misses',
+    description: 'Tracks SLA performance and alerts on misses',
     integrations: [
       { name: 'Google Sheets', logo: '/images/integrations/google-sheets.svg' },
       { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
@@ -51,10 +51,10 @@ const workflows: WorkflowItem[] = [
   },
   {
     id: 'wf4',
-    title: 'Vendor invoice sync',
+    title: 'External data sync',
     schedule: 'Daily 9am',
     isToday: false,
-    description: 'Imports invoices from connected vendors',
+    description: 'Imports and reconciles data from connected sources',
     integrations: [
       { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' },
       { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
@@ -69,7 +69,7 @@ interface WorkflowsColumnProps {
 export function WorkflowsColumn({ onOpenWorkflows }: WorkflowsColumnProps) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pt-3">
         <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">Scheduled workflows</h3>
         <button
           onClick={onOpenWorkflows}

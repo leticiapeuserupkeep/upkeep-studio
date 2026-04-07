@@ -1,6 +1,6 @@
 'use client'
 
-import { Activity, ClipboardList, AlertTriangle, Package, TrendingDown, TrendingUp, Clock, DollarSign } from 'lucide-react'
+import { Activity, AlertTriangle, ShieldAlert, FileCheck, TrendingDown, TrendingUp, Clock, DollarSign } from 'lucide-react'
 
 interface MetricCard {
   label: string
@@ -11,37 +11,37 @@ interface MetricCard {
     type: 'success' | 'warning' | 'neutral'
     icon?: React.ReactNode
   }
-  source: { name: string; logo: string }
+  sources: string[]
 }
 
 const metrics: MetricCard[] = [
   {
-    label: 'Production Uptime',
+    label: 'Operational health',
     value: '97.4%',
     icon: <Activity size={18} className="text-[var(--color-accent-9)]" />,
     trend: { text: '↑ 1.2% vs last week', type: 'success', icon: <TrendingUp size={12} /> },
-    source: { name: 'Ignition', logo: '/images/integrations/ignition.svg' },
+    sources: ['/images/integrations/ignition.svg', '/images/integrations/upkeep.svg'],
   },
   {
-    label: 'Open Work Orders',
-    value: 47,
-    icon: <ClipboardList size={18} className="text-[var(--color-accent-9)]" />,
-    trend: { text: '↓ 8 from yesterday', type: 'success', icon: <TrendingDown size={12} /> },
-    source: { name: 'UpKeep', logo: '/images/integrations/upkeep.svg' },
-  },
-  {
-    label: 'ERP Inventory Alerts',
-    value: 5,
-    icon: <Package size={18} className="text-[var(--color-warning)]" />,
-    trend: { text: '3 parts below min threshold', type: 'warning' },
-    source: { name: 'SAP', logo: '/images/integrations/sap.svg' },
-  },
-  {
-    label: 'Overdue PMs',
-    value: 6,
+    label: 'Active issues',
+    value: 12,
     icon: <AlertTriangle size={18} className="text-[var(--color-warning)]" />,
-    trend: { text: '2 critical assets', type: 'warning' },
-    source: { name: 'UpKeep', logo: '/images/integrations/upkeep.svg' },
+    trend: { text: '↓ 4 from yesterday', type: 'success', icon: <TrendingDown size={12} /> },
+    sources: ['/images/integrations/slack.svg', '/images/integrations/sap.svg'],
+  },
+  {
+    label: 'Critical signals',
+    value: 5,
+    icon: <ShieldAlert size={18} className="text-[var(--color-warning)]" />,
+    trend: { text: '3 exceeded threshold', type: 'warning' },
+    sources: ['/images/integrations/ignition.svg'],
+  },
+  {
+    label: 'Pending approvals',
+    value: 6,
+    icon: <FileCheck size={18} className="text-[var(--color-accent-9)]" />,
+    trend: { text: '2 high-impact items waiting', type: 'warning' },
+    sources: ['/images/integrations/quickbooks.svg', '/images/integrations/gmail.svg'],
   },
 ]
 
@@ -51,9 +51,9 @@ const trendColors = {
   neutral: 'text-[var(--color-neutral-8)]',
 }
 
-export function SystemPulse() {
+export function SystemPulseKPIs() {
   return (
-    <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 1.5fr' }}>
+    <div className="grid grid-cols-4 gap-4">
       {metrics.map((m) => (
         <div
           key={m.label}
@@ -70,17 +70,18 @@ export function SystemPulse() {
             {m.trend.icon}
             {m.trend.text}
           </span>
-          <span className="inline-flex items-center gap-1 text-[10px] text-[var(--color-neutral-7)] mt-0.5">
-            <img src={m.source.logo} alt={m.source.name} className="w-3 h-3 rounded-[2px] object-cover" />
-            via {m.source.name}
+          <span className="inline-flex items-center gap-1 mt-0.5">
+            {m.sources.map(src => (
+              <img key={src} src={src} alt="" className="w-3 h-3 rounded-[2px] object-cover" />
+            ))}
           </span>
         </div>
       ))}
-
-      <SupernovaSavingsCard />
     </div>
   )
 }
+
+export { SupernovaSavingsCard }
 
 function SupernovaSavingsCard() {
   return (
@@ -89,9 +90,9 @@ function SupernovaSavingsCard() {
         <div className="flex flex-1 min-w-0 flex-col gap-1">
           <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-white/75">
             <Clock size={16} className="text-white shrink-0" strokeWidth={2} />
-            Time Saved
+            Time saved
           </span>
-          <span className="text-[24px] font-semibold text-white leading-tight">-128h</span>
+          <span className="text-[24px] font-semibold text-white leading-tight">128h</span>
         </div>
 
         <div className="w-px shrink-0 self-stretch bg-white/20" />
@@ -99,15 +100,15 @@ function SupernovaSavingsCard() {
         <div className="flex flex-1 min-w-0 flex-col gap-1">
           <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-white/75">
             <DollarSign size={16} className="text-white shrink-0" strokeWidth={2} />
-            Cost Reduction
+            Cost impact
           </span>
-          <span className="text-[24px] font-semibold text-white leading-tight">-$12.4k</span>
+          <span className="text-[24px] font-semibold text-white leading-tight">$12.4k</span>
         </div>
       </div>
 
       <span className="inline-flex items-center gap-1 text-[12px] font-medium text-white/90">
-        <TrendingDown size={12} className="shrink-0" />
-        23% vs last month
+        <TrendingUp size={12} className="shrink-0" />
+        23% improvement vs last month
       </span>
     </div>
   )

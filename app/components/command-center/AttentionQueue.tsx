@@ -41,9 +41,9 @@ const items: AttentionItem[] = [
   {
     id: '1',
     type: 'sla',
-    reference: 'WO-4521',
-    title: 'HVAC unit failure — Building A',
-    description: 'Cooling system down. Immediate assignment needed.',
+    reference: 'REQ-4521',
+    title: 'Priority item approaching deadline',
+    description: 'A high-priority request is close to missing its target window. Immediate assignment recommended.',
     timeLeft: '2h left',
     suggestedBy: { name: 'Sofia', photo: 'https://i.pravatar.cc/150?u=sofia-chen-upkeep' },
     source: [
@@ -54,44 +54,44 @@ const items: AttentionItem[] = [
     suggestions: [
       {
         id: 's1', icon: 'assign', title: 'Assign to John Reeves', badge: '⏱ 2h SLA',
-        reasoning: '**John is available now** and **0.8 mi** from Building A. His last 3 WOs of this type were HVAC jobs — all resolved within SLA.',
-        acceptLabel: 'Assign John', altLabel: 'Assign', status: 'pending',
+        reasoning: '**John is available now** and is the closest available team member. His last **3 similar tasks** were all completed within the target window.',
+        acceptLabel: 'Assign', altLabel: 'Reassign', status: 'pending',
       },
       {
-        id: 's2', icon: 'email', title: 'Notify by Email',
-        reasoning: "I'll send a heads-up to the Building A manager so tenants know HVAC is being addressed. Helps prevent duplicate reports.",
-        emailDraft: { to: 'mgr-buildingA@company.com', subject: 'HVAC repair in progress — Building A', body: 'Hi — a technician has been assigned to the HVAC unit failure in Building A. ETA is within 2 hours. We\'ll update you once resolved.' },
-        acceptLabel: 'Send email', altLabel: 'Edit', status: 'pending',
+        id: 's2', icon: 'email', title: 'Notify stakeholder',
+        reasoning: "Sending a heads-up to the responsible manager reduces duplicate reports and keeps stakeholders informed.",
+        emailDraft: { to: 'manager@company.com', subject: 'Priority request in progress — REQ-4521', body: 'Hi — a team member has been assigned to REQ-4521. ETA is within 2 hours. We\'ll update you once resolved.' },
+        acceptLabel: 'Send notification', altLabel: 'Edit', status: 'pending',
       },
     ],
-    chatOpener: "I flagged WO-4521 because the SLA window is closing in 2 hours. I've identified John Reeves as the best available technician — he's nearby and has HVAC experience. Want me to assign him?",
+    chatOpener: "I flagged REQ-4521 because the SLA window is closing in 2 hours. I've identified John Reeves as the best available team member — he's nearby and has relevant experience. Want me to assign him?",
   },
   {
     id: '2',
     type: 'anomaly',
-    reference: 'Asset #1847',
-    title: 'Compressor #4 vibration pattern',
-    description: 'Bearing wear detected. Failure predicted in 2–3 weeks.',
+    reference: 'SIG-1847',
+    title: 'Unusual pattern detected in monitored workflow',
+    description: 'Behavioral anomaly identified. Predicted impact within 2–3 weeks if unaddressed.',
     suggestedBy: { name: 'Marcus', photo: 'https://i.pravatar.cc/150?u=marcus-johnson-upkeep' },
     source: [
-      { name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' },
+      { name: 'Ignition', logo: '/images/integrations/ignition.svg' },
     ],
     pillLabel: 'Marcus has suggestions',
     suggestions: [
       {
-        id: 's3', icon: 'schedule', title: 'Schedule preventive maintenance',
-        reasoning: "Vibration data shows **bearing degradation at 73%**. Historical pattern suggests failure within **2–3 weeks**. Scheduling a PM now avoids unplanned downtime estimated at **$4,200/day**.",
-        acceptLabel: 'Schedule PM', altLabel: 'Pick date', status: 'pending',
+        id: 's3', icon: 'schedule', title: 'Schedule preventive action',
+        reasoning: "Signal data shows **degradation at 73%**. Historical patterns suggest impact within **2–3 weeks**. Acting now avoids unplanned disruption estimated at **$4,200/day**.",
+        acceptLabel: 'Schedule', altLabel: 'Pick date', status: 'pending',
       },
     ],
-    chatOpener: "I detected an anomaly in Compressor #4's vibration signature. The bearing wear pattern matches 3 previous failures in your fleet. I'd recommend scheduling preventive maintenance within the next week.",
+    chatOpener: "I detected an anomaly in a monitored workflow. The pattern matches 3 previous incidents. I'd recommend scheduling a preventive action within the next week.",
   },
   {
     id: '3',
     type: 'approval',
-    reference: 'PO-892',
-    title: 'Part reorder — $1,240',
-    description: '15× filters above auto-approval threshold.',
+    reference: 'APR-892',
+    title: 'Approval needed — $1,240 request',
+    description: 'A request above the auto-approval threshold is waiting for review.',
     suggestedBy: { name: 'Elena', photo: 'https://i.pravatar.cc/150?u=elena-rodriguez-upkeep' },
     source: [
       { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' },
@@ -100,19 +100,19 @@ const items: AttentionItem[] = [
     pillLabel: 'Elena recommends approval',
     suggestions: [
       {
-        id: 's4', icon: 'inventory', title: 'Approve filter reorder', badge: '$1,240',
-        reasoning: "Current stock is **3 units** — below the **15-unit minimum**. Usage rate is **4/week**, so you'll run out in **5 days**. Vendor price is **8% below** market average. Recommended qty: 15.",
-        acceptLabel: 'Approve reorder', altLabel: 'Adjust qty', status: 'pending',
+        id: 's4', icon: 'inventory', title: 'Approve request', badge: '$1,240',
+        reasoning: "Current level is **3 units** — below the **15-unit minimum**. Usage rate is **4/week**, so stock runs out in **5 days**. Vendor price is **8% below** market average.",
+        acceptLabel: 'Approve', altLabel: 'Adjust', status: 'pending',
       },
     ],
-    chatOpener: "PO-892 is a reorder for 15 air filters at $1,240. Current stock will last about 5 days at your usage rate. The vendor's price is competitive — 8% below average. Want me to approve it?",
+    chatOpener: "APR-892 is a $1,240 request that exceeds the auto-approval threshold. Current stock will last about 5 days at the current rate. The pricing is competitive — 8% below average. Want me to approve it?",
   },
   {
     id: '4',
     type: 'anomaly',
-    reference: 'Line 3 — SAP',
-    title: 'Material shortage predicted — Line 3',
-    description: 'ERP stock forecast shows raw material depletion in ~4 days at current production rate.',
+    reference: 'SIG-3041',
+    title: 'Resource shortage predicted in active workflow',
+    description: 'Forecast shows depletion in ~4 days at the current rate. Action recommended.',
     suggestedBy: { name: 'Elena', photo: 'https://i.pravatar.cc/150?u=elena-rodriguez-upkeep' },
     source: [
       { name: 'SAP', logo: '/images/integrations/sap.svg' },
@@ -120,19 +120,19 @@ const items: AttentionItem[] = [
     pillLabel: 'Elena has 1 suggestion',
     suggestions: [
       {
-        id: 's5', icon: 'inventory', title: 'Create emergency PO in SAP', badge: '~$3,200',
-        reasoning: "Current stock of **Material M-204** will run out in **4 days** based on Line 3's production rate of **120 units/day**. Lead time from preferred vendor is **3 days** — ordering now avoids a stoppage estimated at **$8,400/day**.",
-        acceptLabel: 'Create PO', altLabel: 'Review stock', status: 'pending',
+        id: 's5', icon: 'inventory', title: 'Create emergency request', badge: '~$3,200',
+        reasoning: "Current stock will run out in **4 days** at the current consumption rate of **120 units/day**. Lead time from preferred vendor is **3 days** — acting now avoids a disruption estimated at **$8,400/day**.",
+        acceptLabel: 'Create request', altLabel: 'Review details', status: 'pending',
       },
     ],
-    chatOpener: "I detected a material shortage risk on Line 3 based on SAP inventory data. At the current production rate, M-204 stock runs out in 4 days. I can create an emergency PO now — want me to proceed?",
+    chatOpener: "I detected a resource shortage risk in an active workflow. At the current rate, stock runs out in 4 days. I can create an emergency request now — want me to proceed?",
   },
 ]
 
 const badgeConfig = {
   sla: { label: 'SLA risk', bg: 'bg-red-50 text-red-700 border-red-200', border: 'border-l-red-500' },
-  anomaly: { label: 'Anomaly', bg: 'bg-amber-50 text-amber-700 border-amber-200', border: 'border-l-amber-500' },
-  approval: { label: 'Approval', bg: 'bg-blue-50 text-blue-700 border-blue-200', border: 'border-l-blue-500' },
+  anomaly: { label: 'Anomaly detected', bg: 'bg-amber-50 text-amber-700 border-amber-200', border: 'border-l-amber-500' },
+  approval: { label: 'Approval needed', bg: 'bg-blue-50 text-blue-700 border-blue-200', border: 'border-l-blue-500' },
 }
 
 const suggestionIconConfig = {

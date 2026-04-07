@@ -65,8 +65,9 @@ export function IntegrationsStrip() {
 
   return (
     <div className="flex flex-col gap-3">
+      <div className="mt-[18px] mb-[18px] h-px bg-[var(--color-neutral-5)]" />
       <div className="flex items-center justify-between">
-        <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">Your integrations</h3>
+        <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">Connected sources</h3>
         <button className="inline-flex items-center gap-1 text-[12px] font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] cursor-pointer transition-colors">
           Manage <ArrowRight size={12} />
         </button>
@@ -96,7 +97,7 @@ export function IntegrationsStrip() {
             <Plus size={18} className="text-[var(--color-neutral-8)] group-hover:text-[var(--color-accent-9)] transition-colors" />
           </div>
           <p className="text-[10px] font-medium text-[var(--color-neutral-8)] group-hover:text-[var(--color-accent-9)] transition-colors">
-            New integration
+            Add source
           </p>
         </div>
       </div>

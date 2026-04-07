@@ -2,12 +2,12 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { PanelLeft, MessageCircle } from 'lucide-react'
-import { SystemPulse } from '@/app/components/command-center/SystemPulse'
+import { SystemPulseKPIs, SupernovaSavingsCard } from '@/app/components/command-center/SystemPulse'
 import { AttentionQueue } from '@/app/components/command-center/AttentionQueue'
 import { AIMatesColumn } from '@/app/components/command-center/AIMatesColumn'
 // WorkflowsColumn is now rendered inside AIMatesColumn
 // IntegrationsStrip is now rendered inside AttentionQueue
-import { UsagePanel } from '@/app/components/command-center/UsagePanel'
+import { UsageThisMonthCard, CostByActionCard, TokensByAgentCard } from '@/app/components/command-center/UsagePanel'
 import { CommandSidebar, type SidebarView } from '@/app/components/command-center/CommandSidebar'
 import { OnboardingFlow } from '@/app/components/command-center/onboarding/OnboardingFlow'
 
@@ -130,35 +130,51 @@ export default function CommandCenterPage() {
                 {getGreeting()}, Leti
               </h2>
               <p className="text-[14px] text-[var(--color-neutral-8)] mt-0.5">
-                {getDateString()} · 4 items need your attention
+                {getDateString()} · 4 signals need your attention
               </p>
             </div>
 
-            {/* System Pulse */}
+            {/* Row 1: KPI cards + Savings */}
             <div
-              className={skipAnimations ? '' : 'opacity-0'}
+              className={`grid grid-cols-3 gap-x-7 gap-y-4 ${skipAnimations ? '' : 'opacity-0'}`}
               style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
             >
-              <SystemPulse />
+              <div className="col-span-2">
+                <SystemPulseKPIs />
+              </div>
+              <SupernovaSavingsCard />
             </div>
 
-            {/* Usage Panel */}
+            <div className="h-px my-6 bg-[var(--color-neutral-5)]" />
+
+            {/* Row 2: Credits & Usage */}
             <div
-              className={skipAnimations ? '' : 'opacity-0'}
+              className={`flex flex-col gap-3 ${skipAnimations ? '' : 'opacity-0'}`}
               style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.15s forwards' }}
             >
-              <UsagePanel />
+              <div className="flex items-center justify-between">
+                <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">Credits & Usage</h3>
+                <button className="text-[13px] font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] cursor-pointer transition-colors">
+                  Upgrade
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-x-7 gap-y-5">
+                <UsageThisMonthCard />
+                <CostByActionCard />
+                <TokensByAgentCard />
+              </div>
             </div>
 
-            {/* 2-Column Grid */}
+            <div className="h-px my-6 bg-[var(--color-neutral-5)]" />
+
+            {/* Row 3: Attention + Agents */}
             <div
-              className={`grid gap-8 ${skipAnimations ? '' : 'opacity-0'}`}
-              style={{
-                gridTemplateColumns: '1.6fr 1fr',
-                ...(skipAnimations ? {} : { animation: 'fadeInUp 0.4s var(--ease-default) 0.22s forwards' }),
-              }}
+              className={`grid grid-cols-3 gap-x-7 gap-y-4 ${skipAnimations ? '' : 'opacity-0'}`}
+              style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.2s forwards' }}
             >
-              <AttentionQueue onOpenChat={openChatWith} />
+              <div className="col-span-2">
+                <AttentionQueue onOpenChat={openChatWith} />
+              </div>
               <AIMatesColumn onOpenChat={openChatWith} onManage={openManage} onOpenWorkflows={openWorkflows} />
             </div>
           </div>

@@ -26,10 +26,10 @@ const aiMates: AIMatePreview[] = [
     id: 'sofia',
     name: 'Sofia',
     photo: EXISTING_AGENTS.find(a => a.id === 'sofia')?.photo ?? '',
-    skill: 'Scheduling',
+    skill: 'Coordinator',
     skillColor: 'text-blue-700',
     skillBg: 'bg-blue-50 border-blue-200',
-    activity: "Assigned 14 WO's",
+    activity: 'Assigned 14 items today',
     mode: 'Auto-assign',
     integrations: [
       { name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' },
@@ -40,11 +40,11 @@ const aiMates: AIMatePreview[] = [
     id: 'elena',
     name: 'Elena',
     photo: `https://i.pravatar.cc/150?u=elena-rodriguez-upkeep`,
-    skill: 'Inventory',
+    skill: 'Reviewer',
     skillColor: 'text-emerald-700',
     skillBg: 'bg-emerald-50 border-emerald-200',
-    activity: 'Reordered 3 parts',
-    mode: 'Auto-reorder · approval >$500',
+    activity: 'Processed 3 approvals',
+    mode: 'Auto-approve within threshold',
     integrations: [
       { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' },
       { name: 'Google Sheets', logo: '/images/integrations/google-sheets.svg' },
@@ -57,8 +57,8 @@ const aiMates: AIMatePreview[] = [
     skill: 'Triage',
     skillColor: 'text-amber-700',
     skillBg: 'bg-amber-50 border-amber-200',
-    activity: '8 requests sorted',
-    mode: 'Auto-escalate · 4h threshold',
+    activity: 'Sorted 8 incoming items',
+    mode: 'Auto-escalate on risk',
     integrations: [
       { name: 'Gmail', logo: '/images/integrations/gmail.svg' },
       { name: 'Slack', logo: '/images/integrations/slack.svg' },
@@ -78,9 +78,9 @@ interface HandledAction {
 }
 
 const handledActions: HandledAction[] = [
-  { id: 'h1', photo: aiMates[0].photo, mateName: 'Sofia', count: 14, noun: 'work orders', verb: 'assigned', timeAgo: '6h ago', via: { name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' } },
-  { id: 'h2', photo: aiMates[1].photo, mateName: 'Elena', count: 3, noun: 'parts', verb: 'reordered', timeAgo: '8h ago', via: { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' } },
-  { id: 'h3', photo: aiMates[2].photo, mateName: 'Marcus', count: 1, noun: 'request', verb: 'escalated', timeAgo: '12h ago', via: { name: 'Slack', logo: '/images/integrations/slack.svg' } },
+  { id: 'h1', photo: aiMates[0].photo, mateName: 'Sofia', count: 14, noun: 'items', verb: 'assigned', timeAgo: '6h ago', via: { name: 'Google Calendar', logo: '/images/integrations/google-calendar.svg' } },
+  { id: 'h2', photo: aiMates[1].photo, mateName: 'Elena', count: 3, noun: 'approvals', verb: 'processed', timeAgo: '8h ago', via: { name: 'QuickBooks', logo: '/images/integrations/quickbooks.svg' } },
+  { id: 'h3', photo: aiMates[2].photo, mateName: 'Marcus', count: 1, noun: 'issue', verb: 'escalated', timeAgo: '12h ago', via: { name: 'Slack', logo: '/images/integrations/slack.svg' } },
 ]
 
 interface AIMatesColumnProps {
@@ -148,8 +148,8 @@ export function AIMatesColumn({ onOpenChat, onManage, onOpenWorkflows }: AIMates
 
       {/* Handled Today */}
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">Handled today</h3>
+        <div className="flex items-center justify-between pt-3">
+          <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">Completed today</h3>
           <span className="text-[12px] font-medium text-[var(--color-neutral-8)]">25 actions</span>
         </div>
 
