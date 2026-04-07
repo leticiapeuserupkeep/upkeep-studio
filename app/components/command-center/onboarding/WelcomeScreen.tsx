@@ -1,8 +1,8 @@
 'use client'
 
-import { Sparkles } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import { ProgressDots } from './ProgressDots'
+import SupernovaOrb from '@/components/SupernovaOrb'
 
 interface WelcomeScreenProps {
   onStart: () => void
@@ -16,12 +16,9 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
         className="flex flex-col items-center gap-6 max-w-[440px] text-center opacity-0"
         style={{ animation: 'fadeInUp 0.6s var(--ease-default) 0.1s forwards' }}
       >
-        {/* Icon */}
-        <div className="relative">
-          <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#7C3AED] to-[#4F46E5] shadow-[0_0_40px_rgba(124,58,237,0.3)]">
-            <Sparkles size={28} className="text-white" />
-          </div>
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#7C3AED] to-[#4F46E5] opacity-30 blur-xl animate-pulse" />
+        {/* Orb */}
+        <div className="relative flex justify-center -my-2">
+          <SupernovaOrb />
         </div>
 
         {/* Title */}
