@@ -58,6 +58,12 @@ export interface ChatMessage {
   chips?: SuggestedChip[]
   profileCard?: Teammate
   thinking?: boolean
+  /** Inline progress line (magic inbox demo) — shown with lightweight spinner */
+  loaderLine?: string
+  /** Inline email draft card (magic inbox demo) */
+  emailCard?: { id: string; subject: string; draftReply: string }
+  /** After user accepts/edits, hide actions */
+  emailCardHandled?: boolean
 }
 
 export interface ActionCard {

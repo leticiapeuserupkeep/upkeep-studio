@@ -33,14 +33,14 @@ const metrics: MetricCard[] = [
     label: 'Critical signals',
     value: 5,
     icon: <ShieldAlert size={18} className="text-[var(--color-warning)]" />,
-    trend: { text: '3 exceeded threshold', type: 'warning' },
+    trend: { text: '3 exceeded threshold', type: 'neutral' },
     sources: ['/images/integrations/ignition.svg'],
   },
   {
     label: 'Pending approvals',
     value: 6,
     icon: <FileCheck size={18} className="text-[var(--color-accent-9)]" />,
-    trend: { text: '2 high-impact items waiting', type: 'warning' },
+    trend: { text: '2 high-impact items waiting', type: 'neutral' },
     sources: ['/images/integrations/quickbooks.svg', '/images/integrations/gmail.svg'],
   },
 ]

@@ -7,11 +7,16 @@ import {
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import {
-  EXISTING_AGENTS, AVAILABLE_AGENTS, DEFAULT_CHIPS, MULTI_AGENT_EXTRA_CHIPS,
+  EXISTING_AGENTS, AVAILABLE_AGENTS,
   suggestTeammate, getTeammateGreeting, getTeammateWelcomeActions,
-  SMART_INBOX_WORKFLOW_CHIP_PROMPT,
 } from '@/app/lib/agents-data'
-import type { Teammate, ChatMessage, SuggestedChip, ActionOption } from '@/app/lib/agents-data'
+import type { Teammate, ChatMessage, ActionOption } from '@/app/lib/agents-data'
+import {
+  DEMO_INBOX_EMAILS,
+  DEMO_CALL_REMINDER,
+  MAGIC_INBOX_WORKFLOW_NAME,
+  MAGIC_INBOX_WORKFLOW_META,
+} from '@/app/lib/magic-inbox-demo'
 
 export type SidebarView = 'chat' | 'aimates' | 'workflows'
 
@@ -103,6 +108,8 @@ function ChatView({
   const [isThinking, setIsThinking] = useState(false)
   /** 0 = idle; 1 = Elena turn; 2 = Marcus; 3 = Sofia; 4 = Marcus final (save/dismiss) */
   const [smartInboxStep, setSmartInboxStep] = useState(0)
+  const [magicScriptRunning, setMagicScriptRunning] = useState(false)
+  const firstMultiUserMessageSentRef = useRef(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -117,6 +124,21 @@ function ChatView({
       ),
   )
   const inputLockedForWorkflow = isMulti && smartInboxStep > 0 && !!pendingWorkflowOptions
+
+  const pendingMagicOptions = [...messages].reverse().find(
+    (m) =>
+      m.role === 'teammate' &&
+      m.options?.some((o) => typeof o.action === 'string' && o.action.startsWith('magic_')),
+  )
+  const pendingEmailCard = [...messages].reverse().find(
+    (m) => m.role === 'teammate' && m.emailCard && !m.emailCardHandled,
+  )
+  /** Only lock after the user has started a thread — avoids stale magicScriptRunning blocking the empty welcome view */
+  const inputLockedForMagic =
+    isMulti &&
+    messages.length > 0 &&
+    (magicScriptRunning || !!pendingMagicOptions || !!pendingEmailCard)
+  const inputLocked = inputLockedForWorkflow || inputLockedForMagic
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -135,41 +157,360 @@ function ChatView({
         options: actions,
       }])
       setSmartInboxStep(0)
+      setMagicScriptRunning(false)
     } else {
       setMessages([])
       setSmartInboxStep(0)
+      firstMultiUserMessageSentRef.current = false
+      setMagicScriptRunning(false)
     }
   }, [selectedMate, initialMessage])
 
-  const startSmartInboxWorkflow = useCallback(() => {
-    setSmartInboxStep(1)
-    setMessages([
-      {
-        id: `wf-user-${Date.now()}`,
-        role: 'user',
-        content: SMART_INBOX_WORKFLOW_CHIP_PROMPT,
-        timestamp: new Date(),
-      },
-    ])
-    setIsThinking(true)
-    setTimeout(() => {
-      setIsThinking(false)
+  const runMagicAfterAuth = useCallback(() => {
+    setMagicScriptRunning(true)
+    const addLoader = (text: string) => {
+      const id = `magic-L-${Date.now()}-${Math.random().toString(36).slice(2)}`
       setMessages((prev) => [
         ...prev,
         {
-          id: `wf-elena-${Date.now()}`,
+          id,
           role: 'teammate',
           teammate: tElena,
-          content:
-            'I\'d start by **scoring each email** for importance (sender, thread, recency), then only invest drafting time on messages above your threshold — that keeps volume manageable.\n\n**What should we prioritize first?**',
+          content: '',
+          loaderLine: text,
+          timestamp: new Date(),
+        },
+      ])
+      return id
+    }
+    const rm = (id: string) => setMessages((prev) => prev.filter((m) => m.id !== id))
+
+    setTimeout(() => {
+      const l1 = addLoader('Checking new emails…')
+      setTimeout(() => {
+        rm(l1)
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `magic-${Date.now()}-m1`,
+            role: 'teammate',
+            teammate: tElena,
+            content: 'I found 3 new emails. I\'m checking the importance of each one.',
+            timestamp: new Date(),
+          },
+        ])
+        const l2 = addLoader('Scoring importance…')
+        setTimeout(() => {
+          rm(l2)
+          const l3 = addLoader('Reviewing past conversations and related context.')
+          setTimeout(() => {
+            rm(l3)
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `magic-${Date.now()}-m2`,
+                role: 'teammate',
+                teammate: tElena,
+                content: 'I found **3 related conversations** and **17 emails** from the last 30 days.',
+                timestamp: new Date(),
+              },
+            ])
+            setTimeout(() => {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: `magic-${Date.now()}-m3`,
+                  role: 'teammate',
+                  teammate: tElena,
+                  content:
+                    'There are **2 emails** that need an **immediate response**, and **1** that requires a **phone call in 1 hour**.\n\nI already have the context and drafted replies for both.',
+                  timestamp: new Date(),
+                },
+              ])
+              setTimeout(() => {
+                const e = DEMO_INBOX_EMAILS[0]
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: `magic-ec1`,
+                    role: 'teammate',
+                    teammate: tElena,
+                    content: '**Email 1**',
+                    emailCard: { id: e.id, subject: e.subject, draftReply: e.draftReply },
+                    timestamp: new Date(),
+                  },
+                ])
+                setMagicScriptRunning(false)
+              }, 520)
+            }, 420)
+          }, 920)
+        }, 780)
+      }, 880)
+    }, 380)
+  }, [])
+
+  const finishMagicSchedule = useCallback(
+    (scheduleLabel: string, action: string) => {
+      const id = `sw-${Date.now()}`
+      onWorkflowSaved({
+        id,
+        ...MAGIC_INBOX_WORKFLOW_META,
+        schedule: scheduleLabel,
+      })
+      setMessages((prev) => {
+        const stripped = prev.map((m) =>
+          m.id === 'magic-wf-prompt' ? { ...m, options: undefined } : m,
+        )
+        return [
+          ...stripped,
+          {
+            id: `magic-user-${Date.now()}`,
+            role: 'user',
+            content: scheduleLabel,
+            timestamp: new Date(),
+          },
+          {
+            id: `magic-done-${Date.now()}`,
+            role: 'teammate',
+            teammate: tElena,
+            content:
+              action === 'magic_sched_other'
+                ? `Perfect. Your workflow was saved as **${MAGIC_INBOX_WORKFLOW_NAME}** with a **custom cadence** — fine-tune it anytime in **Workflows**, or ask me here if you want to change it.`
+                : `Perfect. Your workflow was saved as **${MAGIC_INBOX_WORKFLOW_NAME}**. You can view and edit it in **Workflows**, or ask me anytime if you want to update it.`,
+            timestamp: new Date(),
+          },
+        ]
+      })
+    },
+    [onWorkflowSaved],
+  )
+
+  const handleMagicDemoOption = useCallback(
+    (opt: ActionOption) => {
+      if (opt.action === 'magic_auth_once' || opt.action === 'magic_auth_always') {
+        setMessages((prev) => [
+          ...prev,
+          { id: `magic-user-${Date.now()}`, role: 'user', content: opt.label, timestamp: new Date() },
+        ])
+        runMagicAfterAuth()
+        return
+      }
+      if (opt.action === 'magic_dismiss') {
+        setMessages((prev) => {
+          const stripped = prev.map((m) =>
+            m.id === 'magic-wf-prompt' ? { ...m, options: undefined } : m,
+          )
+          return [
+            ...stripped,
+            { id: `magic-user-${Date.now()}`, role: 'user', content: opt.label, timestamp: new Date() },
+            {
+              id: `magic-dismiss-${Date.now()}`,
+              role: 'teammate',
+              teammate: tElena,
+              content: 'No problem — I\'ll keep helping in chat whenever you need. If you change your mind about automating this, just say the word.',
+              timestamp: new Date(),
+            },
+          ]
+        })
+        return
+      }
+      if (opt.action === 'magic_sched_30') {
+        finishMagicSchedule('Every 30 minutes', opt.action)
+        return
+      }
+      if (opt.action === 'magic_sched_60') {
+        finishMagicSchedule('Every 1 hour', opt.action)
+        return
+      }
+      if (opt.action === 'magic_sched_6h') {
+        finishMagicSchedule('Every 6 hours', opt.action)
+        return
+      }
+      if (opt.action === 'magic_sched_other') {
+        finishMagicSchedule('Custom schedule', opt.action)
+        return
+      }
+    },
+    [runMagicAfterAuth, finishMagicSchedule],
+  )
+
+  const handleMagicEmailAction = useCallback(
+    (emailId: string, kind: 'accept' | 'edit') => {
+      const e1 = DEMO_INBOX_EMAILS[0]
+      const e2 = DEMO_INBOX_EMAILS[1]
+      if (emailId === e1.id) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === 'magic-ec1' ? { ...m, emailCardHandled: true } : m)),
+        )
+        if (kind === 'accept') {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `magic-u-e1-${Date.now()}`,
+              role: 'user',
+              content: 'Accept and send',
+              timestamp: new Date(),
+            },
+            {
+              id: `magic-r-e1-${Date.now()}`,
+              role: 'teammate',
+              teammate: tElena,
+              content: 'On it — sending the first one now.',
+              timestamp: new Date(),
+            },
+            {
+              id: `magic-ec2-intro`,
+              role: 'teammate',
+              teammate: tElena,
+              content: 'Perfect — the second email is for **Facilities**.',
+              timestamp: new Date(),
+            },
+            {
+              id: `magic-ec2`,
+              role: 'teammate',
+              teammate: tElena,
+              content: '**Email 2**',
+              emailCard: { id: e2.id, subject: e2.subject, draftReply: e2.draftReply },
+              timestamp: new Date(),
+            },
+          ])
+        } else {
+          setChatInput(e1.draftReply)
+          setTimeout(() => inputRef.current?.focus(), 0)
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `magic-edit-${Date.now()}`,
+              role: 'teammate',
+              teammate: tElena,
+              content: 'I dropped the draft in the composer — edit anything, then send when you\'re ready.',
+              timestamp: new Date(),
+            },
+          ])
+        }
+        return
+      }
+      if (emailId === e2.id) {
+        setMessages((prev) => prev.map((m) => (m.id === 'magic-ec2' ? { ...m, emailCardHandled: true } : m)))
+        if (kind === 'accept') {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `magic-u-e2-${Date.now()}`,
+              role: 'user',
+              content: 'Accept and send',
+              timestamp: new Date(),
+            },
+            {
+              id: `magic-r-e2-${Date.now()}`,
+              role: 'teammate',
+              teammate: tElena,
+              content: 'Sent. You\'re all set on both replies.',
+              timestamp: new Date(),
+            },
+          ])
+        } else {
+          setChatInput(e2.draftReply)
+          setTimeout(() => inputRef.current?.focus(), 0)
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `magic-edit2-${Date.now()}`,
+              role: 'teammate',
+              teammate: tElena,
+              content: 'Draft\'s in the composer for the Facilities note — adjust as needed.',
+              timestamp: new Date(),
+            },
+          ])
+        }
+        const t0 = kind === 'accept' ? 450 : 320
+        setTimeout(() => {
+          setMagicScriptRunning(true)
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `magic-rem-${Date.now()}`,
+              role: 'teammate',
+              teammate: tElena,
+              content: `I'm also creating a reminder for you to call **${DEMO_CALL_REMINDER.name}** at **${DEMO_CALL_REMINDER.phone}** in 2 hours.`,
+              timestamp: new Date(),
+            },
+          ])
+          setTimeout(() => {
+            const l = `magic-L-rem-${Date.now()}`
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: l,
+                role: 'teammate',
+                teammate: tElena,
+                content: '',
+                loaderLine: 'Creating reminder…',
+                timestamp: new Date(),
+              },
+            ])
+            setTimeout(() => {
+              setMessages((prev) => prev.filter((m) => m.id !== l))
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: `magic-wf-prompt`,
+                  role: 'teammate',
+                  teammate: tElena,
+                  content:
+                    'This looks like a **strong workflow** to save and automate. Would you like me to save it and run it:',
+                  timestamp: new Date(),
+                  options: [
+                    { id: 'ms30', label: 'Every 30 minutes', action: 'magic_sched_30' },
+                    { id: 'ms60', label: 'Every 1 hour', action: 'magic_sched_60' },
+                    { id: 'ms6', label: 'Every 6 hours', action: 'magic_sched_6h' },
+                    { id: 'mso', label: 'Other', action: 'magic_sched_other' },
+                    { id: 'msd', label: 'Dismiss', action: 'magic_dismiss' },
+                  ],
+                },
+              ])
+              setMagicScriptRunning(false)
+            }, 720)
+          }, 600)
+        }, t0)
+        return
+      }
+    },
+    [],
+  )
+
+  const beginMagicInboxDemo = useCallback((userText: string) => {
+    const display = userText.length > 48 ? `${userText.slice(0, 48)}…` : userText
+    setMagicScriptRunning(true)
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `magic-open-${Date.now()}`,
+          role: 'teammate',
+          teammate: tElena,
+          content: `Perfect — let me review your inbox and check whether there's anything important related to **${display}**.`,
+          timestamp: new Date(),
+        },
+      ])
+    }, 420)
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `magic-auth-req-${Date.now()}`,
+          role: 'teammate',
+          teammate: tElena,
+          content: 'To do that, I\'ll need access to your inbox.',
           timestamp: new Date(),
           options: [
-            { id: 'wf-e1', label: 'VIP senders + urgent threads', action: 'wf_continue' },
-            { id: 'wf-e2', label: 'Score everything, draft top 20%', action: 'wf_continue' },
+            { id: 'magic-a1', label: 'Authorize once', action: 'magic_auth_once' },
+            { id: 'magic-a2', label: 'Authorize always', action: 'magic_auth_always' },
           ],
         },
       ])
-    }, 900)
+      setMagicScriptRunning(false)
+    }, 1080)
   }, [])
 
   const handleWorkflowOption = useCallback(
@@ -275,6 +616,10 @@ function ChatView({
 
   const handleMessageOption = useCallback(
     (opt: ActionOption) => {
+      if (typeof opt.action === 'string' && opt.action.startsWith('magic_')) {
+        handleMagicDemoOption(opt)
+        return
+      }
       if (opt.action === 'wf_continue' || opt.action === 'wf_save' || opt.action === 'wf_dismiss') {
         handleWorkflowOption(opt)
         return
@@ -299,13 +644,13 @@ function ChatView({
         ])
       }, 800)
     },
-    [selectedMate, handleWorkflowOption],
+    [selectedMate, handleWorkflowOption, handleMagicDemoOption],
   )
 
   const handleSend = useCallback(() => {
     const text = chatInput.trim()
     if (!text) return
-    if (inputLockedForWorkflow) return
+    if (inputLocked) return
     setChatInput('')
 
     const smartInboxIntent =
@@ -313,28 +658,35 @@ function ChatView({
       smartInboxStep === 0 &&
       /smart inbox|inbox reply|reply draft|gmail draft|design a workflow/i.test(text)
 
-    if (smartInboxIntent) {
+    if (isMulti && smartInboxStep === 0 && !firstMultiUserMessageSentRef.current) {
+      firstMultiUserMessageSentRef.current = true
       setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: 'user', content: text, timestamp: new Date() }])
-      setIsThinking(true)
-      setSmartInboxStep(1)
-      setTimeout(() => {
-        setIsThinking(false)
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `wf-elena-${Date.now()}`,
-            role: 'teammate',
-            teammate: tElena,
-            content:
-              'I\'d start by **scoring each email** for importance (sender, thread, recency), then only invest drafting time on messages above your threshold — that keeps volume manageable.\n\n**What should we prioritize first?**',
-            timestamp: new Date(),
-            options: [
-              { id: 'wf-e1', label: 'VIP senders + urgent threads', action: 'wf_continue' },
-              { id: 'wf-e2', label: 'Score everything, draft top 20%', action: 'wf_continue' },
-            ],
-          },
-        ])
-      }, 900)
+
+      if (smartInboxIntent) {
+        setIsThinking(true)
+        setSmartInboxStep(1)
+        setTimeout(() => {
+          setIsThinking(false)
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `wf-elena-${Date.now()}`,
+              role: 'teammate',
+              teammate: tElena,
+              content:
+                'I\'d start by **scoring each email** for importance (sender, thread, recency), then only invest drafting time on messages above your threshold — that keeps volume manageable.\n\n**What should we prioritize first?**',
+              timestamp: new Date(),
+              options: [
+                { id: 'wf-e1', label: 'VIP senders + urgent threads', action: 'wf_continue' },
+                { id: 'wf-e2', label: 'Score everything, draft top 20%', action: 'wf_continue' },
+              ],
+            },
+          ])
+        }, 900)
+        return
+      }
+
+      beginMagicInboxDemo(text)
       return
     }
 
@@ -357,16 +709,7 @@ function ChatView({
         timestamp: new Date(),
       }])
     }, 1200)
-  }, [chatInput, selectedMate, isMulti, smartInboxStep, inputLockedForWorkflow])
-
-  const handleChipClick = (chip: SuggestedChip) => {
-    if (isMulti && chip.prompt === SMART_INBOX_WORKFLOW_CHIP_PROMPT) {
-      startSmartInboxWorkflow()
-      return
-    }
-    setChatInput(chip.prompt)
-    setTimeout(() => inputRef.current?.focus(), 0)
-  }
+  }, [selectedMate, isMulti, smartInboxStep, inputLocked, beginMagicInboxDemo])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
@@ -439,26 +782,18 @@ function ChatView({
                 ))}
               </div>
               <div className="flex flex-col items-center gap-1 text-center">
-                <h2 className="text-[20px] font-bold text-[var(--color-neutral-12)]">Good Morning, Leti</h2>
                 <p className="text-[13px] text-[var(--color-neutral-8)]">Your team is ready to work with you!</p>
-              </div>
-              <div className="flex flex-col items-center gap-2 w-full">
-                {[...DEFAULT_CHIPS, ...MULTI_AGENT_EXTRA_CHIPS].map((chip) => (
-                  <button
-                    key={chip.label}
-                    onClick={() => handleChipClick(chip)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-primary)] text-[12px] text-[var(--color-neutral-9)] font-medium hover:bg-[var(--color-neutral-2)] hover:border-[var(--color-neutral-5)] cursor-pointer transition-all"
-                  >
-                    {chip.icon && (() => { const Icon = chip.icon; return <Icon size={13} className="text-[var(--color-neutral-7)]" /> })()}
-                    {chip.label}
-                  </button>
-                ))}
               </div>
             </div>
           ) : (
             <>
               {messages.map((msg) => (
-                <SidebarMessageBubble key={msg.id} message={msg} onOptionClick={handleMessageOption} />
+                <SidebarMessageBubble
+                  key={msg.id}
+                  message={msg}
+                  onOptionClick={handleMessageOption}
+                  onMagicEmailAction={handleMagicEmailAction}
+                />
               ))}
               {isThinking && (
                 <div className="flex items-center gap-2 text-[13px] text-[var(--color-neutral-7)]">
@@ -484,11 +819,11 @@ function ChatView({
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={1}
-                disabled={inputLockedForWorkflow}
+                disabled={inputLocked}
                 className="flex-1 resize-none bg-transparent text-[13px] text-[var(--color-neutral-12)] placeholder:text-[var(--color-neutral-6)] outline-none! ring-0! shadow-none! disabled:opacity-50"
                 placeholder={
-                  inputLockedForWorkflow
-                    ? 'Choose a suggestion above to continue…'
+                  inputLocked
+                    ? 'Choose a suggestion or action above to continue…'
                     : selectedMate
                       ? `Ask ${selectedMate.firstName}…`
                       : 'Ask Agents…'
@@ -499,9 +834,9 @@ function ChatView({
               </button>
               <button
                 onClick={handleSend}
-                disabled={!chatInput.trim() || inputLockedForWorkflow}
+                disabled={!chatInput.trim() || inputLocked}
                 className={`flex items-center justify-center w-7 h-7 rounded-full cursor-pointer transition-colors shrink-0 ${
-                  chatInput.trim() && !inputLockedForWorkflow
+                  chatInput.trim() && !inputLocked
                     ? 'bg-[var(--color-accent-9)] text-white hover:bg-[var(--color-accent-10)]'
                     : 'bg-[var(--color-neutral-3)] text-[var(--color-neutral-7)] opacity-40'
                 }`}
@@ -655,9 +990,11 @@ function WorkflowsView({ onClose, workflows }: { onClose: () => void; workflows:
 function SidebarMessageBubble({
   message,
   onOptionClick,
+  onMagicEmailAction,
 }: {
   message: ChatMessage
   onOptionClick?: (opt: ActionOption) => void
+  onMagicEmailAction?: (emailId: string, kind: 'accept' | 'edit') => void
 }) {
   if (message.role === 'user') {
     return (
@@ -672,6 +1009,10 @@ function SidebarMessageBubble({
   const photo = message.teammate?.photo
   const name = message.teammate?.firstName
   const opts = message.options
+  const loader = message.loaderLine
+  const card = message.emailCard
+  const cardDone = message.emailCardHandled
+  const hasText = message.content.trim().length > 0
 
   return (
     <div className="flex flex-col gap-2 max-w-[90%]">
@@ -685,10 +1026,50 @@ function SidebarMessageBubble({
             ))}
           </div>
         )}
-        <div className="text-[13px] text-[var(--color-neutral-12)] leading-relaxed whitespace-pre-line min-w-0">
-          <FormattedText text={message.content} />
+        <div className="flex flex-col gap-2 min-w-0 flex-1">
+          {loader && (
+            <div className="flex items-center gap-2 text-[12px] text-[var(--color-neutral-9)]">
+              <span
+                className="h-3.5 w-3.5 rounded-full border-2 border-[var(--color-accent-9)] border-t-transparent animate-spin shrink-0"
+                aria-hidden
+              />
+              <span>{loader}</span>
+            </div>
+          )}
+          {hasText && (
+            <div className="text-[13px] text-[var(--color-neutral-12)] leading-relaxed whitespace-pre-line min-w-0">
+              <FormattedText text={message.content} />
+            </div>
+          )}
         </div>
       </div>
+      {card && !cardDone && onMagicEmailAction && (
+        <div className="pl-9 w-full max-w-[100%] rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-3 space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)]">Subject</p>
+          <p className="text-[12px] font-medium text-[var(--color-neutral-12)] leading-snug">{card.subject}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)] pt-1">Draft reply</p>
+          <p className="text-[11px] text-[var(--color-neutral-9)] leading-relaxed">{card.draftReply}</p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => onMagicEmailAction(card.id, 'accept')}
+              className="inline-flex items-center px-3 py-1.5 rounded-md bg-[var(--color-accent-9)] text-white text-[11px] font-semibold hover:bg-[var(--color-accent-10)] cursor-pointer transition-colors"
+            >
+              Accept and send
+            </button>
+            <button
+              type="button"
+              onClick={() => onMagicEmailAction(card.id, 'edit')}
+              className="inline-flex items-center px-3 py-1.5 rounded-md border border-[var(--border-default)] bg-white text-[11px] font-medium text-[var(--color-neutral-12)] hover:bg-[var(--color-neutral-2)] cursor-pointer transition-colors"
+            >
+              Edit
+            </button>
+          </div>
+        </div>
+      )}
+      {card && cardDone && (
+        <p className="pl-9 text-[11px] font-medium text-[var(--color-neutral-7)]">Done</p>
+      )}
       {opts && opts.length > 0 && onOptionClick && (
         <div className="flex flex-col gap-1.5 pl-9 w-full max-w-[100%]">
           {opts.map((opt) => (
