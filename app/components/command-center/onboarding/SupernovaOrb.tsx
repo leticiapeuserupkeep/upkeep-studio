@@ -9,8 +9,8 @@ const STYLES = `
     50%       { transform: translateY(-13px); }
   }
   @keyframes orb-shadow-v2 {
-    0%, 100% { transform: translateX(-50%) scaleX(1);    opacity: 0.5;  filter: blur(8px); }
-    50%       { transform: translateX(-50%) scaleX(0.55); opacity: 0.18; filter: blur(12px); }
+    0%, 100% { transform: translateX(-50%) scaleX(1);    opacity: 0.28; filter: blur(10px); }
+    50%       { transform: translateX(-50%) scaleX(0.55); opacity: 0.09; filter: blur(14px); }
   }
   @keyframes ring-spin-cw {
     from { transform: rotate(0deg); }
@@ -21,11 +21,11 @@ const STYLES = `
     to   { transform: rotate(-360deg); }
   }
   @keyframes orb-ambient-pulse {
-    0%, 100% { transform: scale(1);    opacity: 0.5; }
-    50%       { transform: scale(1.15); opacity: 0.2; }
+    0%, 100% { transform: scale(1);    opacity: 0.32; }
+    50%       { transform: scale(1.15); opacity: 0.12; }
   }
   @keyframes orb-wave-expand {
-    0%   { transform: translate(-50%,-50%) scale(0.7); opacity: 0.7; }
+    0%   { transform: translate(-50%,-50%) scale(0.7); opacity: 0.45; }
     100% { transform: translate(-50%,-50%) scale(1.7); opacity: 0; }
   }
   @keyframes orb-dot-orbit {
@@ -151,14 +151,15 @@ export default function SupernovaOrb() {
           const specHard = specDot ** 52 * 1.05
           const specSoft = specDot ** 8 * 0.14
 
-          const fresnel = (1 - Math.max(0, nz)) ** 2.2 * 0.72
+          // Fresnel rim — kept soft; lower = less chalky white on the silhouette
+          const fresnel = (1 - Math.max(0, nz)) ** 3.1 * 0.26
 
           const ambient = 0.18
           const litAmt = ambient + kDiff * 0.72 + fDiff + specSoft
 
-          r = r * litAmt + specHard * 252 + fresnel * 120 + pinkStr * specHard * 40
-          g = g * litAmt + specHard * 235 + fresnel * 195
-          b = b * litAmt + specHard * 255 + fresnel * 255
+          r = r * litAmt + specHard * 210 + fresnel * 44 + pinkStr * specHard * 32
+          g = g * litAmt + specHard * 198 + fresnel * 82
+          b = b * litAmt + specHard * 228 + fresnel * 118
 
           r = Math.min(255, Math.max(0, Math.round(r)))
           g = Math.min(255, Math.max(0, Math.round(g)))
@@ -191,7 +192,7 @@ export default function SupernovaOrb() {
   }, [])
 
   return (
-    <div className="relative flex h-[200px] w-[200px] items-center justify-center">
+    <div className="relative flex h-[180px] w-[180px] items-center justify-center">
       {[0, 1.5].map((delay) => (
         <div
           key={delay}
@@ -199,8 +200,8 @@ export default function SupernovaOrb() {
             position: 'absolute',
             top: '50%',
             left: '50%',
-            width: 176,
-            height: 176,
+            width: 158,
+            height: 158,
             borderRadius: '50%',
             border: '1px solid rgba(147,197,253,0.2)',
             animation: `orb-wave-expand 3s ease-out infinite ${delay}s`,
@@ -211,12 +212,12 @@ export default function SupernovaOrb() {
       <div
         style={{
           position: 'absolute',
-          width: 185,
-          height: 185,
+          width: 167,
+          height: 167,
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(59,130,246,0.22) 0%, rgba(37,99,235,0.10) 50%, transparent 72%)',
-          filter: 'blur(16px)',
+            'radial-gradient(circle, rgba(59,130,246,0.12) 0%, rgba(37,99,235,0.055) 50%, transparent 76%)',
+          filter: 'blur(18px)',
           animation: 'orb-ambient-pulse 4.5s ease-in-out infinite',
         }}
       />
@@ -224,8 +225,8 @@ export default function SupernovaOrb() {
       <div
         style={{
           position: 'absolute',
-          width: 148,
-          height: 148,
+          width: 133,
+          height: 133,
           borderRadius: '50%',
           background: `conic-gradient(
           from 0deg,
@@ -248,8 +249,8 @@ export default function SupernovaOrb() {
       <div
         style={{
           position: 'absolute',
-          width: 126,
-          height: 126,
+          width: 113,
+          height: 113,
           borderRadius: '50%',
           background: `conic-gradient(
           from 180deg,
@@ -269,8 +270,8 @@ export default function SupernovaOrb() {
       <div
         style={{
           position: 'absolute',
-          width: 108,
-          height: 108,
+          width: 97,
+          height: 97,
           borderRadius: '50%',
           background: `conic-gradient(
           from 90deg,
@@ -293,7 +294,7 @@ export default function SupernovaOrb() {
           glow: 'rgba(56,189,248,0.9)',
           gradientEnd: 'rgb(56,189,248)',
           angle: '0deg',
-          radius: '59px',
+          radius: '53px',
           duration: '6s',
         },
         {
@@ -302,7 +303,7 @@ export default function SupernovaOrb() {
           glow: 'rgba(96,165,250,0.8)',
           gradientEnd: 'rgb(96,165,250)',
           angle: '130deg',
-          radius: '59px',
+          radius: '53px',
           duration: '9s',
         },
         {
@@ -311,7 +312,7 @@ export default function SupernovaOrb() {
           glow: 'rgba(147,197,253,0.85)',
           gradientEnd: 'rgb(147,197,253)',
           angle: '255deg',
-          radius: '59px',
+          radius: '53px',
           duration: '11s',
         },
       ].map(({ size, color, glow, gradientEnd, angle, radius, duration }, i) => (
@@ -349,13 +350,13 @@ export default function SupernovaOrb() {
           ref={canvasRef}
           width={100}
           height={100}
-          className="block size-[100px] rounded-full"
+          className="block size-[90px] rounded-full"
           style={{
             boxShadow: `
-              0 0 0 0.5px rgba(200,225,255,0.18),
-              0 0 20px 5px rgba(59,130,246,0.28),
-              0 8px 28px rgba(37,99,235,0.35),
-              0 2px 6px rgba(0,0,0,0.18)
+              0 0 0 0.33px rgba(200,225,255,0.032),
+              0 0 22px 6px rgba(59,130,246,0.14),
+              0 8px 32px rgba(37,99,235,0.16),
+              0 2px 5px rgba(0,0,0,0.12)
             `,
           }}
         />
@@ -370,10 +371,10 @@ export default function SupernovaOrb() {
               height: '45%',
               borderRadius: '50%',
               background: `radial-gradient(ellipse at 35% 30%,
-              rgba(255,255,255,1.0)  0%,
-              rgba(255,255,255,0.85) 18%,
-              rgba(255,255,255,0.45) 40%,
-              rgba(255,255,255,0.10) 65%,
+              rgba(255,255,255,0.72)  0%,
+              rgba(255,255,255,0.52) 18%,
+              rgba(255,255,255,0.28) 40%,
+              rgba(255,255,255,0.06) 65%,
               transparent 85%
             )`,
               filter: 'blur(2px)',
@@ -389,7 +390,7 @@ export default function SupernovaOrb() {
               height: '16%',
               borderRadius: '50%',
               background:
-                'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.5) 50%, transparent 100%)',
+                'radial-gradient(circle, rgba(255,255,255,0.58) 0%, rgba(255,255,255,0.28) 50%, transparent 100%)',
               filter: 'blur(1px)',
             }}
           />
@@ -413,7 +414,7 @@ export default function SupernovaOrb() {
               width: '10%',
               height: '55%',
               borderRadius: '50%',
-              background: 'linear-gradient(to right, rgba(255,255,255,0.18), transparent)',
+              background: 'linear-gradient(to right, rgba(255,255,255,0.045), transparent)',
               filter: 'blur(2px)',
             }}
           />
@@ -423,13 +424,13 @@ export default function SupernovaOrb() {
       <div
         style={{
           position: 'absolute',
-          bottom: 4,
+          bottom: 3,
           left: '50%',
-          width: 58,
-          height: 10,
+          width: 52,
+          height: 9,
           borderRadius: '50%',
-          background: 'radial-gradient(ellipse, rgba(37,99,235,0.4) 0%, transparent 70%)',
-          filter: 'blur(6px)',
+          background: 'radial-gradient(ellipse, rgba(37,99,235,0.22) 0%, transparent 78%)',
+          filter: 'blur(8px)',
           animation: 'orb-shadow-v2 5s ease-in-out infinite',
         }}
       />
