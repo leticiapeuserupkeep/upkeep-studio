@@ -242,10 +242,16 @@ export function AttentionQueue({ onOpenChat }: AttentionQueueProps) {
                       onClick={e => { e.stopPropagation(); setExpandedId(isExpanded ? null : item.id) }}
                       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-accent-1)] border border-[var(--color-accent-3)] text-[12px] font-medium text-[var(--color-accent-9)] hover:bg-[var(--color-accent-2)] cursor-pointer transition-colors"
                     >
-                      <img src={item.suggestedBy.photo} alt={item.suggestedBy.name} className="w-5 h-5 rounded-full object-cover" />
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-accent-9)] opacity-40" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-accent-9)]" />
+                      <span className="relative inline-flex h-5 w-5 shrink-0 rounded-full">
+                        <span
+                          className="absolute inset-[-2px] rounded-full border-2 border-[var(--color-accent-9)] opacity-50 animate-ping pointer-events-none"
+                          aria-hidden
+                        />
+                        <img
+                          src={item.suggestedBy.photo}
+                          alt={item.suggestedBy.name}
+                          className="relative h-5 w-5 rounded-full object-cover ring-2 ring-[var(--color-accent-1)]"
+                        />
                       </span>
                       {item.suggestedBy.name} has {pendingSugs.length} suggestion{pendingSugs.length !== 1 ? 's' : ''}
                     </button>

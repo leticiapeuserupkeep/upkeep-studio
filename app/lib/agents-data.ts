@@ -1,4 +1,4 @@
-import { BarChart3, ClipboardList, Sparkles, Search, ListFilter, Wrench } from 'lucide-react'
+import { BarChart3, ClipboardList, Sparkles, Search, ListFilter, Wrench, Zap } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 /* ── Types ── */
@@ -275,6 +275,18 @@ export const DEFAULT_CHIPS: SuggestedChip[] = [
   { label: "I'm overwhelmed with requests", icon: BarChart3, prompt: 'I have too many open work orders and need help analyzing and prioritizing them' },
   { label: 'I need to prioritize today', icon: ClipboardList, prompt: 'Help me figure out what to focus on today based on urgency and deadlines' },
   { label: 'My data is a mess', icon: Sparkles, prompt: 'My work order data has duplicates and inconsistencies — help me clean it up' },
+]
+
+/** Starter chip for AI-Team Chat: opens the multi-agent → save workflow demo flow */
+export const SMART_INBOX_WORKFLOW_CHIP_PROMPT =
+  "Let's design a workflow: Smart inbox reply drafts — triage Gmail, score importance, pull context, draft replies to Gmail Drafts (not sent), on a schedule."
+
+export const MULTI_AGENT_EXTRA_CHIPS: SuggestedChip[] = [
+  {
+    label: 'Design workflow: Smart inbox reply drafts',
+    icon: Zap,
+    prompt: SMART_INBOX_WORKFLOW_CHIP_PROMPT,
+  },
 ]
 
 export const BUILDER_CHIPS: SuggestedChip[] = [
