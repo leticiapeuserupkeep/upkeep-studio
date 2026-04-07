@@ -51,13 +51,31 @@ const trendColors = {
   neutral: 'text-[var(--color-neutral-8)]',
 }
 
-export function SystemPulseKPIs() {
+const ENTRANCE_DURATION = '0.38s'
+const ENTRANCE_STAGGER_SEC = 0.042
+const ENTRANCE_BASE_SEC = 0.03
+
+interface SystemPulseKPIsProps {
+  /** When true, cards render visible with no entrance animation. */
+  skipEntrance?: boolean
+  /** Stagger slot for the first KPI; consecutive cards use +1 each. */
+  slotStart?: number
+}
+
+export function SystemPulseKPIs({ skipEntrance = true, slotStart = 1 }: SystemPulseKPIsProps) {
   return (
     <div className="grid grid-cols-4 gap-4">
-      {metrics.map((m) => (
+      {metrics.map((m, i) => (
         <div
           key={m.label}
-          className="flex flex-col gap-1 rounded-[var(--radius-2xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4"
+          className={`flex flex-col gap-1 rounded-[var(--radius-2xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4 ${skipEntrance ? '' : 'opacity-0'}`}
+          style={
+            skipEntrance
+              ? undefined
+              : {
+                  animation: `fadeInUp ${ENTRANCE_DURATION} var(--ease-default) ${ENTRANCE_BASE_SEC + (slotStart + i) * ENTRANCE_STAGGER_SEC}s forwards`,
+                }
+          }
         >
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium text-[var(--color-neutral-8)]">{m.label}</span>

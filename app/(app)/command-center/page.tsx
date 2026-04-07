@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, type CSSProperties } from 'react'
 import { PanelLeft, MessageCircle } from 'lucide-react'
 import { SystemPulseKPIs, SupernovaSavingsCard } from '@/app/components/command-center/SystemPulse'
 import { AttentionQueue } from '@/app/components/command-center/AttentionQueue'
@@ -24,9 +24,24 @@ function getDateString(): string {
 
 const ONBOARDING_KEY = 'supernova_onboarded'
 
+const ENTRANCE_DURATION = '0.38s'
+const ENTRANCE_STAGGER_SEC = 0.042
+const ENTRANCE_BASE_SEC = 0.03
+
+function entranceStyle(skip: boolean, slot: number): CSSProperties | undefined {
+  if (skip) return undefined
+  const delay = ENTRANCE_BASE_SEC + slot * ENTRANCE_STAGGER_SEC
+  return { animation: `fadeInUp ${ENTRANCE_DURATION} var(--ease-default) ${delay}s forwards` }
+}
+
+function entranceOpacityClass(skip: boolean): string {
+  return skip ? '' : 'opacity-0'
+}
+
 export default function CommandCenterPage() {
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null)
   const [skipAnimations, setSkipAnimations] = useState(false)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const [activeSidebar, setActiveSidebar] = useState<SidebarView | null>(null)
   const [chatMateId, setChatMateId] = useState<string | null>(null)
   const [chatInitialMessage, setChatInitialMessage] = useState<string | null>(null)
@@ -36,6 +51,16 @@ export default function CommandCenterPage() {
     setShowOnboarding(!done)
     if (done) setSkipAnimations(false)
   }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const sync = () => setPrefersReducedMotion(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+
+  const noEntranceMotion = skipAnimations || prefersReducedMotion
 
   const handleOnboardingComplete = useCallback(() => {
     localStorage.setItem(ONBOARDING_KEY, 'true')
@@ -69,7 +94,17 @@ export default function CommandCenterPage() {
     setActiveSidebar('workflows')
   }, [])
 
-  if (showOnboarding === null) return null
+  if (showOnboarding === null) {
+    return (
+      <div
+        className="flex flex-col flex-1 w-full min-h-0 h-full overflow-hidden bg-[var(--surface-canvas)]"
+        aria-busy="true"
+      >
+        <div className="h-14 shrink-0 border-b border-[var(--border-default)] bg-[var(--surface-primary)]" />
+        <div className="flex-1 min-h-0 bg-[var(--surface-canvas)]" />
+      </div>
+    )
+  }
 
   if (showOnboarding) {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />
@@ -121,10 +156,10 @@ export default function CommandCenterPage() {
         {/* Main Content */}
         <main className="flex-1 min-h-0 overflow-y-auto min-w-0 overscroll-y-contain">
           <div className="w-full max-w-[1400px] mx-auto px-6 py-6 space-y-6">
-            {/* Greeting */}
+            {/* Greeting — slot 0 */}
             <div
-              className={skipAnimations ? '' : 'opacity-0'}
-              style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.05s forwards' }}
+              className={entranceOpacityClass(noEntranceMotion)}
+              style={entranceStyle(noEntranceMotion, 0)}
             >
               <h2 className="text-[22px] font-medium text-[var(--color-neutral-12)]">
                 {getGreeting()}, Leti
@@ -134,48 +169,58 @@ export default function CommandCenterPage() {
               </p>
             </div>
 
-            {/* Row 1: KPI cards + Savings */}
-            <div
-              className={`grid grid-cols-3 gap-x-7 gap-y-4 ${skipAnimations ? '' : 'opacity-0'}`}
-              style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.1s forwards' }}
-            >
+            {/* Row 1: KPI cards (staggered) + Savings — savings after four KPI slots */}
+            <div className="grid grid-cols-3 gap-x-7 gap-y-4">
               <div className="col-span-2">
-                <SystemPulseKPIs />
+                <SystemPulseKPIs skipEntrance={noEntranceMotion} slotStart={1} />
               </div>
-              <SupernovaSavingsCard />
+              <div
+                className={entranceOpacityClass(noEntranceMotion)}
+                style={entranceStyle(noEntranceMotion, 5)}
+              >
+                <SupernovaSavingsCard />
+              </div>
             </div>
 
             <div className="h-px my-6 bg-[var(--color-neutral-5)]" />
 
-            {/* Row 2: Credits & Usage */}
-            <div
-              className={`flex flex-col gap-3 ${skipAnimations ? '' : 'opacity-0'}`}
-              style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.15s forwards' }}
-            >
-              <div className="flex items-center justify-between">
+            {/* Row 2: Credits & Usage — header then cards one by one */}
+            <div className="flex flex-col gap-3">
+              <div
+                className={`flex items-center justify-between ${entranceOpacityClass(noEntranceMotion)}`}
+                style={entranceStyle(noEntranceMotion, 6)}
+              >
                 <h3 className="text-[15px] font-semibold text-[var(--color-neutral-12)]">Credits & Usage</h3>
                 <button className="text-[13px] font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] cursor-pointer transition-colors">
                   Upgrade
                 </button>
               </div>
               <div className="grid grid-cols-3 gap-x-7 gap-y-5">
-                <UsageThisMonthCard />
-                <CostByActionCard />
-                <TokensByAgentCard />
+                <div className={entranceOpacityClass(noEntranceMotion)} style={entranceStyle(noEntranceMotion, 7)}>
+                  <UsageThisMonthCard />
+                </div>
+                <div className={entranceOpacityClass(noEntranceMotion)} style={entranceStyle(noEntranceMotion, 8)}>
+                  <CostByActionCard />
+                </div>
+                <div className={entranceOpacityClass(noEntranceMotion)} style={entranceStyle(noEntranceMotion, 9)}>
+                  <TokensByAgentCard />
+                </div>
               </div>
             </div>
 
             <div className="h-px my-6 bg-[var(--color-neutral-5)]" />
 
             {/* Row 3: Attention + Agents */}
-            <div
-              className={`grid grid-cols-3 gap-x-7 gap-y-4 ${skipAnimations ? '' : 'opacity-0'}`}
-              style={skipAnimations ? undefined : { animation: 'fadeInUp 0.4s var(--ease-default) 0.2s forwards' }}
-            >
-              <div className="col-span-2">
+            <div className="grid grid-cols-3 gap-x-7 gap-y-4">
+              <div
+                className={`col-span-2 ${entranceOpacityClass(noEntranceMotion)}`}
+                style={entranceStyle(noEntranceMotion, 10)}
+              >
                 <AttentionQueue onOpenChat={openChatWith} />
               </div>
-              <AIMatesColumn onOpenChat={openChatWith} onManage={openManage} onOpenWorkflows={openWorkflows} />
+              <div className={entranceOpacityClass(noEntranceMotion)} style={entranceStyle(noEntranceMotion, 11)}>
+                <AIMatesColumn onOpenChat={openChatWith} onManage={openManage} onOpenWorkflows={openWorkflows} />
+              </div>
             </div>
           </div>
         </main>
