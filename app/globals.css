@@ -66,6 +66,125 @@
   box-shadow: inset 0 1px 2px color-mix(in srgb, var(--surface-raised) 35%, transparent);
 }
 
+/* SuperNova staging: agents list, Workflows main page, agent detail column, tab panels */
+@keyframes sn-staging-agents-index-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sn-staging-agents-index-enter {
+  animation: sn-staging-agents-index-in 0.42s var(--ease-default) forwards;
+}
+
+/* SuperNova staging: main Workflows route (/) — intro + list reveal on load */
+.sn-staging-workflows-page-enter {
+  animation: sn-staging-agents-index-in 0.42s var(--ease-default) forwards;
+}
+
+@keyframes sn-staging-agent-detail-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.sn-staging-agent-detail-enter {
+  animation: sn-staging-agent-detail-in 0.4s var(--ease-default) forwards;
+}
+
+@keyframes sn-staging-agent-tab-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sn-staging-agent-tab-panel-enter {
+  animation: sn-staging-agent-tab-panel-in 0.3s var(--ease-default) forwards;
+}
+
+/* SuperNova staging: Inbox / Workbench + standalone Coming Soon pages (Data, Audit) — slightly richer reveal */
+@keyframes sn-staging-agent-coming-soon-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.sn-staging-agent-coming-soon-panel-enter {
+  animation: sn-staging-agent-coming-soon-panel-in 0.42s var(--ease-default) forwards;
+}
+
+/* SuperNova staging: workflow cards — staggered list reveal */
+@keyframes sn-staging-workflow-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sn-staging-workflow-card-enter {
+  animation: sn-staging-workflow-card-in 0.38s var(--ease-default) both;
+}
+
+.sn-staging-workflow-cards > *:nth-child(1) { animation-delay: 0ms; }
+.sn-staging-workflow-cards > *:nth-child(2) { animation-delay: 40ms; }
+.sn-staging-workflow-cards > *:nth-child(3) { animation-delay: 80ms; }
+.sn-staging-workflow-cards > *:nth-child(4) { animation-delay: 120ms; }
+.sn-staging-workflow-cards > *:nth-child(5) { animation-delay: 160ms; }
+.sn-staging-workflow-cards > *:nth-child(6) { animation-delay: 200ms; }
+.sn-staging-workflow-cards > *:nth-child(7) { animation-delay: 240ms; }
+.sn-staging-workflow-cards > *:nth-child(8) { animation-delay: 280ms; }
+.sn-staging-workflow-cards > *:nth-child(9) { animation-delay: 320ms; }
+.sn-staging-workflow-cards > *:nth-child(10) { animation-delay: 360ms; }
+.sn-staging-workflow-cards > *:nth-child(11) { animation-delay: 400ms; }
+.sn-staging-workflow-cards > *:nth-child(12) { animation-delay: 440ms; }
+
+/* SuperNova staging: integration cards — same motion as workflows; cap stagger for large grids */
+.sn-staging-integration-card-enter {
+  animation: sn-staging-workflow-card-in 0.38s var(--ease-default) both;
+}
+
+.sn-staging-integration-cards > *:nth-child(1) { animation-delay: 0ms; }
+.sn-staging-integration-cards > *:nth-child(2) { animation-delay: 20ms; }
+.sn-staging-integration-cards > *:nth-child(3) { animation-delay: 40ms; }
+.sn-staging-integration-cards > *:nth-child(4) { animation-delay: 60ms; }
+.sn-staging-integration-cards > *:nth-child(5) { animation-delay: 80ms; }
+.sn-staging-integration-cards > *:nth-child(6) { animation-delay: 100ms; }
+.sn-staging-integration-cards > *:nth-child(7) { animation-delay: 120ms; }
+.sn-staging-integration-cards > *:nth-child(8) { animation-delay: 140ms; }
+.sn-staging-integration-cards > *:nth-child(9) { animation-delay: 160ms; }
+.sn-staging-integration-cards > *:nth-child(10) { animation-delay: 180ms; }
+.sn-staging-integration-cards > *:nth-child(11) { animation-delay: 200ms; }
+.sn-staging-integration-cards > *:nth-child(12) { animation-delay: 220ms; }
+.sn-staging-integration-cards > *:nth-child(13) { animation-delay: 240ms; }
+.sn-staging-integration-cards > *:nth-child(14) { animation-delay: 260ms; }
+.sn-staging-integration-cards > *:nth-child(15) { animation-delay: 280ms; }
+.sn-staging-integration-cards > *:nth-child(16) { animation-delay: 300ms; }
+.sn-staging-integration-cards > *:nth-child(n + 17) { animation-delay: 300ms; }
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

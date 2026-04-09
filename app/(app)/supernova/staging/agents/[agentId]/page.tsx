@@ -4,6 +4,7 @@ import { Fragment, useCallback, useEffect, useId, useRef, useState } from 'react
 import { useParams, useRouter } from 'next/navigation'
 import { ChevronRight, History, Mic, Minimize2, MoreVertical, Plus, Send, Settings } from 'lucide-react'
 import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -121,6 +122,9 @@ export default function SuperNovaStagingAgentChatPage() {
   const chatScrollRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
+  /** Avoid stacking tab-panel motion on top of the detail-column entrance on first paint. */
+  const hasTabChangedRef = useRef(false)
+  const lastTabAnimAgentIdRef = useRef<string | undefined>(undefined)
 
   useEffect(() => {
     if (agentId && !agent) {
@@ -158,6 +162,11 @@ export default function SuperNovaStagingAgentChatPage() {
     setActiveTab('chat')
   }, [])
 
+  const handleTabChange = useCallback((v: string) => {
+    hasTabChangedRef.current = true
+    setActiveTab(v as AgentTabId)
+  }, [])
+
   if (!agentId || !agent) {
     return (
       <div className="w-full px-[var(--space-xl)] py-[var(--space-xl)] text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
@@ -166,31 +175,55 @@ export default function SuperNovaStagingAgentChatPage() {
     )
   }
 
+  if (lastTabAnimAgentIdRef.current !== agent.id) {
+    lastTabAnimAgentIdRef.current = agent.id
+    hasTabChangedRef.current = false
+  }
+
+  const isComingSoonTab = activeTab === 'inbox' || activeTab === 'workbench'
+  const tabPanelEnterClassName = hasTabChangedRef.current
+    ? isComingSoonTab
+      ? 'sn-staging-agent-coming-soon-panel-enter '
+      : 'sn-staging-agent-tab-panel-enter '
+    : ''
+
   return (
     <SuperNovaStagingAgentsWorkspace selectedAgentId={agent.id}>
-      <Tabs
-        value={activeTab}
-        onValueChange={(v) => setActiveTab(v as AgentTabId)}
-        className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-[var(--surface-canvas)]"
+      <div
+        key={agent.id}
+        className="sn-staging-agent-detail-enter flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
       >
-        <header className="flex min-h-[var(--supernova-staging-header-height)] shrink-0 items-center justify-between gap-4 border-b border-[var(--border-default)] bg-[var(--surface-primary)] px-[var(--space-xl)]">
-          <h1 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">
+        <Tabs
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-[var(--surface-canvas)]"
+        >
+        <header className="flex min-h-[var(--supernova-staging-header-height)] min-w-0 shrink-0 items-center gap-4 border-b border-[var(--border-default)] bg-[var(--surface-primary)] px-[var(--space-xl)]">
+          <h1 className="min-w-0 flex-1 truncate text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">
             {agent.name}
           </h1>
           <div className="flex shrink-0 items-center gap-1">
-            <IconButton
-              label="Staging settings"
+            <Button
               variant="secondary"
-              size="lg"
+              size="md"
               type="button"
+              className="shrink-0"
+              aria-label="Staging settings"
               onClick={() => router.push('/supernova/staging/settings')}
             >
-              <Settings size={20} aria-hidden />
-            </IconButton>
+              <Settings size={18} strokeWidth={2} aria-hidden />
+              Settings
+            </Button>
             {activeTab === 'chat' && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <IconButton label="Chat options" variant="secondary" size="lg" type="button">
+                  <IconButton
+                    label="Chat options"
+                    variant="secondary"
+                    size="lg"
+                    type="button"
+                    className="!border-0 shadow-none hover:!border-0 active:!border-0 disabled:!border-0"
+                  >
                     <MoreVertical size={20} aria-hidden />
                   </IconButton>
                 </DropdownMenuTrigger>
@@ -231,16 +264,18 @@ export default function SuperNovaStagingAgentChatPage() {
         </header>
 
         <nav
-          className="shrink-0 border-b border-[var(--border-default)] bg-[var(--surface-primary)] px-[var(--space-xl)] pt-[var(--space-xs)]"
+          className="flex min-w-0 shrink-0 items-center border-b border-[var(--border-default)] bg-[var(--surface-primary)] px-[var(--space-xl)] pt-[var(--space-xs)] pb-0"
           aria-label="Agent sections"
         >
-          <TabsList>
-            {AGENT_TABS.map((tab) => (
-              <TabsTrigger key={tab.id} value={tab.id} id={`agent-tab-${tab.id}`}>
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="min-w-0 w-full overflow-x-auto overflow-y-hidden">
+            <TabsList>
+              {AGENT_TABS.map((tab) => (
+                <TabsTrigger key={tab.id} value={tab.id} id={`agent-tab-${tab.id}`}>
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
         </nav>
 
         <div
@@ -254,6 +289,12 @@ export default function SuperNovaStagingAgentChatPage() {
           id={`agent-tabpanel-${activeTab}`}
           aria-labelledby={`agent-tab-${activeTab}`}
         >
+          <div
+            key={activeTab}
+            className={`w-full min-w-0 ${tabPanelEnterClassName}${
+              activeTab === 'chat' ? 'flex min-h-0 min-w-0 flex-1 flex-col' : ''
+            }`}
+          >
           {activeTab === 'chat' ? (
             <div className="mx-auto mt-auto flex w-full max-w-[min(100%,720px)] flex-col gap-6">
               {messages.map((m) => (
@@ -321,6 +362,7 @@ export default function SuperNovaStagingAgentChatPage() {
               </p>
             </div>
           )}
+          </div>
         </div>
 
         {activeTab === 'chat' && (
@@ -368,6 +410,7 @@ export default function SuperNovaStagingAgentChatPage() {
           </div>
         )}
       </Tabs>
+      </div>
     </SuperNovaStagingAgentsWorkspace>
   )
 }

@@ -18,7 +18,7 @@ export const TabsList = forwardRef<
 >(({ className = '', ...props }, ref) => (
   <TabsPrimitive.List
     ref={ref}
-    className={`-mb-px flex items-center gap-0 overflow-x-auto ${className}`}
+    className={`flex items-center gap-0 overflow-x-auto overflow-y-hidden ${className}`}
     {...props}
   />
 ))

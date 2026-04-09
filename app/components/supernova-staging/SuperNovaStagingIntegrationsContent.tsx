@@ -363,7 +363,7 @@ function IntegrationCard({
   connected: boolean
 }) {
   return (
-    <div className="relative flex gap-3 rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4 shadow-[var(--shadow-xs)] transition-shadow duration-[var(--duration-fast)] hover:shadow-[var(--shadow-sm)]">
+    <div className="sn-staging-integration-card-enter relative flex gap-3 rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] p-4 shadow-[var(--shadow-xs)] transition-shadow duration-[var(--duration-fast)] hover:shadow-[var(--shadow-sm)]">
       {connected && (
         <span
           className="absolute right-2 top-2 z-[1] inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-success)] text-white shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-success)_25%,transparent)] ring-2 ring-[var(--surface-primary)]"
@@ -453,7 +453,7 @@ export function SuperNovaStagingIntegrationsContent() {
             })}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="sn-staging-integration-cards grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {visibleApps.map((app) => (
               <IntegrationCard
                 key={app.id}
@@ -468,7 +468,7 @@ export function SuperNovaStagingIntegrationsContent() {
       )}
 
       {mainTab === 'messaging' && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="sn-staging-integration-cards grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {MESSAGING_CHANNELS.map((ch) => (
             <IntegrationCard
               key={ch.id}

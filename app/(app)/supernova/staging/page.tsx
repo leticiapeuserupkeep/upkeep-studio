@@ -82,14 +82,17 @@ export default function SuperNovaStagingWorkflowsPage() {
     <div className="w-full flex flex-col min-h-0">
       <StagingPageHeader title="Workflows" />
 
-      <div className="w-full px-[var(--space-2xl)] py-[var(--space-xl)] flex flex-col gap-6">
+      <div className="sn-staging-workflows-page-enter w-full px-[var(--space-2xl)] py-[var(--space-xl)] flex flex-col gap-6">
         <p className="text-[length:var(--font-size-body-1)] text-[var(--color-neutral-12)] leading-6 max-w-[var(--supernova-staging-prose-max)]">
           Manage all workflows created by your agents in one place. Agents can create them directly from chat.
         </p>
 
-        <div className="max-w-[var(--supernova-staging-content-max)] flex flex-col gap-[var(--space-md)] w-full">
+        <div className="sn-staging-workflow-cards max-w-[var(--supernova-staging-content-max)] flex flex-col gap-[var(--space-md)] w-full">
           {stagingWorkflows.map((wf) => (
-            <Card key={wf.id} className="shadow-none border-[var(--border-default)] bg-[var(--surface-primary)]">
+            <Card
+              key={wf.id}
+              className="sn-staging-workflow-card-enter shadow-none border-[var(--border-default)] bg-[var(--surface-primary)]"
+            >
               <div className="p-[var(--widget-padding)] flex flex-col gap-[var(--space-md)]">
                 <div className="flex flex-wrap items-start justify-between gap-x-[var(--space-sm)] gap-y-[var(--space-xs)]">
                   <div className="flex flex-wrap items-center gap-[var(--space-xs)] min-w-0 flex-1">

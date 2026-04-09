@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 import { MoreVertical, PanelLeft, Plus, Settings, Shield, Star, Trash2 } from 'lucide-react'
@@ -26,7 +25,7 @@ const tableHeadClass =
   '!h-11 !px-4 !py-3 text-left !text-[length:var(--font-size-xs)] !font-semibold uppercase tracking-wide !text-[var(--color-neutral-8)]'
 
 /**
- * Agents directory: table view (stage, status, model, systems, actions). Rows link to `/agents/[id]`.
+ * Agents directory: table view (stage, status, model, systems, actions). Rows open `/agents/[id]` (tabs + chat).
  */
 export function SuperNovaStagingAgentsIndex() {
   const router = useRouter()
@@ -69,7 +68,7 @@ export function SuperNovaStagingAgentsIndex() {
         </Button>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-[var(--space-xl)] py-[var(--space-xl)]">
+      <div className="sn-staging-agents-index-enter min-h-0 flex-1 overflow-y-auto px-[var(--space-xl)] py-[var(--space-xl)]">
         <div className="flex w-full min-w-0 flex-col gap-6">
           <p className="max-w-[var(--supernova-staging-prose-max)] text-[length:var(--font-size-body-1)] leading-6 text-[var(--color-neutral-12)]">
             Select an agent to open chat, workflows, and integrations.
@@ -88,17 +87,26 @@ export function SuperNovaStagingAgentsIndex() {
               </TableHeader>
               <TableBody>
                 {STAGING_AGENTS.map((a) => (
-                  <TableRow key={a.id} className="group">
+                  <TableRow
+                    key={a.id}
+                    className="group cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-accent-7)]"
+                    tabIndex={0}
+                    aria-label={`Open ${a.name}`}
+                    onClick={() => router.push(`/supernova/staging/agents/${a.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        router.push(`/supernova/staging/agents/${a.id}`)
+                      }
+                    }}
+                  >
                     <TableCell className="align-middle py-3 pl-4 pr-3">
                       <div className="flex min-w-0 items-start gap-3">
                         <Avatar name={a.name} size="lg" />
                         <div className="min-w-0 pt-0.5">
-                          <Link
-                            href={`/supernova/staging/agents/${a.id}`}
-                            className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] hover:underline"
-                          >
+                          <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-accent-9)] group-hover:text-[var(--color-accent-10)] group-hover:underline">
                             {a.name}
-                          </Link>
+                          </span>
                           <p className="mt-0.5 text-[length:var(--font-size-sm)] leading-snug text-[var(--color-neutral-8)]">
                             {a.subtitle}
                           </p>
@@ -139,7 +147,10 @@ export function SuperNovaStagingAgentsIndex() {
                         ))}
                       </div>
                     </TableCell>
-                    <TableCell className="align-middle py-3 pr-4 pl-3 text-right">
+                    <TableCell
+                      className="align-middle py-3 pr-4 pl-3 text-right"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="flex justify-end">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

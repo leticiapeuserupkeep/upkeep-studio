@@ -84,9 +84,12 @@ export function SuperNovaStagingWorkflowsContent({ className = '' }: { className
         To create a new workflow for the demo, ask something in the chat.
       </p>
 
-      <div className="flex w-full max-w-[var(--supernova-staging-content-max)] flex-col gap-[var(--space-md)]">
+      <div className="sn-staging-workflow-cards flex w-full max-w-[var(--supernova-staging-content-max)] flex-col gap-[var(--space-md)]">
         {stagingWorkflows.map((wf) => (
-          <Card key={wf.id} className="border-[var(--border-default)] bg-[var(--surface-primary)] shadow-none">
+          <Card
+            key={wf.id}
+            className="sn-staging-workflow-card-enter border-[var(--border-default)] bg-[var(--surface-primary)] shadow-none"
+          >
             <CardHeader
               action={
                 <>
