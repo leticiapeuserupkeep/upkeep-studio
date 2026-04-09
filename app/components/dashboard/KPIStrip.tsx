@@ -21,7 +21,7 @@ export function KPIStrip({ kpis }: KPIStripProps) {
       <KPI
         label="Open Work Orders"
         value={kpis.openWOs}
-        icon={<ClipboardList size={18} className="text-[var(--color-accent-9)]" />}
+        icon={<ClipboardList size={20} className="text-[var(--color-accent-9)]" />}
         accent
         chart={
           <MiniBarChart
@@ -38,19 +38,19 @@ export function KPIStrip({ kpis }: KPIStripProps) {
         label="Overdue"
         value={kpis.overdueWOs}
         subtitle={kpis.overdueWOs > 0 ? 'Requires attention' : 'All on track'}
-        icon={<AlertTriangle size={18} className="text-[var(--color-error)]" />}
+        icon={<AlertTriangle size={20} className="text-[var(--color-error)]" />}
       />
       <KPI
         label="In Progress"
         value={kpis.inProgressWOs}
-        icon={<Clock size={18} className="text-[var(--color-warning)]" />}
+        icon={<Clock size={20} className="text-[var(--color-warning)]" />}
       />
       <KPI
         label="Completed Today"
         value={kpis.completedToday}
         subtitle={`${kpis.availableTechnicians} of ${kpis.totalTechnicians} techs available`}
         subtitleIcon={<Users size={11} />}
-        icon={<CheckCircle2 size={18} className="text-[var(--color-success)]" />}
+        icon={<CheckCircle2 size={20} className="text-[var(--color-success)]" />}
         chart={
           <MiniBarChart
             data={MOCK_COMPLETED_TREND}

@@ -34,6 +34,32 @@
   }
 }
 
+/* SuperNova staging sidebar orb (32px) */
+@keyframes sn-staging-orb-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes sn-staging-orb-pulse {
+  0%, 100% { opacity: 0.88; filter: brightness(1); }
+  50% { opacity: 1; filter: brightness(1.06); }
+}
+
+.supernova-staging-orb__inner {
+  background:
+    radial-gradient(
+      circle at 32% 26%,
+      color-mix(in srgb, var(--surface-raised) 55%, transparent) 0%,
+      color-mix(in srgb, var(--surface-raised) 8%, transparent) 38%,
+      transparent 52%
+    ),
+    radial-gradient(
+      circle at 50% 58%,
+      var(--color-accent-6) 0%,
+      var(--color-accent-9) 48%,
+      var(--color-accent-12) 100%
+    );
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--surface-raised) 35%, transparent);
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
