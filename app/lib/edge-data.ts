@@ -25,9 +25,9 @@ const runtimeSensorsBase: RuntimeSensor[] = [
   {
     id: 'RS-001',
     name: 'AirComp 115PSI | BL1 - 150 AMP',
-    assetId: 'A-205',
-    assetName: 'Pump P-401',
-    locationName: 'Main Office',
+    assetId: 'A-820',
+    assetName: 'Air Compressor #4',
+    locationName: 'Production Hall A',
     gatewayId: 'GW-001',
     gatewayName: 'FC - 168CMF',
     type: 'UpKeep Current',
@@ -55,9 +55,26 @@ const runtimeSensorsBase: RuntimeSensor[] = [
     ],
     lastReading: '5 min ago',
     insights: [
-      'Runtime increased 5.3% compared to previous 30-day period',
-      'Peak usage consistently on Wednesdays — consider load balancing',
-      'Approaching next service milestone at 15,000 hours (currently 12,847)',
+      {
+        message:
+          'Min current reading 0 amps breached alerts for < 1 and < 2 amps on AirComp 115PSI sensor. Verify sensor functionality.',
+        tone: 'warning',
+      },
+      {
+        message:
+          'Amp hours recorded 0 Ah, triggering multiple low-level alerts; check sensor for accuracy or connection issues.',
+        tone: 'warning',
+      },
+      {
+        message:
+          'Avg current consistently 0 amps over past 7 days with 1008 samples indicates no load detected on AirComp 115PSI.',
+        tone: 'neutral',
+      },
+      {
+        message:
+          'Battery and signal strength at 100%, indicating excellent power and connectivity health for this device.',
+        tone: 'success',
+      },
     ],
   },
   {
@@ -65,7 +82,7 @@ const runtimeSensorsBase: RuntimeSensor[] = [
     name: 'Cool Storage | EC - HMD',
     assetId: 'A-101',
     assetName: 'HVAC Unit #12',
-    locationName: 'Warehouse B01',
+    locationName: 'Production Hall A',
     gatewayId: 'GW-001',
     gatewayName: 'FC - 168CMF',
     type: 'UpKeep Humidity',
@@ -92,20 +109,31 @@ const runtimeSensorsBase: RuntimeSensor[] = [
     ],
     lastReading: '2 min ago',
     insights: [
-      'Near-continuous operation (99.2% uptime) — asset running almost 24/7',
-      'Runtime decreased 2.5% vs previous period — compressor issues may be causing intermittent shutdowns',
-      'Approaching 35,000 hour service milestone — only 790 hours remaining',
+      {
+        message:
+          'Near-continuous operation (99.2% uptime) — asset running almost 24/7',
+        tone: 'neutral',
+      },
+      {
+        message:
+          'Runtime decreased 2.5% vs previous period — compressor issues may be causing intermittent shutdowns',
+        tone: 'warning',
+      },
+      {
+        message: 'Approaching 35,000 hour service milestone — only 790 hours remaining',
+        tone: 'neutral',
+      },
     ],
   },
   {
     id: 'RS-003',
-    name: 'TurboAir 120PSI | BL2 - EC',
-    assetId: 'A-302',
-    assetName: 'Conveyor #3',
-    locationName: 'Plant Floor - Line 3',
+    name: 'HVAC Unit #12 | discharge air',
+    assetId: 'A-101',
+    assetName: 'HVAC Unit #12',
+    locationName: 'Production Hall A',
     gatewayId: 'GW-002',
     gatewayName: 'FC - 169CMF',
-    type: 'UpKeep Current',
+    type: 'UpKeep Temperature',
     status: 'connected',
     totalHours: 312.6,
     previousPeriodHours: 318.2,
@@ -121,19 +149,26 @@ const runtimeSensorsBase: RuntimeSensor[] = [
       avgCyclesPerDay: 54,
       nextServiceAt: 10000,
     },
-    meterName: '#TurboAir Runtime | BL2 - EC',
+    meterName: '#HVAC discharge air | EC',
     meterSyncEnabled: false,
     runtimeThreshold: 8,
     workOrders: [
-      { id: 'WO-2038', title: 'Conveyor belt misalignment', status: 'in_progress', createdAt: '2026-02-20', urgency: 'high' },
-      { id: 'WO-2029', title: 'Motor temperature check', status: 'completed', createdAt: '2026-02-05', urgency: 'medium' },
-      { id: 'WO-2022', title: 'Belt replacement', status: 'completed', createdAt: '2026-01-15', urgency: 'low' },
+      { id: 'WO-2038', title: 'Supply fan vibration review', status: 'in_progress', createdAt: '2026-02-20', urgency: 'high' },
+      { id: 'WO-2029', title: 'Economizer actuator check', status: 'completed', createdAt: '2026-02-05', urgency: 'medium' },
+      { id: 'WO-2022', title: 'Filter replacement PM', status: 'completed', createdAt: '2026-01-15', urgency: 'low' },
     ],
     lastReading: '12 min ago',
     insights: [
-      'Consistent daily pattern — 2-shift operation detected',
-      'Weekend runtime is 60% lower than weekdays — normal production schedule',
-      '1,544 hours until next service interval',
+      {
+        message: 'Consistent daily pattern — 2-shift operation detected',
+        tone: 'neutral',
+      },
+      {
+        message:
+          'Weekend runtime is 60% lower than weekdays — normal production schedule',
+        tone: 'neutral',
+      },
+      { message: '1,544 hours until next service interval', tone: 'neutral' },
     ],
   },
   {
@@ -158,9 +193,20 @@ const runtimeSensorsBase: RuntimeSensor[] = [
     ],
     lastReading: '8 min ago',
     insights: [
-      'Runtime dropped 5.2% vs last period — flow rate decline may be causing efficiency loss',
-      'Vibration levels trending up — correlates with reduced runtime efficiency',
-      '2,870 hours to next major service at 25,000 hours',
+      {
+        message:
+          'Runtime dropped 5.2% vs last period — flow rate decline may be causing efficiency loss',
+        tone: 'warning',
+      },
+      {
+        message:
+          'Vibration levels trending up — correlates with reduced runtime efficiency',
+        tone: 'warning',
+      },
+      {
+        message: '2,870 hours to next major service at 25,000 hours',
+        tone: 'neutral',
+      },
     ],
   },
   {
@@ -184,9 +230,19 @@ const runtimeSensorsBase: RuntimeSensor[] = [
     ],
     lastReading: '3 min ago',
     insights: [
-      'Standby generator — low average runtime but spikes during outages',
-      'Feb 26 peak of 18.2h coincides with power outage event',
-      'Oil change due — 320 hours until 6,000 hour service mark',
+      {
+        message:
+          'Standby generator — low average runtime but spikes during outages',
+        tone: 'neutral',
+      },
+      {
+        message: 'Feb 26 peak of 18.2h coincides with power outage event',
+        tone: 'neutral',
+      },
+      {
+        message: 'Oil change due — 320 hours until 6,000 hour service mark',
+        tone: 'warning',
+      },
     ],
   },
   {
@@ -214,9 +270,18 @@ const runtimeSensorsBase: RuntimeSensor[] = [
     ],
     lastReading: '14 days ago',
     insights: [
-      'Sensor disconnected since Feb 12 — no runtime data available',
-      'Was running ~18-22 hours/day before disconnection',
-      'Critical: asset may be running without monitoring',
+      {
+        message: 'Sensor disconnected since Feb 12 — no runtime data available',
+        tone: 'warning',
+      },
+      {
+        message: 'Was running ~18-22 hours/day before disconnection',
+        tone: 'neutral',
+      },
+      {
+        message: 'Critical: asset may be running without monitoring',
+        tone: 'warning',
+      },
     ],
   },
   {
@@ -249,9 +314,18 @@ const runtimeSensorsBase: RuntimeSensor[] = [
     workOrders: [],
     lastReading: '1 min ago',
     insights: [
-      'Healthy operation — runtime stable and within expected range',
-      'Approaching 10,000 hour service milestone (130 hours away)',
-      'Efficiency remains consistent — no anomalies detected',
+      {
+        message: 'Healthy operation — runtime stable and within expected range',
+        tone: 'success',
+      },
+      {
+        message: 'Approaching 10,000 hour service milestone (130 hours away)',
+        tone: 'neutral',
+      },
+      {
+        message: 'Efficiency remains consistent — no anomalies detected',
+        tone: 'success',
+      },
     ],
   },
   {
@@ -259,7 +333,7 @@ const runtimeSensorsBase: RuntimeSensor[] = [
     name: 'CompAir 200PSI | BL6',
     assetId: 'A-820',
     assetName: 'Air Compressor #4',
-    locationName: 'Plant Floor - Zone A',
+    locationName: 'Production Hall A',
     gatewayId: 'GW-002',
     gatewayName: 'FC - 169CMF',
     type: 'UpKeep Vibration',
@@ -286,9 +360,19 @@ const runtimeSensorsBase: RuntimeSensor[] = [
     ],
     lastReading: '6 min ago',
     insights: [
-      'Runtime increased 3.5% vs previous period — higher production demand',
-      'Vibration sensor showing stable readings — no concerns',
-      '4,570 hours until next major service interval',
+      {
+        message:
+          'Runtime increased 3.5% vs previous period — higher production demand',
+        tone: 'neutral',
+      },
+      {
+        message: 'Vibration sensor showing stable readings — no concerns',
+        tone: 'success',
+      },
+      {
+        message: '4,570 hours until next major service interval',
+        tone: 'neutral',
+      },
     ],
   },
 ]

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
+import * as Collapsible from '@radix-ui/react-collapsible'
 import {
   Siren,
   AlertTriangle,
@@ -12,10 +13,19 @@ import {
   MapPin,
   Box,
   Tag,
-  LayoutGrid,
   Bookmark,
 } from 'lucide-react'
-import { Tooltip, TooltipProvider } from '@/app/components/ui'
+import {
+  Tooltip,
+  TooltipProvider,
+  Button,
+  FilterSelect,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/app/components/ui'
+import { Badge } from '@/app/components/ui/Badge'
 import { EdgeSensorCard } from '@/app/components/edge/EdgeSensorCard'
 import { runtimeSensors } from '@/app/lib/edge-data'
 import type { RuntimeSensor, SensorStatus } from '@/app/lib/models'
@@ -33,6 +43,19 @@ const STORAGE_VIEWS = 'edge-sensor-saved-views'
 type KpiFilter = null | 'alert' | 'warning' | 'connected' | 'disconnected'
 type GroupBy = 'none' | 'location' | 'asset'
 
+const GROUP_BY_OPTIONS: { value: GroupBy; label: string }[] = [
+  { value: 'none', label: 'None' },
+  { value: 'location', label: 'Locations' },
+  { value: 'asset', label: 'Assets' },
+]
+
+const STATUS_FILTER_OPTIONS: { value: 'all' | SensorStatus; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'connected', label: 'Connected' },
+  { value: 'disconnected', label: 'Disconnected' },
+  { value: 'warning', label: 'Overloaded' },
+]
+
 interface SavedViewState {
   kpiFilter: KpiFilter
   statusFilter: 'all' | SensorStatus
@@ -47,6 +70,62 @@ interface SavedViewState {
 interface SavedViewRow extends SavedViewState {
   id: string
   name: string
+}
+
+/** Primary section (e.g. location), each with secondary buckets (e.g. asset). */
+interface NestedSensorSection {
+  primary: string
+  secondary: Array<{ label: string; sensors: RuntimeSensor[] }>
+}
+
+function groupSensorsByLocationThenAsset(sensors: RuntimeSensor[]): NestedSensorSection[] {
+  const byLocation = new Map<string, RuntimeSensor[]>()
+  for (const s of sensors) {
+    const loc = s.locationName
+    if (!byLocation.has(loc)) byLocation.set(loc, [])
+    byLocation.get(loc)!.push(s)
+  }
+  const locations = [...byLocation.keys()].sort((a, b) => a.localeCompare(b))
+  return locations.map((primary) => {
+    const inLoc = byLocation.get(primary)!
+    const byAsset = new Map<string, RuntimeSensor[]>()
+    for (const s of inLoc) {
+      const an = s.assetName
+      if (!byAsset.has(an)) byAsset.set(an, [])
+      byAsset.get(an)!.push(s)
+    }
+    const secondary = [...byAsset.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([label, sens]) => ({ label, sensors: sens }))
+    return { primary, secondary }
+  })
+}
+
+function pluralCount(n: number, singular: string, plural: string) {
+  return `${n} ${n === 1 ? singular : plural}`
+}
+
+function groupSensorsByAssetThenLocation(sensors: RuntimeSensor[]): NestedSensorSection[] {
+  const byAsset = new Map<string, RuntimeSensor[]>()
+  for (const s of sensors) {
+    const an = s.assetName
+    if (!byAsset.has(an)) byAsset.set(an, [])
+    byAsset.get(an)!.push(s)
+  }
+  const assets = [...byAsset.keys()].sort((a, b) => a.localeCompare(b))
+  return assets.map((primary) => {
+    const inAsset = byAsset.get(primary)!
+    const byLoc = new Map<string, RuntimeSensor[]>()
+    for (const s of inAsset) {
+      const loc = s.locationName
+      if (!byLoc.has(loc)) byLoc.set(loc, [])
+      byLoc.get(loc)!.push(s)
+    }
+    const secondary = [...byLoc.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([label, sens]) => ({ label, sensors: sens }))
+    return { primary, secondary }
+  })
 }
 
 function woIsActive(wo: { status: string }) {
@@ -101,7 +180,7 @@ function KpiCard({
     success:
       'bg-[var(--color-success-light)] border-[var(--color-success-border)]',
     neutral:
-      'bg-[var(--surface-secondary)] border-[var(--border-default)]',
+      'bg-[var(--surface-primary)] border-[var(--border-default)]',
   }[tone]
 
   const valueColor = {
@@ -115,7 +194,7 @@ function KpiCard({
     <button
       type="button"
       onClick={onClick}
-      className={`flex flex-1 min-w-[200px] items-center gap-3 rounded-[var(--radius-lg)] border px-4 py-2.5 text-left transition-shadow cursor-pointer ${shell} ${
+      className={`flex w-[240px] max-w-full shrink-0 min-w-0 items-center gap-3 rounded-[var(--radius-lg)] border px-4 py-2.5 text-left transition-shadow cursor-pointer ${shell} ${
         active ? 'ring-2 ring-[var(--color-accent-9)] ring-offset-2 ring-offset-[var(--surface-canvas)]' : 'hover:shadow-sm'
       }`}
     >
@@ -179,6 +258,28 @@ export default function EdgeSensorsPage() {
   const assets = useMemo(() => uniqueAssetNames(runtimeSensors), [])
   const tags = useMemo(() => allAssetTags(runtimeSensors), [])
 
+  const locationFilterOptions = useMemo(
+    () => [
+      { value: '', label: 'Location' },
+      ...locations.map((l) => ({ value: l, label: l })),
+    ],
+    [locations],
+  )
+  const assetFilterOptions = useMemo(
+    () => [
+      { value: '', label: 'Asset' },
+      ...assets.map((a) => ({ value: a, label: a })),
+    ],
+    [assets],
+  )
+  const tagFilterOptions = useMemo(
+    () => [
+      { value: '', label: 'Asset custom fields' },
+      ...tags.map((t) => ({ value: t, label: t })),
+    ],
+    [tags],
+  )
+
   const filtered = useMemo(() => {
     let list = [...runtimeSensors]
 
@@ -209,16 +310,10 @@ export default function EdgeSensorsPage() {
     return list
   }, [kpiFilter, statusFilter, location, asset, tag, search])
 
-  const grouped = useMemo(() => {
-    if (groupBy === 'none') return [['', filtered]] as [string, RuntimeSensor[]][]
-    const keyFn = groupBy === 'location' ? (s: RuntimeSensor) => s.locationName : (s: RuntimeSensor) => s.assetName
-    const map = new Map<string, RuntimeSensor[]>()
-    for (const s of filtered) {
-      const k = keyFn(s)
-      if (!map.has(k)) map.set(k, [])
-      map.get(k)!.push(s)
-    }
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b))
+  const nestedSections = useMemo(() => {
+    if (groupBy === 'location') return groupSensorsByLocationThenAsset(filtered)
+    if (groupBy === 'asset') return groupSensorsByAssetThenLocation(filtered)
+    return null
   }, [filtered, groupBy])
 
   function toggleKpi(key: Exclude<KpiFilter, null>) {
@@ -271,15 +366,16 @@ export default function EdgeSensorsPage() {
     persistViews([...savedViews, row])
   }
 
+  /** Fixed max 400px tracks + start justify so cards hug the left; extra row space stays on the right. */
   const gridClass =
     columns === 3
-      ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5'
-      : 'grid grid-cols-1 md:grid-cols-2 gap-5'
+      ? 'grid grid-cols-1 gap-[24px] justify-items-start justify-content-start md:[grid-template-columns:repeat(2,minmax(0,400px))] xl:[grid-template-columns:repeat(3,minmax(0,400px))]'
+      : 'grid grid-cols-1 gap-[24px] justify-items-start justify-content-start md:[grid-template-columns:repeat(2,minmax(0,400px))]'
 
   return (
     <TooltipProvider delayDuration={250}>
-      <div className="w-full max-w-[1200px] mx-auto px-6 py-6 flex flex-col gap-6">
-        <div className="flex flex-wrap gap-5">
+      <div className="w-full min-w-0 px-6 py-6 flex flex-col gap-6">
+        <div className="flex flex-wrap items-stretch gap-5 w-full justify-start">
           <KpiCard
             tone="danger"
             icon={Siren}
@@ -318,87 +414,57 @@ export default function EdgeSensorsPage() {
           />
         </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-2 justify-between gap-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
+        <div className="flex flex-col gap-4 w-full min-w-0">
+          <div className="flex flex-wrap items-center gap-2 justify-between gap-y-3 w-full min-w-0">
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
+              <Button
                 type="button"
+                variant={showFiltersPanel ? 'subtle' : 'secondary'}
+                size="sm"
                 onClick={() => setShowFiltersPanel((v) => !v)}
-                className={`inline-flex items-center gap-2 h-7 px-3 rounded-[var(--radius-md)] border text-[length:var(--font-size-sm)] font-medium cursor-pointer transition-colors ${
-                  showFiltersPanel
-                    ? 'bg-[var(--color-accent-1)] border-[var(--color-accent-4)] text-[var(--color-accent-11)]'
-                    : 'bg-[var(--surface-primary)] border-[var(--border-default)] text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)]'
-                }`}
+                className="!h-7 min-h-7 px-3 rounded-[var(--radius-md)] gap-2 text-[length:var(--font-size-sm)] font-medium shadow-none"
+                aria-expanded={showFiltersPanel}
+                aria-controls="edge-sensors-search-panel"
               >
                 <SlidersHorizontal size={14} />
                 Filters
-              </button>
+              </Button>
 
-              <label className="inline-flex items-center gap-1.5 h-7 px-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] cursor-pointer">
-                <span className="text-[var(--color-neutral-8)]">Status</span>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as 'all' | SensorStatus)}
-                  className="bg-transparent font-medium text-[var(--color-neutral-11)] outline-none cursor-pointer max-w-[120px]"
-                >
-                  <option value="all">All</option>
-                  <option value="connected">Connected</option>
-                  <option value="disconnected">Disconnected</option>
-                  <option value="warning">Overloaded</option>
-                </select>
-                <ChevronDown size={14} className="text-[var(--color-neutral-7)] shrink-0" />
-              </label>
+              <FilterSelect
+                ariaLabel="Filter by connection status"
+                prefix="Status"
+                value={statusFilter}
+                options={STATUS_FILTER_OPTIONS}
+                onChange={(v) => setStatusFilter(v as 'all' | SensorStatus)}
+                triggerClassName="max-w-[200px]"
+              />
 
-              <label className="inline-flex items-center gap-1.5 h-7 px-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] cursor-pointer">
-                <MapPin size={14} className="text-[var(--color-neutral-7)]" />
-                <select
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="bg-transparent font-medium text-[var(--color-neutral-11)] outline-none cursor-pointer max-w-[140px]"
-                >
-                  <option value="">Location</option>
-                  {locations.map((l) => (
-                    <option key={l} value={l}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="text-[var(--color-neutral-7)] shrink-0" />
-              </label>
+              <FilterSelect
+                ariaLabel="Filter by location"
+                icon={<MapPin size={14} />}
+                value={location}
+                options={locationFilterOptions}
+                onChange={setLocation}
+                triggerClassName="max-w-[160px]"
+              />
 
-              <label className="inline-flex items-center gap-1.5 h-7 px-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] cursor-pointer">
-                <Box size={14} className="text-[var(--color-neutral-7)]" />
-                <select
-                  value={asset}
-                  onChange={(e) => setAsset(e.target.value)}
-                  className="bg-transparent font-medium text-[var(--color-neutral-11)] outline-none cursor-pointer max-w-[140px]"
-                >
-                  <option value="">Asset</option>
-                  {assets.map((a) => (
-                    <option key={a} value={a}>
-                      {a}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="text-[var(--color-neutral-7)] shrink-0" />
-              </label>
+              <FilterSelect
+                ariaLabel="Filter by asset"
+                icon={<Box size={14} />}
+                value={asset}
+                options={assetFilterOptions}
+                onChange={setAsset}
+                triggerClassName="max-w-[160px]"
+              />
 
-              <label className="inline-flex items-center gap-1.5 h-7 px-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] cursor-pointer">
-                <Tag size={14} className="text-[var(--color-neutral-7)]" />
-                <select
-                  value={tag}
-                  onChange={(e) => setTag(e.target.value)}
-                  className="bg-transparent font-medium text-[var(--color-neutral-11)] outline-none cursor-pointer max-w-[160px]"
-                >
-                  <option value="">Asset custom fields</option>
-                  {tags.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="text-[var(--color-neutral-7)] shrink-0" />
-              </label>
+              <FilterSelect
+                ariaLabel="Filter by asset custom field"
+                icon={<Tag size={14} />}
+                value={tag}
+                options={tagFilterOptions}
+                onChange={setTag}
+                triggerClassName="max-w-[180px]"
+              />
 
               <button
                 type="button"
@@ -410,29 +476,13 @@ export default function EdgeSensorsPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <label className="inline-flex items-center gap-1.5 h-7 px-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] cursor-pointer">
-                <span className="text-[var(--color-neutral-8)]">Group by</span>
-                <select
-                  value={groupBy}
-                  onChange={(e) => setGroupBy(e.target.value as GroupBy)}
-                  className="bg-transparent font-medium text-[var(--color-neutral-11)] outline-none cursor-pointer"
-                >
-                  <option value="none">All</option>
-                  <option value="location">Location</option>
-                  <option value="asset">Asset</option>
-                </select>
-                <ChevronDown size={14} className="text-[var(--color-neutral-7)] shrink-0" />
-              </label>
-
-              <button
-                type="button"
-                onClick={() => setColumns(columns === 3 ? 2 : 3)}
-                className="inline-flex items-center gap-1.5 h-7 px-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] cursor-pointer"
-                title="Toggle column count"
-              >
-                <LayoutGrid size={14} />
-                {columns} cols
-              </button>
+              <FilterSelect
+                ariaLabel="Group sensors by"
+                prefix="Group by"
+                value={groupBy}
+                options={GROUP_BY_OPTIONS}
+                onChange={(v) => setGroupBy(v as GroupBy)}
+              />
 
               <div className="w-px h-6 bg-[var(--border-default)] mx-1 hidden sm:block" />
 
@@ -445,49 +495,45 @@ export default function EdgeSensorsPage() {
                 Save view
               </button>
 
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setSavedMenuOpen((o) => !o)}
-                  className="inline-flex items-center gap-1 h-7 px-2 text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:text-[var(--color-neutral-12)] cursor-pointer"
-                >
-                  Saved views
-                  <ChevronDown size={14} className={savedMenuOpen ? 'rotate-180' : ''} />
-                </button>
-                {savedMenuOpen && (
-                  <>
-                    <button
-                      type="button"
-                      className="fixed inset-0 z-[var(--z-dropdown)] cursor-default"
-                      aria-label="Close menu"
-                      onClick={() => setSavedMenuOpen(false)}
+              <DropdownMenu open={savedMenuOpen} onOpenChange={setSavedMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="!h-7 min-h-7 px-2 gap-1 text-[length:var(--font-size-sm)] font-medium !text-[var(--color-neutral-11)] hover:!text-[var(--color-neutral-12)] shadow-none"
+                    aria-label="Saved views"
+                  >
+                    Saved views
+                    <ChevronDown
+                      size={14}
+                      className={savedMenuOpen ? 'rotate-180 transition-transform duration-[var(--duration-fast)]' : 'transition-transform duration-[var(--duration-fast)]'}
+                      aria-hidden
                     />
-                    <div className="absolute right-0 top-full mt-1 z-[var(--z-modal)] min-w-[200px] max-h-[280px] overflow-auto rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] py-1">
-                      {savedViews.length === 0 ? (
-                        <div className="px-3 py-2 text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
-                          No saved views yet
-                        </div>
-                      ) : (
-                        savedViews.map((v) => (
-                          <button
-                            key={v.id}
-                            type="button"
-                            onClick={() => applySavedView(v)}
-                            className="w-full text-left px-3 py-2 text-[length:var(--font-size-sm)] hover:bg-[var(--color-neutral-3)] cursor-pointer"
-                          >
-                            {v.name}
-                          </button>
-                        ))
-                      )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" minWidth="200px" className="max-h-[280px] overflow-y-auto">
+                  {savedViews.length === 0 ? (
+                    <div className="px-[var(--space-md)] py-2 text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)]">
+                      No saved views yet
                     </div>
-                  </>
-                )}
-              </div>
+                  ) : (
+                    savedViews.map((v) => (
+                      <DropdownMenuItem key={v.id} onSelect={() => applySavedView(v)}>
+                        {v.name}
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
           {showFiltersPanel && (
-            <div className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-4 py-3">
+            <div
+              id="edge-sensors-search-panel"
+              className="w-full rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-4 py-3"
+            >
               <label className="block text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wide text-[var(--color-neutral-8)] mb-1.5">
                 Search sensors
               </label>
@@ -502,23 +548,60 @@ export default function EdgeSensorsPage() {
           )}
         </div>
 
-        {grouped.map(([heading, sensors]) => (
-          <div key={heading || 'all'} className="flex flex-col gap-4">
-            {heading ? (
-              <h2 className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">
-                {heading}
-              </h2>
-            ) : null}
-            <div className={gridClass}>
-              {sensors.map((sensor) => (
-                <EdgeSensorCard key={sensor.id} sensor={sensor} />
-              ))}
-            </div>
+        {groupBy === 'none' ? (
+          <div className={`${gridClass} w-full min-w-0`}>
+            {filtered.map((sensor) => (
+              <EdgeSensorCard key={sensor.id} sensor={sensor} />
+            ))}
           </div>
-        ))}
+        ) : (
+          <div className="flex flex-col gap-4 w-full min-w-0">
+            {nestedSections?.map((section) => {
+              const sensorCount = section.secondary.reduce((n, g) => n + g.sensors.length, 0)
+              const bucketCount = section.secondary.length
+              return (
+                <Collapsible.Root key={`${groupBy}-${section.primary}`} defaultOpen>
+                  <div className="rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-xs)] overflow-hidden">
+                    <Collapsible.Trigger
+                      type="button"
+                      className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)] cursor-pointer data-[state=open]:[&_.section-chevron]:rotate-180"
+                    >
+                      <h2 className="flex-1 min-w-0 truncate text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)]">
+                        {section.primary}
+                      </h2>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge severity="neutral" variant="outline" size="sm">
+                          {pluralCount(sensorCount, 'sensor', 'sensors')}
+                        </Badge>
+                        <Badge severity="neutral" variant="outline" size="sm">
+                          {groupBy === 'location'
+                            ? pluralCount(bucketCount, 'asset', 'assets')
+                            : pluralCount(bucketCount, 'location', 'locations')}
+                        </Badge>
+                        <ChevronDown
+                          className="section-chevron h-5 w-5 shrink-0 text-[var(--color-neutral-7)] transition-transform duration-300 [transition-timing-function:var(--ease-default)]"
+                          aria-hidden
+                        />
+                      </div>
+                    </Collapsible.Trigger>
+                    <Collapsible.Content>
+                      <div className="border-t border-[var(--border-subtle)] px-4 pb-4 pt-4">
+                        <div className={`${gridClass} w-full min-w-0`}>
+                          {section.secondary.flatMap((sub) => sub.sensors).map((sensor) => (
+                            <EdgeSensorCard key={sensor.id} sensor={sensor} />
+                          ))}
+                        </div>
+                      </div>
+                    </Collapsible.Content>
+                  </div>
+                </Collapsible.Root>
+              )
+            })}
+          </div>
+        )}
 
         {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center rounded-[var(--radius-xl)] border border-dashed border-[var(--border-default)] bg-[var(--surface-secondary)]">
+          <div className="flex flex-col items-center justify-center w-full py-16 text-center rounded-[var(--radius-xl)] border border-dashed border-[var(--border-default)] bg-[var(--surface-secondary)]">
             <WifiOff size={36} className="text-[var(--color-neutral-5)] mb-2" />
             <p className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-11)]">
               No sensors match your filters

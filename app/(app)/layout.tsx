@@ -10,6 +10,7 @@ import { Button } from '@/app/components/ui/Button'
 import { IconButton } from '@/app/components/ui/IconButton'
 import { MeterConfigModal } from '@/app/components/edge/MeterConfigModal'
 import { DashboardProvider } from '@/app/lib/dashboard/dashboard-context'
+import { runtimeSensors } from '@/app/lib/edge-data'
 import { sites } from '@/app/lib/mock-data'
 import type { Role } from '@/app/lib/models'
 
@@ -72,8 +73,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isFleetDetail = /^\/fleet\/vehicles\/[^/]+/.test(pathname)
   const isScheduler = pathname.startsWith('/scheduler')
   const isCommandCenter = pathname.startsWith('/command-center')
+  const isEdgeSensors = pathname === '/edge/sensors'
+
+  const exportSensorReadings = useCallback(() => {
+    const blob = new Blob([JSON.stringify(runtimeSensors, null, 2)], {
+      type: 'application/json',
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `sensor-readings-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [])
 
   function getActions() {
+    if (isEdgeSensors) {
+      return (
+        <Button variant="primary" size="sm" type="button" onClick={() => setShowAddRuntime(true)}>
+          <Plus size={14} />
+          Add Sensor
+        </Button>
+      )
+    }
     if (isStudioAgents) {
       return (
         <Button variant="primary" size="md">+ New Agent</Button>
@@ -147,7 +169,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             sites={sites}
             minimal={isEdge || isStudioSection || pathname.startsWith('/exports') || pathname.startsWith('/files') || isWorkOrders || pathname.startsWith('/scheduler')}
             backHref={isRuntimeDetail ? '/edge/runtime' : undefined}
-            afterTitle={isWorkOrders ? (
+            afterTitle={isEdgeSensors ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                className="ml-3 shrink-0"
+                onClick={exportSensorReadings}
+              >
+                <FileDown size={14} />
+                Export Readings
+              </Button>
+            ) : isWorkOrders ? (
               <button className="inline-flex items-center gap-1.5 ml-2 px-2.5 py-1 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-secondary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] cursor-pointer hover:bg-[var(--color-neutral-3)] transition-colors duration-[var(--duration-fast)]">
                 <LayoutGrid size={14} className="text-[var(--color-neutral-7)]" />
                 Table

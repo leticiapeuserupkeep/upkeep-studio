@@ -207,13 +207,21 @@ export interface RuntimeWorkOrder {
 }
 
 /** Live telemetry tile on Edge Sensors cards (label + formatted value + health style). */
-export type TelemetryReadingVariant = 'success' | 'warning' | 'danger'
+export type TelemetryReadingVariant = 'success' | 'warning' | 'danger' | 'neutral'
 
 export interface TelemetryReading {
   id: string
   label: string
   value: string
   variant: TelemetryReadingVariant
+}
+
+/** Edge sensor insight row shown in “View insights” (left accent + tinted surface). */
+export type SensorInsightTone = 'warning' | 'neutral' | 'success'
+
+export interface SensorInsight {
+  message: string
+  tone: SensorInsightTone
 }
 
 export interface RuntimeSensor {
@@ -238,7 +246,7 @@ export interface RuntimeSensor {
   runtimeThreshold?: number
   workOrders: RuntimeWorkOrder[]
   lastReading: string
-  insights: string[]
+  insights: SensorInsight[]
   /** Edge Sensors homepage: last telemetry tiles */
   telemetryReadings?: TelemetryReading[]
   /** 0–100 RF signal; disconnected sensors use 0 */

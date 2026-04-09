@@ -13,6 +13,7 @@ export {
   DropdownMenuLabel,
 } from './DropdownMenu'
 export { EmptyState } from './EmptyState'
+export { FilterSelect, type FilterSelectOption } from './FilterSelect'
 export { IconButton } from './IconButton'
 export { InlineAlert } from './InlineAlert'
 export { KPI } from './KPI'
