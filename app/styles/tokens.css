@@ -79,8 +79,10 @@
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
+  --radius-kpi-icon: 10px;
   --radius-xl: 12px;
   --radius-2xl: 16px;
+  --radius-card: 20px;
   --radius-3xl: 24px;
   --radius-full: 9999px;
 
@@ -118,6 +120,8 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
+  /** Accent-tinted glow (sidebar orb, brand highlights) */
+  --shadow-brand-glow: 0 1px 8px color-mix(in srgb, var(--color-accent-9) 22%, transparent);
 
   /* ── Z-index ── */
   --z-base: 0;
@@ -139,10 +143,15 @@
   --dashboard-grid-gap: var(--space-xl);
   --dashboard-kpi-gap: var(--space-lg);
 
+  /* ── SuperNova staging (Executive View) ── */
+  --supernova-staging-content-max: 880px;
+  --supernova-staging-prose-max: 52ch;
+  --supernova-staging-header-height: 60px;
+
   /* ── Widget ── */
   --widget-bg: var(--surface-primary);
   --widget-border: var(--color-neutral-3);
-  --widget-radius: var(--radius-2xl);
+  --widget-radius: var(--radius-card);
   --widget-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
   --widget-padding: var(--space-xl);
   --widget-header-padding-y: var(--space-lg);

@@ -30,6 +30,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/edge/settings')) return 'Settings'
   if (pathname.startsWith('/scheduler')) return 'Scheduler'
   if (pathname.startsWith('/command-center')) return 'Command Center'
+  if (pathname.startsWith('/supernova/staging')) return 'SuperNova Staging'
   if (pathname.startsWith('/workflows')) return 'Workflows'
   if (pathname.startsWith('/aimates')) return 'Agents'
   return 'Dashboard'
@@ -43,6 +44,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [showAddRuntime, setShowAddRuntime] = useState(false)
 
   const pathname = usePathname()
+  const isSupernovaStaging = pathname.startsWith('/supernova/staging')
 
   const handleCollapseSidebar = useCallback(() => setSidebarCollapsed(true), [])
   const handleToggleSidebar = useCallback(() => setSidebarCollapsed((p) => !p), [])
@@ -145,6 +147,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       )
     }
     return undefined
+  }
+
+  if (isSupernovaStaging) {
+    return (
+      <>
+        {children}
+        <MeterConfigModal
+          open={showAddRuntime}
+          onOpenChange={setShowAddRuntime}
+          sensorName=""
+          totalRuntime={0}
+        />
+      </>
+    )
   }
 
   return (

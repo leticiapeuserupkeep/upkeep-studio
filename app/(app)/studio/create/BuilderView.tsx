@@ -1367,7 +1367,7 @@ function AnalyticsPanel({ publishStatus, appTitle }: { publishStatus: string; ap
     return (
       <div className="flex-1 flex items-center justify-center">
         <EmptyState
-          icon={<BarChart3 size={24} className="text-[var(--color-neutral-7)]" />}
+          icon={<BarChart3 size={20} className="text-[var(--color-neutral-7)]" />}
           title="Analytics available after publishing"
           description="Publish your app to start tracking installs, usage, and engagement."
         />
@@ -1394,7 +1394,7 @@ function AnalyticsPanel({ publishStatus, appTitle }: { publishStatus: string; ap
           label="Active Users (7d)"
           value="18"
           subtitle="43% of installs"
-          icon={<Users size={16} className="text-[var(--color-neutral-8)]" />}
+          icon={<Users size={20} className="text-[var(--color-neutral-8)]" />}
         />
         <KPI
           label="Avg Opens / Day"

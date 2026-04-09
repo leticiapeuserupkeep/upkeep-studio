@@ -29,10 +29,10 @@ export function MiniBarChart({
 
   return (
     <svg
-      width={width}
-      height={height}
       viewBox={`0 0 ${width} ${height}`}
-      className={className}
+      preserveAspectRatio="xMidYMid meet"
+      className={`block w-full max-w-full ${className}`.trim()}
+      style={{ aspectRatio: `${width} / ${height}` }}
       aria-hidden="true"
     >
       {data.map((value, i) => {

@@ -60,6 +60,7 @@ const sections: NavSection[] = [
       { label: 'Agents', icon: Users, href: '/aimates' },
       { label: 'Integrations', icon: Sparkles },
       { label: 'Workflows', icon: Bot, href: '/workflows' },
+      { label: 'SuperNova Staging', icon: Rocket, href: '/supernova/staging' },
       { label: 'Settings', icon: Settings },
     ],
   },
@@ -135,6 +136,7 @@ function isActive(pathname: string, href?: string, label?: string): boolean {
   if (href === '/studio/browse') return pathname === '/studio' || pathname.startsWith('/studio/browse')
   if (label === 'File Management') return pathname.startsWith('/exports') || pathname.startsWith('/files')
   if (label === 'Import & Export') return false
+  if (href === '/supernova/staging') return pathname === '/supernova/staging' || pathname.startsWith('/supernova/staging/')
   return pathname === href || pathname.startsWith(href + '/')
 }
 
