@@ -1,5 +1,10 @@
-import { StagingPlaceholder } from '../StagingPlaceholder'
+import { SuperNovaStagingComingSoon } from '@/app/components/supernova-staging/SuperNovaStagingComingSoon'
 
 export default function SuperNovaStagingDataPage() {
-  return <StagingPlaceholder title="Data" />
+  return (
+    <SuperNovaStagingComingSoon
+      title="Data — Coming Soon"
+      description="Coming soon. Explore datasets, connectors, and agent context here in a future release."
+    />
+  )
 }

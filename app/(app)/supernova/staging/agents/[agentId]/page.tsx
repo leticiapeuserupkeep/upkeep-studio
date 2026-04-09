@@ -7,7 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
   EmptyState,
   IconButton,
@@ -125,7 +124,7 @@ export default function SuperNovaStagingAgentChatPage() {
 
   useEffect(() => {
     if (agentId && !agent) {
-      router.replace('/supernova/staging/agents/demo-1')
+      router.replace('/supernova/staging/agents')
     }
   }, [agentId, agent, router])
 
@@ -179,6 +178,15 @@ export default function SuperNovaStagingAgentChatPage() {
             {agent.name}
           </h1>
           <div className="flex shrink-0 items-center gap-1">
+            <IconButton
+              label="Staging settings"
+              variant="secondary"
+              size="lg"
+              type="button"
+              onClick={() => router.push('/supernova/staging/settings')}
+            >
+              <Settings size={20} aria-hidden />
+            </IconButton>
             {activeTab === 'chat' && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -215,19 +223,6 @@ export default function SuperNovaStagingAgentChatPage() {
                       aria-hidden
                     />
                     <span className="min-w-0 flex-1 text-left">Compact Context</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    textValue="Settings"
-                    onSelect={() => router.push('/supernova/staging/settings')}
-                  >
-                    <Settings
-                      size={16}
-                      strokeWidth={2}
-                      className="shrink-0 text-[var(--color-neutral-8)]"
-                      aria-hidden
-                    />
-                    <span className="min-w-0 flex-1 text-left">Settings</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
