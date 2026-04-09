@@ -25,6 +25,12 @@
   border-radius: var(--radius-sm);
 }
 
+/* Child is focused but parent shows focus-within chrome (e.g. chat composer shell) */
+[data-composer-input]:focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

@@ -80,9 +80,9 @@ function SuperNovaStagingShellInner({ children }: { children: React.ReactNode })
   const { sidebarCollapsed } = useSuperNovaStagingNav()
 
   return (
-    <div className="flex min-h-screen w-full bg-[var(--surface-canvas)]">
+    <div className="flex h-screen min-h-0 w-full overflow-hidden bg-[var(--surface-canvas)]">
       <aside
-        className={`flex flex-col min-h-screen shrink-0 border-r border-[var(--border-default)] bg-[var(--surface-sidebar)] transition-[width] duration-[var(--duration-slow)] ease-[var(--ease-default)] ${
+        className={`sticky top-0 flex h-full min-h-0 shrink-0 flex-col border-r border-[var(--border-default)] bg-[var(--surface-sidebar)] transition-[width] duration-[var(--duration-slow)] ease-[var(--ease-default)] ${
           sidebarCollapsed ? 'w-16' : 'w-[260px]'
         }`}
       >
@@ -161,8 +161,8 @@ function SuperNovaStagingShellInner({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>
+      <div className="flex min-h-0 flex-1 min-w-0 flex-col overflow-hidden">
+        <div className="h-full min-h-0 overflow-y-auto">{children}</div>
       </div>
     </div>
   )
