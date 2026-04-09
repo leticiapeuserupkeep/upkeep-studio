@@ -91,11 +91,8 @@ export default function SuperNovaStagingWorkflowsPage() {
           {stagingWorkflows.map((wf) => (
             <Card key={wf.id} className="shadow-none border-[var(--border-default)] bg-[var(--surface-primary)]">
               <div className="p-[var(--widget-padding)] flex flex-col gap-[var(--space-md)]">
-                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-[var(--space-sm)] gap-y-[var(--space-xs)]">
-                  <IconButton label="Delete workflow" variant="secondary" size="md" className="shrink-0">
-                    <Trash2 size={16} />
-                  </IconButton>
-                  <div className="flex flex-wrap items-center gap-[var(--space-xs)] min-w-0">
+                <div className="flex flex-wrap items-start justify-between gap-x-[var(--space-sm)] gap-y-[var(--space-xs)]">
+                  <div className="flex flex-wrap items-center gap-[var(--space-xs)] min-w-0 flex-1">
                     <h2 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">
                       {wf.title}
                     </h2>
@@ -106,7 +103,10 @@ export default function SuperNovaStagingWorkflowsPage() {
                       <ExtraBadge key={b.label} variant={b.variant} label={b.label} />
                     ))}
                   </div>
-                  <div className="flex shrink-0 justify-end">
+                  <div className="flex items-center gap-[var(--space-xs)] shrink-0">
+                    <IconButton label="Delete workflow" variant="secondary" size="md" className="shrink-0">
+                      <Trash2 size={16} />
+                    </IconButton>
                     <Button variant="secondary" size="md" type="button">
                       Assign
                     </Button>
