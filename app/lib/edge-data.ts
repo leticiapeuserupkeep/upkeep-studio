@@ -1,4 +1,5 @@
 import type { RuntimeSensor } from './models'
+import { mergeEdgeSensorExtras } from './edge-sensor-extras'
 
 function generateDailyRuntime(days: number, avgHours: number, variance: number) {
   const data = []
@@ -20,7 +21,7 @@ function generateDailyRuntime(days: number, avgHours: number, variance: number) 
   return data
 }
 
-export const runtimeSensors: RuntimeSensor[] = [
+const runtimeSensorsBase: RuntimeSensor[] = [
   {
     id: 'RS-001',
     name: 'AirComp 115PSI | BL1 - 150 AMP',
@@ -291,3 +292,5 @@ export const runtimeSensors: RuntimeSensor[] = [
     ],
   },
 ]
+
+export const runtimeSensors: RuntimeSensor[] = runtimeSensorsBase.map(mergeEdgeSensorExtras)

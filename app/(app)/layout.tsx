@@ -67,6 +67,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isEdge = pathname.startsWith('/edge/')
   const isRuntimeList = pathname === '/edge/runtime'
   const isRuntimeDetail = /^\/edge\/runtime\/[^/]+/.test(pathname)
+  const isRuntimeSection = isRuntimeList || isRuntimeDetail
   const isWorkOrders = pathname.startsWith('/work-orders')
   const isFleetDetail = /^\/fleet\/vehicles\/[^/]+/.test(pathname)
   const isScheduler = pathname.startsWith('/scheduler')
@@ -184,8 +185,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )}
         {(isWorkOrders || pathname.startsWith('/exports')) && <div id="table-toolbar-portal" />}
 
-        {isEdge && <div id="runtime-sensor-bar-portal" />}
-        {isEdge && <div id="runtime-kpi-portal" />}
+        {isRuntimeSection && <div id="runtime-sensor-bar-portal" />}
+        {isRuntimeSection && <div id="runtime-kpi-portal" />}
         <div id="page-toolbar-portal" />
         {isCreateApp || isAgents ? (
           children

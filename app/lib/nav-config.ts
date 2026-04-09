@@ -81,7 +81,7 @@ export const navSections: NavSection[] = [
   {
     title: 'EDGE',
     items: [
-      { label: 'Sensors', icon: Radio },
+      { label: 'Sensors', icon: Radio, href: '/edge/sensors' },
       { label: 'Gateways', icon: Timer },
       { label: 'Alerts', icon: Siren },
       { label: 'Runtime', icon: Signal, href: '/edge/runtime' },

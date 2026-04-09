@@ -206,6 +206,16 @@ export interface RuntimeWorkOrder {
   urgency: UrgencyLevel
 }
 
+/** Live telemetry tile on Edge Sensors cards (label + formatted value + health style). */
+export type TelemetryReadingVariant = 'success' | 'warning' | 'danger'
+
+export interface TelemetryReading {
+  id: string
+  label: string
+  value: string
+  variant: TelemetryReadingVariant
+}
+
 export interface RuntimeSensor {
   id: string
   name: string
@@ -229,6 +239,14 @@ export interface RuntimeSensor {
   workOrders: RuntimeWorkOrder[]
   lastReading: string
   insights: string[]
+  /** Edge Sensors homepage: last telemetry tiles */
+  telemetryReadings?: TelemetryReading[]
+  /** 0–100 RF signal; disconnected sensors use 0 */
+  signalStrength?: number
+  /** 0–100 for battery-backed units; null when line-powered */
+  batteryPercent?: number | null
+  /** Filter chips for “Asset custom fields” */
+  assetTags?: string[]
 }
 
 /* ── Fleet: Vehicles ── */
