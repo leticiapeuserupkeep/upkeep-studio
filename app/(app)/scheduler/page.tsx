@@ -801,8 +801,20 @@ export default function SchedulerPage() {
       dayGridRef.current.scrollTo({ left: Math.max(0, (start - gridStart) * HOUR_WIDTH - 32), behavior: 'smooth' })
     }
     return (
-      <div className="shrink-0 flex flex-col justify-between p-3 gap-2 border-r border-[#E0E1E6] h-full" style={{ width: MEMBER_COL_WIDTH, background: '#FCFCFD' }}>
-        <div className="flex items-center gap-3" style={{ height: 34, padding: '2px 0' }}>
+      <div className="shrink-0 flex flex-col justify-between border-r border-[#E0E1E6] h-full overflow-hidden" style={{ width: MEMBER_COL_WIDTH, background: '#FCFCFD' }}>
+        {/* Shift bar — top of card, styled like timeline shift bar */}
+        {dayShiftTag ? (
+          <button type="button" onClick={scrollToShift}
+            className="flex items-center gap-2 px-3 cursor-pointer hover:brightness-95 transition-all shrink-0"
+            style={{ height: 22, background: `${dayShiftTag.color}20`, borderLeft: `3px solid ${dayShiftTag.color}` }}>
+            <span className="text-[10px] font-semibold truncate" style={{ color: dayShiftTag.color }}>{dayShiftTag.name}</span>
+            <span className="text-[10px] text-[#6b7280] shrink-0">{shiftTimeLabel(dayShiftTag)}</span>
+          </button>
+        ) : (
+          <div className="shrink-0" style={{ height: 22, background: '#f5f5f7', borderLeft: '3px solid #e5e7eb' }} />
+        )}
+        {/* Member info */}
+        <div className="flex items-center gap-3 px-3 flex-1" style={{ paddingTop: 6, paddingBottom: 6 }}>
           <TeamAvatar initials={member.avatar} name={member.name} />
           <div className="min-w-0 flex-1 flex flex-col gap-[2px]">
             <p className="text-[12px] font-semibold text-[#1C2024] truncate" style={{ lineHeight: '15px' }}>{member.name}</p>
@@ -818,17 +830,6 @@ export default function SchedulerPage() {
             </svg>
           </div>
         </div>
-        {dayShiftTag ? (
-          <button type="button" onClick={scrollToShift}
-            className="flex items-center gap-1.5 px-2 py-[3px] rounded-full text-[10px] font-medium cursor-pointer hover:opacity-75 transition-opacity self-start max-w-full overflow-hidden"
-            style={{ background: `${dayShiftTag.color}18`, color: dayShiftTag.color, border: `1px solid ${dayShiftTag.color}35` }}>
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: dayShiftTag.color }} />
-            <span className="truncate">{dayShiftTag.name}</span>
-            <span className="shrink-0 opacity-70">{shiftTimeLabel(dayShiftTag)}</span>
-          </button>
-        ) : (
-          <div className="h-[20px]" />
-        )}
       </div>
     )
   }
