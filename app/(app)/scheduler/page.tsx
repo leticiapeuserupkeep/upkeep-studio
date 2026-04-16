@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { createPortal } from 'react-dom'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Popover from '@radix-ui/react-popover'
@@ -8,7 +11,7 @@ import {
   SlidersHorizontal, Eye, EyeOff, RotateCcw, Calendar,
   ChevronLeft, ChevronRight, Clock, Settings, AlertTriangle,
   Check, Flag, ChevronDown, X, Info, Zap, Save, RefreshCw,
-  Loader2, Grid, List, Layers, Pencil, Trash2, Plus, MoreHorizontal,
+  Loader2, Grid, List, Layers, Pencil, Trash2, Plus, MoreHorizontal, GripVertical,
 } from 'lucide-react'
 
 /* ═══════════════ TYPES ═══════════════ */
@@ -71,7 +74,7 @@ const blockColors = {
 
 const CARD_SHADOW = '0px 1px 3px rgba(0,0,0,0.05), 0px 2px 1px -1px rgba(0,0,0,0.05), 0px 1px 4px rgba(0,0,45,0.09), 0px 0px 0px 0.5px rgba(0,0,0,0.05)'
 
-const SHIFT_COLORS = ['#3b82f6', '#16a34a', '#f59e0b', '#7c3aed', '#ec4899', '#0ea5e9', '#ef4444', '#14b8a6']
+const SHIFT_COLORS = ['#3b82f6', '#16a34a', '#f97316', '#ef4444', '#8b5cf6', '#ec4899']
 
 const SHIFT_CARD_BG: Record<string, string> = {
   '#3b82f6': '#E6EDFE', '#16a34a': '#E9F9EE', '#f59e0b': '#FFF4D5', '#7c3aed': '#F0EAFF',
@@ -166,15 +169,32 @@ const initialMembers: TeamMemberData[] = [
   { id: 'tm-4', name: 'Chris Bennett', role: 'Technician', avatar: 'CB', location: 'Facility B', team: 'The A-Team', blocks: [] },
   { id: 'tm-5', name: 'Eric Gomez', role: 'Technician', avatar: 'EG', location: 'Distribution Center B', team: 'Beta Squad',
     blocks: [
-      { id: 'b6', woNumber: '#050', title: 'Faulty Cable', dueDate: '3/30', date: dk(new Date(2026, 2, 30)), startHour: 9, durationHours: 1.5, color: 'pink', saved: true, category: 'Electrical', location: 'Distribution Center B', priority: 'High', status: 'Open' },
+      { id: 'b6', woNumber: '#050', title: 'Faulty Cable', dueDate: '3/30', date: dk(new Date(2026, 2, 30)), startHour: 14, durationHours: 1.5, color: 'pink', saved: true, category: 'Electrical', location: 'Distribution Center B', priority: 'High', status: 'Open' },
     ] },
   { id: 'tm-6', name: 'Alex Chen', role: 'Technician', avatar: 'AC', location: 'North Wing', team: 'Beta Squad',
     blocks: [
-      { id: 'b7', woNumber: '#050', title: 'Faulty Cable', dueDate: '3/31', date: dk(new Date(2026, 2, 31)), startHour: 10, durationHours: 1, color: 'pink', saved: true, category: 'Electrical', location: 'North Wing', priority: 'Medium', status: 'Open' },
-      { id: 'b8', woNumber: '#041', title: 'Adjust Gate Door Panels', dueDate: '4/4', date: dk(new Date(2026, 3, 4)), startHour: 11, durationHours: 2, color: 'amber', saved: true, category: 'Mechanical', location: 'North Wing', priority: 'Low', status: 'In Progress' },
+      { id: 'b7', woNumber: '#050', title: 'Faulty Cable', dueDate: '3/31', date: dk(new Date(2026, 2, 31)), startHour: 18, durationHours: 1, color: 'pink', saved: true, category: 'Electrical', location: 'North Wing', priority: 'Medium', status: 'Open' },
+      { id: 'b8', woNumber: '#041', title: 'Adjust Gate Door Panels', dueDate: '4/4', date: dk(new Date(2026, 3, 4)), startHour: 19, durationHours: 2, color: 'amber', saved: true, category: 'Mechanical', location: 'North Wing', priority: 'Low', status: 'In Progress' },
     ] },
-  { id: 'tm-7', name: 'Marcus Reed', role: 'Technician', avatar: 'MR', location: 'Maintenance Shop', team: 'Beta Squad', blocks: [] },
+  { id: 'tm-7', name: 'Marcus Reed', role: 'Technician', avatar: 'MR', location: 'Maintenance Shop', team: 'Beta Squad',
+    blocks: [
+      { id: 'b9', woNumber: '#052', title: 'Boiler Pressure Check', dueDate: '4/1', date: dk(new Date(2026, 3, 1)), startHour: 7, durationHours: 1.5, color: 'teal', saved: true, category: 'Inspection', location: 'Maintenance Shop', priority: 'High', status: 'Open' },
+    ] },
   { id: 'tm-8', name: 'Tim Sine', role: 'Technician', avatar: 'TS', location: 'Building C', team: 'Beta Squad', blocks: [] },
+  { id: 'tm-9', name: 'Maria Torres', role: 'Technician', avatar: 'MT', location: 'Warehouse A', team: 'The A-Team',
+    blocks: [
+      { id: 'b10', woNumber: '#055', title: 'Fire Alarm Testing', dueDate: '4/2', date: dk(new Date(2026, 3, 2)), startHour: 7, durationHours: 2, color: 'pink', saved: true, category: 'Safety', location: 'Warehouse A', priority: 'High', status: 'Open' },
+    ] },
+  { id: 'tm-10', name: 'David Kim', role: 'Technician', avatar: 'DK', location: 'Plant Floor 2', team: 'The A-Team',
+    blocks: [
+      { id: 'b11', woNumber: '#056', title: 'HVAC Filter Replacement', dueDate: '4/3', date: dk(new Date(2026, 3, 3)), startHour: 15, durationHours: 2, color: 'teal', saved: true, category: 'HVAC', location: 'Plant Floor 2', priority: 'Medium', status: 'Open' },
+    ] },
+  { id: 'tm-11', name: 'Sandra Lee', role: 'Technician', avatar: 'SL', location: 'Office Building', team: 'Beta Squad',
+    blocks: [
+      { id: 'b12', woNumber: '#057', title: 'Electrical Panel Upgrade', dueDate: '4/4', date: dk(new Date(2026, 3, 4)), startHour: 22, durationHours: 2, color: 'amber', saved: true, category: 'Electrical', location: 'Office Building', priority: 'High', status: 'Open' },
+    ] },
+  { id: 'tm-12', name: 'James Wilson', role: 'Technician', avatar: 'JW', location: 'Distribution Center B', team: 'Beta Squad',
+    blocks: [] },
 ]
 
 /* ═══════════════ DATE HELPERS ═══════════════ */
@@ -241,11 +261,84 @@ const iconBtnCls = 'inline-flex items-center justify-center w-7 h-7 rounded-[6px
 const iconBtnLgCls = 'inline-flex items-center justify-center w-8 h-8 rounded-[6px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors cursor-pointer'
 const selectCls = 'w-full px-3 py-2 rounded-lg border border-[#e5e7eb] text-[13px] text-[#374151] bg-white'
 
+/* ═══════════════ SORTABLE SHIFT CARD ═══════════════ */
+
+interface SortableShiftCardProps {
+  st: ShiftTemplate
+  members: TeamMemberData[]
+  shiftAssignments: ShiftAssignment[]
+  templatesList: { id: string; name: string; active: boolean }[]
+  highlightedTemplateId: string | null
+  shiftCardMenuOpen: string | null
+  setShiftCardMenuOpen: (id: string | null) => void
+  setShiftTemplates: React.Dispatch<React.SetStateAction<ShiftTemplate[]>>
+  setShiftAssignments: React.Dispatch<React.SetStateAction<ShiftAssignment[]>>
+  setSettingsDirty: (v: boolean) => void
+  openEdit: () => void
+}
+
+function SortableShiftCard({ st, members, shiftAssignments, highlightedTemplateId, shiftCardMenuOpen, setShiftCardMenuOpen, setShiftTemplates, setShiftAssignments, setSettingsDirty, openEdit }: SortableShiftCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: st.id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 50 : undefined }
+  const assignedMembers = members.filter(m => shiftAssignments.some(a => a.shiftTemplateId === st.id && a.technicianId === m.id))
+  return (
+    <div ref={setNodeRef} style={style}
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl border bg-white cursor-pointer hover:border-[#d1d5db] transition-all group ${!st.active ? 'opacity-50' : ''} ${highlightedTemplateId === st.id ? 'border-[#3b82f6] ring-2 ring-[#3b82f6]/20' : 'border-[#e5e7eb]'}`}
+      onClick={openEdit}>
+      {/* Drag handle */}
+      <div {...attributes} {...listeners} onClick={e => e.stopPropagation()}
+        className="cursor-grab active:cursor-grabbing text-[#d1d5db] hover:text-[#9ca3af] transition-colors shrink-0 -ml-1">
+        <GripVertical size={16} />
+      </div>
+      <div className="w-1 self-stretch rounded-full shrink-0" style={{ background: st.active ? st.color : '#d1d5db' }} />
+      <div className="flex-1 min-w-0">
+        <p className={`text-[13px] font-semibold ${st.active ? 'text-[#111827]' : 'text-[#9ca3af]'}`}>{st.name || 'Unnamed Shift'}</p>
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          <span className="text-[12px] text-[#6b7280]">{shiftTimeLabel(st)}</span>
+          {st.activeDays.length > 0 && <span className="text-[12px] text-[#9ca3af]">· {st.activeDays.join(', ')}</span>}
+        </div>
+      </div>
+      {assignedMembers.length > 0 && (
+        <div className="flex items-center shrink-0" onClick={e => e.stopPropagation()}>
+          {assignedMembers.slice(0, 3).map((m, i) => {
+            const idx = m.name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % avColors.length
+            return <span key={m.id} className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-white text-[8px] font-semibold border-2 border-white shrink-0" style={{ backgroundColor: avColors[idx], marginLeft: i > 0 ? -6 : 0 }}>{m.avatar}</span>
+          })}
+          {assignedMembers.length > 3 && <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-[#f3f4f6] text-[8px] font-semibold text-[#374151] border-2 border-white shrink-0" style={{ marginLeft: -6 }}>+{assignedMembers.length - 3}</span>}
+        </div>
+      )}
+      <button role="switch" aria-checked={st.active}
+        onClick={e => { e.stopPropagation(); setShiftTemplates(p => p.map(t => t.id === st.id ? { ...t, active: !t.active } : t)); setSettingsDirty(true) }}
+        className={`relative inline-flex h-[18px] w-[30px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${st.active ? 'bg-[#3b82f6]' : 'bg-[#d1d5db]'}`}>
+        <span className={`pointer-events-none inline-block h-[14px] w-[14px] rounded-full bg-white shadow-sm transform transition-transform ${st.active ? 'translate-x-[12px]' : 'translate-x-0'}`} />
+      </button>
+      <div className="relative" onClick={e => e.stopPropagation()}>
+        <button onClick={e => { e.stopPropagation(); setShiftCardMenuOpen(shiftCardMenuOpen === st.id ? null : st.id) }}
+          className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-[#f3f4f6] transition-all cursor-pointer shrink-0" aria-label="Shift options">
+          <MoreHorizontal size={14} className="text-[#6b7280]" />
+        </button>
+        {shiftCardMenuOpen === st.id && (<>
+          <div className="fixed inset-0 z-[50]" onClick={() => setShiftCardMenuOpen(null)} />
+          <div className="absolute right-0 top-8 z-[51] w-36 bg-white rounded-lg shadow-lg border border-[#e5e7eb] py-1">
+            <button onClick={() => { setShiftCardMenuOpen(null); openEdit() }} className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#f3f4f6] transition-colors">
+              <Pencil size={13} className="text-[#6b7280]" /> Edit
+            </button>
+            <button onClick={() => { setShiftCardMenuOpen(null); setShiftTemplates(p => p.filter(t => t.id !== st.id)); setShiftAssignments(p => p.filter(a => a.shiftTemplateId !== st.id)); setSettingsDirty(true) }}
+              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#ef4444] hover:bg-[#fef2f2] transition-colors">
+              <Trash2 size={13} /> Delete
+            </button>
+          </div>
+        </>)}
+      </div>
+    </div>
+  )
+}
+
 /* ═══════════════ MAIN PAGE ═══════════════ */
 
 export default function SchedulerPage() {
   const [currentDate, setCurrentDate] = useState(new Date(TODAY))
-  const [viewMode, setViewMode] = useState<ViewMode>('Week')
+  const [viewMode, setViewMode] = useState<ViewMode>('Day')
   const [unscheduled, setUnscheduled] = useState<WOCard[]>(allWorkOrders)
   const [members, setMembers] = useState<TeamMemberData[]>(initialMembers)
   const [hasUnsaved, setHasUnsaved] = useState(false)
@@ -292,17 +385,21 @@ export default function SchedulerPage() {
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
 
   const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([
-    { id: 'shift_morning', name: 'Morning', color: '#3b82f6', startTime: '06:00', endTime: '10:00', spansMidnight: false, activeDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], breakMinutes: 0, notes: '', active: true, templateId: 'tpl-default' },
-    { id: 'shift_midday', name: 'Midday', color: '#16a34a', startTime: '10:00', endTime: '14:00', spansMidnight: false, activeDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], breakMinutes: 0, notes: '', active: true, templateId: 'tpl-default' },
-    { id: 'shift_afternoon', name: 'Afternoon', color: '#f59e0b', startTime: '14:00', endTime: '18:00', spansMidnight: false, activeDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], breakMinutes: 0, notes: '', active: true, templateId: 'tpl-default' },
-    { id: 'shift_evening', name: 'Evening', color: '#7c3aed', startTime: '18:00', endTime: '22:00', spansMidnight: false, activeDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], breakMinutes: 0, notes: '', active: true, templateId: 'tpl-default' },
+    { id: 'shift_morning', name: 'Morning', color: '#3b82f6', startTime: '06:00', endTime: '14:00', spansMidnight: false, activeDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], breakMinutes: 30, notes: '', active: true, templateId: 'tpl-default' },
+    { id: 'shift_afternoon', name: 'Afternoon', color: '#f59e0b', startTime: '14:00', endTime: '22:00', spansMidnight: false, activeDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], breakMinutes: 30, notes: '', active: true, templateId: 'tpl-default' },
+    { id: 'shift_night', name: 'Night', color: '#0ea5e9', startTime: '22:00', endTime: '06:00', spansMidnight: true, activeDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], breakMinutes: 30, notes: '', active: true, templateId: 'tpl-default' },
     { id: 'shift_sat_day', name: 'Day Shift', color: '#ec4899', startTime: '08:00', endTime: '16:00', spansMidnight: false, activeDays: ['Sat', 'Sun'], breakMinutes: 30, notes: '', active: true, templateId: 'tpl-weekend' },
     { id: 'shift_sat_eve', name: 'Evening', color: '#14b8a6', startTime: '16:00', endTime: '22:00', spansMidnight: false, activeDays: ['Sat', 'Sun'], breakMinutes: 0, notes: '', active: true, templateId: 'tpl-weekend' },
   ])
   const [shiftAssignments, setShiftAssignments] = useState<ShiftAssignment[]>(() => {
     const week = getWeekDays(TODAY)
     const out: ShiftAssignment[] = []
-    const weekdayMap: Record<string, string> = { 'tm-1': 'shift_morning', 'tm-2': 'shift_morning', 'tm-3': 'shift_midday', 'tm-5': 'shift_afternoon', 'tm-6': 'shift_evening' }
+    // Weekday assignments: morning, afternoon, night
+    const weekdayMap: Record<string, string> = {
+      'tm-1': 'shift_morning', 'tm-2': 'shift_morning', 'tm-7': 'shift_morning', 'tm-9': 'shift_morning',
+      'tm-3': 'shift_afternoon', 'tm-5': 'shift_afternoon', 'tm-10': 'shift_afternoon', 'tm-8': 'shift_afternoon',
+      'tm-6': 'shift_night', 'tm-11': 'shift_night', 'tm-12': 'shift_night',
+    }
     Object.entries(weekdayMap).forEach(([tid, sid]) => {
       week.forEach(d => {
         const dn = DAY_NAMES[d.getDay()]
@@ -311,7 +408,7 @@ export default function SchedulerPage() {
         }
       })
     })
-    const weekendMap: Record<string, string> = { 'tm-1': 'shift_sat_day', 'tm-4': 'shift_sat_eve' }
+    const weekendMap: Record<string, string> = { 'tm-1': 'shift_sat_day', 'tm-4': 'shift_sat_eve', 'tm-9': 'shift_sat_day', 'tm-3': 'shift_sat_eve' }
     Object.entries(weekendMap).forEach(([tid, sid]) => {
       week.forEach(d => {
         const dn = DAY_NAMES[d.getDay()]
@@ -338,7 +435,13 @@ export default function SchedulerPage() {
   const [assignDropOpen, setAssignDropOpen] = useState(false)
   const [timePickerOpen, setTimePickerOpen] = useState<'start' | 'end' | null>(null)
   const timeListRef = useRef<HTMLDivElement>(null)
+  const dayGridRef = useRef<HTMLDivElement>(null)
   const [shiftPopover, setShiftPopover] = useState<{ memberId: string; date: string; clientX: number; clientY: number } | null>(null)
+  const [shiftPopoverStep, setShiftPopoverStep] = useState<'shift' | 'scope'>('shift')
+  const [pendingShiftTemplateId, setPendingShiftTemplateId] = useState<string | null>(null)
+  const [pendingScope, setPendingScope] = useState<'today' | 'week' | 'month' | 'always' | null>(null)
+  const [shiftFilter, setShiftFilter] = useState('')
+  const shiftCardSensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }))
   const [oooConfirm, setOooConfirm] = useState<{ targetId: string; targetDate: string; hour: number; shiftName: string; shiftTime: string; payload: DragPayload } | null>(null)
 
   const [bulkMembers, setBulkMembers] = useState<string[]>([])
@@ -435,14 +538,39 @@ export default function SchedulerPage() {
     let r = [...members]
     if (teamLocF) r = r.filter(m => m.location === teamLocF)
     if (teamTeamF) r = r.filter(m => m.team === teamTeamF)
-    r.sort((a, b) => teamSort === 'Last Name'
+    if (shiftFilter) {
+      const dateStr = dk(currentDate)
+      r = r.filter(m => shiftAssignments.some(a => a.technicianId === m.id && a.date === dateStr && a.shiftTemplateId === shiftFilter))
+    }
+    // Smart sort: active-now shifts first, then by shift start time, then no-shift last; within same bucket use selected name sort
+    const dateStr = dk(currentDate)
+    const now = new Date()
+    const nowMin = now.getHours() * 60 + now.getMinutes()
+    const parseTime = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + (m || 0) }
+    const memberShiftBucket = (m: typeof members[0]) => {
+      const a = shiftAssignments.find(sa => sa.technicianId === m.id && sa.date === dateStr)
+      if (!a) return { bucket: 3, start: 9999 }
+      const st = shiftTemplates.find(s => s.id === a.shiftTemplateId)
+      if (!st) return { bucket: 3, start: 9999 }
+      const start = parseTime(st.startTime)
+      const end = parseTime(st.endTime)
+      const isActive = st.spansMidnight ? (nowMin >= start || nowMin < end) : (nowMin >= start && nowMin < end)
+      return { bucket: isActive ? 0 : nowMin < start ? 1 : 2, start }
+    }
+    const nameSort = (a: typeof members[0], b: typeof members[0]) => teamSort === 'Last Name'
       ? (a.name.split(' ').pop() || '').localeCompare(b.name.split(' ').pop() || '')
-      : a.name.localeCompare(b.name))
+      : a.name.localeCompare(b.name)
+    r.sort((a, b) => {
+      const ba = memberShiftBucket(a), bb = memberShiftBucket(b)
+      if (ba.bucket !== bb.bucket) return ba.bucket - bb.bucket
+      if (ba.start !== bb.start) return ba.start - bb.start
+      return nameSort(a, b)
+    })
     return r
-  }, [members, teamLocF, teamTeamF, teamSort])
+  }, [members, teamLocF, teamTeamF, teamSort, shiftFilter, shiftAssignments, shiftTemplates, currentDate])
 
   const visibleMembers = filteredMembers.filter(m => !hiddenTechs.has(m.id))
-  const teamFilterCount = [teamLocF, teamTeamF].filter(Boolean).length
+  const teamFilterCount = [teamLocF, teamTeamF, shiftFilter].filter(Boolean).length
 
   const overdueBlocks = useMemo(() => {
     const items: { block: ScheduleBlock; memberName: string }[] = []
@@ -451,6 +579,19 @@ export default function SchedulerPage() {
   }, [members, todayStr])
 
   useEffect(() => { if (currentPage > totalPages) setCurrentPage(totalPages) }, [currentPage, totalPages])
+
+  // Scroll day view to current time on mount / when switching to day view
+  useEffect(() => {
+    if (viewMode !== 'Day') return
+    const raf = requestAnimationFrame(() => {
+      const el = dayGridRef.current
+      if (!el) return
+      const visibleW = el.clientWidth - MEMBER_COL_WIDTH
+      const nowPx = (CURRENT_HOUR - gridStart) * HOUR_WIDTH
+      el.scrollLeft = Math.max(0, nowPx - visibleW / 2)
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [viewMode, gridStart])
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { setRowDDOpen(false); setViewDDOpen(false); setStartDateOpen(false) } }
@@ -653,8 +794,14 @@ export default function SchedulerPage() {
     const circumference = 2 * Math.PI * 5.5
     const strokeDash = (ringPct / 100) * circumference
     const ringColor = wl > 80 ? '#E5484D' : '#30A46C'
+    const dayShiftTag = viewMode === 'Day' ? getShiftForMemberDay(member.id, dk(currentDate)) : null
+    const scrollToShift = () => {
+      if (!dayShiftTag || !dayGridRef.current) return
+      const start = shiftStartHour(dayShiftTag)
+      dayGridRef.current.scrollTo({ left: Math.max(0, (start - gridStart) * HOUR_WIDTH - 32), behavior: 'smooth' })
+    }
     return (
-      <div className="shrink-0 flex flex-col justify-between p-3 gap-3 border-r border-[#E0E1E6] h-full" style={{ width: MEMBER_COL_WIDTH, background: '#FCFCFD' }}>
+      <div className="shrink-0 flex flex-col justify-between p-3 gap-2 border-r border-[#E0E1E6] h-full" style={{ width: MEMBER_COL_WIDTH, background: '#FCFCFD' }}>
         <div className="flex items-center gap-3" style={{ height: 34, padding: '2px 0' }}>
           <TeamAvatar initials={member.avatar} name={member.name} />
           <div className="min-w-0 flex-1 flex flex-col gap-[2px]">
@@ -671,6 +818,17 @@ export default function SchedulerPage() {
             </svg>
           </div>
         </div>
+        {dayShiftTag ? (
+          <button type="button" onClick={scrollToShift}
+            className="flex items-center gap-1.5 px-2 py-[3px] rounded-full text-[10px] font-medium cursor-pointer hover:opacity-75 transition-opacity self-start max-w-full overflow-hidden"
+            style={{ background: `${dayShiftTag.color}18`, color: dayShiftTag.color, border: `1px solid ${dayShiftTag.color}35` }}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: dayShiftTag.color }} />
+            <span className="truncate">{dayShiftTag.name}</span>
+            <span className="shrink-0 opacity-70">{shiftTimeLabel(dayShiftTag)}</span>
+          </button>
+        ) : (
+          <div className="h-[20px]" />
+        )}
       </div>
     )
   }
@@ -876,6 +1034,17 @@ export default function SchedulerPage() {
                   </Popover.Portal>
                 </Popover.Root>
 
+                {shiftTemplates.length > 0 && (
+                  <div className="relative">
+                    <select value={shiftFilter} onChange={e => setShiftFilter(e.target.value)}
+                      className={`${btnCls} appearance-none pl-[10px] pr-6 cursor-pointer`}>
+                      <option value="">All Shifts</option>
+                      {shiftTemplates.filter(s => s.active).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6b7280] pointer-events-none" />
+                  </div>
+                )}
+
                 <button onClick={() => setCurrentDate(new Date(TODAY))} className={btnCls}>Today</button>
                 <div className="flex items-center gap-1">
                   <button onClick={() => navDate(-1)} className="inline-flex items-center justify-center w-7 h-7 rounded-[6px] hover:bg-[#f9fafb] transition-colors cursor-pointer"><ChevronLeft size={14} className="text-[#6b7280]" /></button>
@@ -934,7 +1103,7 @@ export default function SchedulerPage() {
               const nowLeft = (CURRENT_HOUR - gridStart) * HOUR_WIDTH
               const totalW = MEMBER_COL_WIDTH + hours.length * HOUR_WIDTH
               return (
-                <div className="rounded-lg border border-[#e5e7eb] bg-white overflow-x-auto">
+                <div ref={dayGridRef} className="rounded-lg border border-[#e5e7eb] bg-white overflow-x-auto">
                   <div style={{ minWidth: totalW }} className="relative">
                     {/* Header row */}
                     <div className="flex border-b border-[#e5e7eb] relative" style={{ height: 40 }}>
@@ -1062,47 +1231,86 @@ export default function SchedulerPage() {
                   </div>
 
                   {/* Rows */}
-                  {visibleMembers.map(member => (
-                    <div key={member.id} className="flex border-b border-[#f3f4f6] last:border-b-0" style={{ minHeight: 85 }}>
-                      <div className="shrink-0 border-r border-[#e5e7eb]" style={{ width: MEMBER_COL_WIDTH }}><MemberCell member={member} /></div>
-                      {weekDays.map(day => {
-                        const dayStr = dk(day)
-                        const dayBlocks = member.blocks.filter(b => b.date === dayStr)
-                        const cellKey = `${member.id}:${dayStr}`
-                        const isCellOver = dragOverCell === cellKey
-                        const isCellFlash = flashCell === cellKey
-                        const dayShift = getShiftForMemberDay(member.id, dayStr)
-                        const dayName = DAY_NAMES[day.getDay()]
-                        const isOffDay = dayShift && !dayShift.activeDays.includes(dayName)
-                        const isPast = day < TODAY && !sameDay(day, TODAY)
-                        return (
-                          <div key={dayStr}
-                            className={`flex-1 min-w-0 relative p-1 border-r border-[#f3f4f6] last:border-r-0 transition-colors duration-150 group/cell`}
-                            style={{ backgroundColor: isCellFlash ? '#DCFCE7' : isCellOver ? '#eff6ff' : isOffDay ? '#eef0f3' : day.getDay() === 0 ? '#f9fafb' : '#ffffff', ...(isCellOver ? { outline: '2px dashed #93c5fd', outlineOffset: '-2px' } : {}) }}
-                            onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverCell(cellKey) }}
-                            onDragEnter={e => { e.preventDefault(); setDragOverCell(cellKey) }}
-                            onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverCell(null) }}
-                            onDrop={e => handleDrop(e, member.id, dayStr)}>
-                            {/* Shift band */}
-                            {dayShift && (
-                              <button type="button" onClick={e => { e.stopPropagation(); setShiftPopover({ memberId: member.id, date: dayStr, clientX: e.clientX, clientY: e.clientY }) }}
-                                className="w-full rounded-[3px] px-1.5 py-[2px] mb-1 text-left cursor-pointer transition-opacity hover:opacity-80 z-[3] relative"
-                                style={{ background: `${dayShift.color}20`, borderLeft: `3px solid ${dayShift.color}` }}>
-                                <span className="text-[10px] font-semibold truncate block" style={{ color: dayShift.color }}>{dayShift.name.split(' ')[0]} · {shiftTimeLabel(dayShift)}</span>
-                              </button>
-                            )}
-                            {!dayShift && hasAnyShifts && (
-                              <button type="button" onClick={e => { e.stopPropagation(); setShiftPopover({ memberId: member.id, date: dayStr, clientX: e.clientX, clientY: e.clientY }) }}
-                                className="w-full rounded-[3px] px-1.5 py-[2px] mb-1 text-left cursor-pointer opacity-0 group-hover/cell:opacity-100 hover:bg-[#f3f4f6] transition-all z-[3] relative border border-dashed border-transparent hover:border-[#d1d5db]">
-                                <span className="text-[11px] text-[rgb(120,120,120)]">+ shift</span>
-                              </button>
-                            )}
-                            <div className="relative z-[2] space-y-1">{dayBlocks.map(block => <WeekBlock key={block.id} block={block} member={member} />)}</div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ))}
+                  {visibleMembers.map(member => {
+                    // Compute consecutive runs of same shift across the week
+                    const shiftRuns: Array<{ startIdx: number; endIdx: number; shift: ShiftTemplate }> = []
+                    let runStart = -1; let runShift: ShiftTemplate | null = null
+                    weekDays.forEach((day, idx) => {
+                      const s = getShiftForMemberDay(member.id, dk(day))
+                      if (s && s.id === runShift?.id) { /* continue */ }
+                      else {
+                        if (runShift && runStart >= 0) shiftRuns.push({ startIdx: runStart, endIdx: idx - 1, shift: runShift })
+                        runStart = s ? idx : -1; runShift = s ?? null
+                      }
+                    })
+                    if (runShift && runStart >= 0) shiftRuns.push({ startIdx: runStart, endIdx: weekDays.length - 1, shift: runShift })
+
+                    return (
+                      <div key={member.id} className="flex border-b border-[#f3f4f6] last:border-b-0" style={{ minHeight: 85 }}>
+                        <div className="shrink-0 border-r border-[#e5e7eb]" style={{ width: MEMBER_COL_WIDTH }}><MemberCell member={member} /></div>
+                        <div className="flex-1 flex relative">
+                          {/* Spanning shift bars overlay */}
+                          {hasAnyShifts && (
+                            <div className="absolute inset-x-0 top-0 h-[26px] z-[4] pointer-events-none">
+                              {shiftRuns.map(({ startIdx, endIdx, shift }) => {
+                                const N = endIdx - startIdx + 1
+                                const firstDayStr = dk(weekDays[startIdx])
+                                return (
+                                  <button key={`${shift.id}-${startIdx}`} type="button"
+                                    onClick={e => { e.stopPropagation(); setShiftPopover({ memberId: member.id, date: firstDayStr, clientX: e.clientX, clientY: e.clientY }) }}
+                                    className="absolute top-[4px] rounded-[3px] px-1.5 py-[2px] text-left cursor-pointer transition-opacity hover:opacity-80"
+                                    style={{
+                                      pointerEvents: 'auto',
+                                      left: `calc(${startIdx} / 7 * 100% + 4px)`,
+                                      width: `calc(${N} / 7 * 100% - 8px)`,
+                                      background: `${shift.color}20`,
+                                      borderLeft: `3px solid ${shift.color}`,
+                                    }}>
+                                    <span className="text-[10px] font-semibold truncate block" style={{ color: shift.color }}>
+                                      {shift.name.split(' ')[0]} · {shiftTimeLabel(shift)}
+                                    </span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          )}
+                          {weekDays.map(day => {
+                            const dayStr = dk(day)
+                            const dayBlocks = member.blocks.filter(b => b.date === dayStr)
+                            const cellKey = `${member.id}:${dayStr}`
+                            const isCellOver = dragOverCell === cellKey
+                            const isCellFlash = flashCell === cellKey
+                            const dayShift = getShiftForMemberDay(member.id, dayStr)
+                            const dayName = DAY_NAMES[day.getDay()]
+                            const isOffDay = dayShift && !dayShift.activeDays.includes(dayName)
+                            const isPast = day < TODAY && !sameDay(day, TODAY)
+                            return (
+                              <div key={dayStr}
+                                className={`flex-1 min-w-0 relative border-r border-[#f3f4f6] last:border-r-0 transition-colors duration-150 group/cell`}
+                                style={{
+                                  padding: hasAnyShifts ? '30px 4px 4px' : '4px',
+                                  backgroundColor: isCellFlash ? '#DCFCE7' : isCellOver ? '#eff6ff' : isOffDay ? '#eef0f3' : day.getDay() === 0 ? '#f9fafb' : '#ffffff',
+                                  ...(isCellOver ? { outline: '2px dashed #93c5fd', outlineOffset: '-2px' } : {})
+                                }}
+                                onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverCell(cellKey) }}
+                                onDragEnter={e => { e.preventDefault(); setDragOverCell(cellKey) }}
+                                onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverCell(null) }}
+                                onDrop={e => handleDrop(e, member.id, dayStr)}>
+                                {!dayShift && hasAnyShifts && (
+                                  <button type="button" onClick={e => { e.stopPropagation(); setShiftPopover({ memberId: member.id, date: dayStr, clientX: e.clientX, clientY: e.clientY }) }}
+                                    className="absolute top-[4px] left-[4px] rounded-[3px] px-1.5 py-[2px] text-left opacity-0 group-hover/cell:opacity-100 hover:bg-[#f3f4f6] transition-all z-[3] border border-dashed border-transparent hover:border-[#d1d5db]"
+                                    style={{ width: 'calc(100% - 8px)' }}>
+                                    <span className="text-[11px] text-[rgb(120,120,120)]">+ shift</span>
+                                  </button>
+                                )}
+                                <div className="relative z-[2] space-y-1">{dayBlocks.map(block => <WeekBlock key={block.id} block={block} member={member} />)}</div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )
             })()}
@@ -1180,13 +1388,44 @@ export default function SchedulerPage() {
       <Dialog.Root open={settingsOpen} onOpenChange={o => { setSettingsOpen(o); if (!o) { setEditingShift(null); setAddingShift(false); setTemplateFormOpen(false); setIsNewTemplate(false); setEditingTemplateId(null) } else { setSettingsDirty(false) } }}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[var(--z-overlay)] bg-black/40" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-[var(--z-modal)] -translate-x-1/2 -translate-y-1/2 w-full max-w-[720px] h-[85vh] rounded-xl bg-white shadow-[var(--shadow-xl)] focus:outline-none flex flex-col overflow-hidden">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[var(--z-modal)] -translate-x-1/2 -translate-y-1/2 w-full max-w-[640px] max-h-[85vh] rounded-xl bg-white shadow-[var(--shadow-xl)] focus:outline-none flex flex-col overflow-hidden">
             {(() => {
               const isFormOpen = templateFormOpen
               const isShiftEditing = addingShift || !!editingShift
+              const isEdit = !!editingShift
+              const s = isEdit ? editingShift! : newShiftDraft
+              const canSaveShift = isShiftEditing && s.name.trim() !== ''
               const closeForm = () => {
                 setEditingShift(null); setAddingShift(false); setAssignDropOpen(false); setTimePickerOpen(null)
                 setTemplateFormOpen(false)
+              }
+              const saveShift = () => {
+                const startH = parseInt(s.startTime.split(':')[0]) * 60 + parseInt(s.startTime.split(':')[1])
+                const endH = parseInt(s.endTime.split(':')[0]) * 60 + parseInt(s.endTime.split(':')[1])
+                const overnight = endH <= startH
+                if (isEdit && editingShift) {
+                  setShiftTemplates(p => p.map(t => t.id === editingShift.id ? { ...editingShift, spansMidnight: overnight } : t))
+                  setEditingShift(null)
+                  setSettingsDirty(true)
+                } else {
+                  const ns: ShiftTemplate = { ...newShiftDraft, id: `shift_${Date.now()}`, spansMidnight: overnight, templateId: editingTemplateId || '' }
+                  setShiftTemplates(p => [...p, ns])
+                  setLastAddedShiftId(ns.id)
+                  setTimeout(() => setLastAddedShiftId(null), 600)
+                  setShiftAssignments(p => p.map(a => a.shiftTemplateId === '__new_shift_draft__' ? { ...a, shiftTemplateId: ns.id } : a))
+                  setNewShiftDraft({ id: '', name: '', color: '#3b82f6', startTime: '08:00', endTime: '17:00', spansMidnight: false, activeDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], breakMinutes: 0, notes: '', active: true, templateId: '' })
+                  setAddingShift(false)
+                  setSelectedGapRange(null)
+                  setSettingsDirty(true)
+                  if (isNewTemplate && editingTemplateId) {
+                    setTemplatesList(p => [...p, { id: editingTemplateId, name: ns.name.trim() || 'New Shift', active: true }])
+                    setIsNewTemplate(false)
+                    setHighlightedTemplateId(editingTemplateId)
+                    setTimeout(() => setHighlightedTemplateId(null), 2000)
+                    setSettingsDirty(false)
+                    closeForm()
+                  }
+                }
               }
               return (<>
             <div className="flex items-center justify-between px-6 pt-6 pb-3">
@@ -1198,13 +1437,13 @@ export default function SchedulerPage() {
                   <button onClick={closeForm} className="inline-flex items-center justify-center w-8 h-8 rounded-[6px] hover:bg-[#f3f4f6] transition-colors cursor-pointer" aria-label="Back">
                     <ChevronLeft size={20} className="text-[#374151]" />
                   </button>
-                  <Dialog.Title className="text-[18px] font-bold text-[#111827]">{isNewTemplate ? 'New Template' : `Edit ${templateName || 'Template'}`}</Dialog.Title>
+                  <Dialog.Title className="text-[18px] font-bold text-[#111827]">{isNewTemplate ? 'New Shift' : isEdit ? `Edit Shift` : `Edit ${templateName || 'Template'}`}</Dialog.Title>
                 </div>
               </div>
               <Dialog.Close asChild><button className="inline-flex items-center justify-center w-8 h-8 rounded-[6px] hover:bg-[#f3f4f6] transition-colors cursor-pointer" aria-label="Close"><X size={18} className="text-[#6b7280]" /></button></Dialog.Close>
             </div>
-            <div className="flex-1 min-h-0 overflow-hidden relative">
-              <div className={`absolute inset-0 overflow-y-auto px-6 py-5 space-y-6 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isFormOpen ? '-translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'}`}>
+            <div className="overflow-y-auto">
+              <div className={`px-6 py-5 space-y-6 ${isFormOpen ? 'hidden' : ''}`}>
 
               {/* ═══ MAIN VIEW ═══ */}
               {(<>
@@ -1235,118 +1474,63 @@ export default function SchedulerPage() {
                 </div>
 
                 <div>
-                  <p className="text-[14px] font-semibold text-[#111827]">Shifts Templates</p>
+                  <p className="text-[14px] font-semibold text-[#111827]">Shifts</p>
                   <p className="text-[12px] text-[#6b7280] mt-1">Define reusable shift types. Assign them to technicians on the calendar.</p>
                 </div>
 
-                {/* Shift Template Cards */}
-                <div className="space-y-3">
-                  {templatesList.map(tpl => {
-                    const tplShifts = shiftTemplates.filter(s => s.templateId === tpl.id)
-                    const tplShiftIds = new Set(tplShifts.map(s => s.id))
-                    const assignedIds = [...new Set(shiftAssignments.filter(a => tplShiftIds.has(a.shiftTemplateId)).map(a => a.technicianId))]
-                    const assignedMembers = assignedIds.map(id => members.find(m => m.id === id)).filter(Boolean) as TeamMemberData[]
-                    const activeDaysSet = new Set(tplShifts.flatMap(s => s.activeDays))
-                    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].filter(d => activeDaysSet.has(d))
-                    return (
-                      <div key={tpl.id} className={`rounded-xl border bg-white transition-all duration-500 ${highlightedTemplateId === tpl.id ? 'border-[#3b82f6] ring-2 ring-[#3b82f6]/20 bg-[#f0f6ff]' : tpl.active ? 'border-[#e5e7eb]' : 'border-[#f3f4f6] opacity-60'}`}>
-                        <div className="flex items-center gap-3 px-5 pt-4">
-                          <div className="min-w-0 flex-1 cursor-pointer" onClick={() => { setIsNewTemplate(false); setEditingTemplateId(tpl.id); setTemplateName(tpl.name); setScheduleActive(tpl.active); setTemplateFormOpen(true); setEditingShift(null); setAddingShift(false) }}>
-                            <p className="text-[15px] font-semibold text-[#111827] hover:text-[#3b82f6] transition-colors">{tpl.name || 'Untitled Template'}</p>
-                          </div>
-                          <button onClick={() => { setTemplatesList(p => p.map(t => t.id === tpl.id ? { ...t, active: !t.active } : t)); setSettingsDirty(true) }}
-                            className={`relative shrink-0 w-[36px] h-[20px] rounded-full transition-colors duration-200 cursor-pointer ${tpl.active ? 'bg-[#3b82f6]' : 'bg-[#d1d5db]'}`}
-                            aria-label={tpl.active ? 'Disable schedule' : 'Enable schedule'}>
-                            <span className={`absolute top-[2px] left-[2px] w-[16px] h-[16px] rounded-full bg-white shadow-sm transition-transform duration-200 ${tpl.active ? 'translate-x-[16px]' : ''}`} />
-                          </button>
-                          <div className="relative shrink-0">
-                            <button onClick={() => setTemplateMenuOpen(p => p === tpl.id ? null : tpl.id)}
-                              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-[#f3f4f6] transition-colors cursor-pointer" aria-label="Template options">
-                              <MoreHorizontal size={16} className="text-[#6b7280]" />
-                            </button>
-                            {templateMenuOpen === tpl.id && (<>
-                              <div className="fixed inset-0 z-[5]" onClick={() => setTemplateMenuOpen(null)} />
-                              <div className="absolute right-0 top-full mt-1 z-10 w-[160px] rounded-lg border border-[#e5e7eb] bg-white shadow-lg py-1">
-                                <button onClick={() => { setTemplateMenuOpen(null); setIsNewTemplate(false); setEditingTemplateId(tpl.id); setTemplateName(tpl.name); setScheduleActive(tpl.active); setTemplateFormOpen(true); setEditingShift(null); setAddingShift(false) }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#f9fafb] transition-colors cursor-pointer text-left">
-                                  <Pencil size={14} className="text-[#6b7280]" /> Edit template
-                                </button>
-                                <button onClick={() => { setTemplateMenuOpen(null); setShiftTemplates(p => p.filter(s => s.templateId !== tpl.id)); setShiftAssignments(p => p.filter(a => !tplShiftIds.has(a.shiftTemplateId))); setTemplatesList(p => p.filter(t => t.id !== tpl.id)); setSettingsDirty(true) }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#ef4444] hover:bg-[#fef2f2] transition-colors cursor-pointer text-left">
-                                  <Trash2 size={14} className="text-[#ef4444]" /> Delete template
-                                </button>
-                              </div>
-                            </>)}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 px-5 pb-3">
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {dayLabels.length > 0 ? dayLabels.map(d => (
-                              <span key={d} className="text-[12px] text-[#9ca3af]">{d}</span>
-                            )) : <span className="text-[12px] text-[#9ca3af]">No days</span>}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {assignedMembers.length === 0 ? (
-                              <span className="text-[12px] text-[#9ca3af]">No members assigned</span>
-                            ) : (() => {
-                              const show = assignedMembers.slice(0, 3)
-                              const more = assignedMembers.length - 3
-                              return (
-                                <div className="flex items-center">
-                                  {show.map((m, i) => {
-                                    const idx = m.name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % avColors.length
-                                    return <span key={m.id} className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-white text-[8px] font-semibold border-2 border-white shrink-0" style={{ backgroundColor: avColors[idx], marginLeft: i > 0 ? -6 : 0, zIndex: 10 - i }}>{m.avatar}</span>
-                                  })}
-                                  {more > 0 && <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-[#f3f4f6] text-[8px] font-semibold text-[#374151] border-2 border-white shrink-0" style={{ marginLeft: -6, zIndex: 6 }}>+{more}</span>}
-                                </div>
-                              )
-                            })()}
-                          </div>
-                        </div>
-                        <div className="px-5 pb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
-                          {tplShifts.map(st => (
-                            <button key={st.id}
-                              onClick={() => { setEditingTemplateId(tpl.id); setTemplateName(tpl.name); setScheduleActive(tpl.active); setTemplateFormOpen(true); setEditingShift({ ...st }); setAddingShift(false); setIsNewTemplate(false) }}
-                              className={`flex items-center gap-2 text-[12px] cursor-pointer transition-colors ${st.active ? 'text-[#374151] hover:text-[#111827]' : 'text-[#9ca3af]'}`}>
-                              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: st.color }} />
-                              <span>{st.name || 'Unnamed'}</span>
-                              <span className="text-[#9ca3af]">{shiftTimeLabel(st)}</span>
-                            </button>
-                          ))}
-                          {tplShifts.length < 6 && (
-                            <button onClick={() => { setEditingTemplateId(tpl.id); setTemplateName(tpl.name); setScheduleActive(tpl.active); setTemplateFormOpen(true); setNewShiftDraft({ id: '', name: '', color: '#3b82f6', startTime: '08:00', endTime: '17:00', spansMidnight: false, activeDays: [], breakMinutes: 0, notes: '', active: true, templateId: tpl.id }); setAddingShift(true); setEditingShift(null); setIsNewTemplate(false) }}
-                              className="text-[12px] text-[#3b82f6] underline cursor-pointer transition-colors hover:text-[#2563eb]">
-                              Add shift
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-
-                  {/* Add new template card */}
+                {/* Flat Shift Cards */}
+                <div className="space-y-2">
+                  {/* Add Shift CTA */}
                   <button onClick={() => {
                     const newId = `tpl-${Date.now()}`
                     setIsNewTemplate(true)
                     setEditingTemplateId(newId)
-                    setTemplateName('')
-                    setDailyHours(8)
-                    setWorkDays({ Mon: false, Tue: false, Wed: false, Thu: false, Fri: false, Sat: false, Sun: false })
+                    setNewShiftDraft({ id: '', name: '', color: '#3b82f6', startTime: '08:00', endTime: '17:00', spansMidnight: false, activeDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], breakMinutes: 0, notes: '', active: true, templateId: newId })
+                    setAddingShift(true)
                     setEditingShift(null)
-                    setAddingShift(false)
                     setTemplateFormOpen(true)
                     setSettingsDirty(false)
                   }}
                     className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border-2 border-dashed border-[#d1d5db] bg-[#fafafa] hover:border-[#3b82f6] hover:bg-[#f0f7ff] cursor-pointer transition-all duration-200 group">
                     <Plus size={16} className="text-[#9ca3af] group-hover:text-[#3b82f6] transition-colors" />
-                    <span className="text-[13px] font-medium text-[#6b7280] group-hover:text-[#3b82f6] transition-colors">Add Template</span>
+                    <span className="text-[13px] font-medium text-[#6b7280] group-hover:text-[#3b82f6] transition-colors">Add Shift</span>
                   </button>
+                  {(() => {
+                    return (
+                      <DndContext sensors={shiftCardSensors} collisionDetection={closestCenter}
+                        onDragEnd={(event: DragEndEvent) => {
+                          const { active, over } = event
+                          if (over && active.id !== over.id) {
+                            setShiftTemplates(items => {
+                              const oldIdx = items.findIndex(i => i.id === active.id)
+                              const newIdx = items.findIndex(i => i.id === over.id)
+                              return arrayMove(items, oldIdx, newIdx)
+                            })
+                          }
+                        }}>
+                        <SortableContext items={shiftTemplates.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                          {shiftTemplates.map(st => {
+                            const tpl = templatesList.find(t => t.id === st.templateId)
+                            const openEdit = () => { setEditingTemplateId(st.templateId); setTemplateName(tpl?.name || ''); setScheduleActive(tpl?.active ?? true); setTemplateFormOpen(true); setEditingShift({ ...st }); setAddingShift(false); setIsNewTemplate(false) }
+                            return (
+                              <SortableShiftCard key={st.id} st={st} members={members} shiftAssignments={shiftAssignments}
+                                templatesList={templatesList} highlightedTemplateId={highlightedTemplateId}
+                                shiftCardMenuOpen={shiftCardMenuOpen} setShiftCardMenuOpen={setShiftCardMenuOpen}
+                                setShiftTemplates={setShiftTemplates} setShiftAssignments={setShiftAssignments}
+                                setSettingsDirty={setSettingsDirty} openEdit={openEdit} />
+                            )
+                          })}
+                        </SortableContext>
+                      </DndContext>
+                    )
+                  })()}
+
                 </div>
               </>)}
               </div>
 
-              {/* ═══ FORM VIEW (slides in) ═══ */}
-              <div className={`absolute inset-0 overflow-y-auto px-6 py-5 space-y-6 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isFormOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
+              {/* ═══ FORM VIEW ═══ */}
+              <div className={`px-6 py-5 space-y-4 ${isFormOpen ? '' : 'hidden'}`}>
               {isFormOpen && (() => {
                 const currentTemplateShifts = shiftTemplates.filter(s => s.templateId === editingTemplateId)
                 return (<>
@@ -1358,7 +1542,8 @@ export default function SchedulerPage() {
                   }
                 `}</style>
 
-                {/* ── Template config ── */}
+                {/* ── Template config (edit mode only) ── */}
+                {!isNewTemplate && !isEdit && (
                 <div className="space-y-5">
                     <div>
                       <label className="block text-[12px] font-medium text-[#374151] mb-1.5">Template Name</label>
@@ -1377,9 +1562,11 @@ export default function SchedulerPage() {
                       </div>
                     </div>
                 </div>
+                )}
 
-                {/* ── Timeline Visualizer (always visible in template form) ── */}
-                {dailyHours > 0 && Object.values(workDays).some(Boolean) && (() => {
+                {/* ── Timeline Visualizer (edit mode only) ── */}
+                {!isNewTemplate && Number(dailyHours) > 0 && Object.values(workDays).some(Boolean) && (() => {
+                  if (isEdit) return null
                   const toMin = (t: string) => parseInt(t.split(':')[0]) * 60 + parseInt(t.split(':')[1])
                   const fmtM = (m: number) => `${String(Math.floor((m % 1440) / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
                   const fmtLabel = (m: number) => {
@@ -1471,7 +1658,7 @@ export default function SchedulerPage() {
                           const showAvatars = assigned.slice(0, 3)
                           const moreCount = assigned.length - 3
                           const isNew = st.id === lastAddedShiftId
-                          const isActive = editingShift?.id === st.id
+                          const isActive = (editingShift as ShiftTemplate | null)?.id === st.id
                           return (
                             <button key={st.id} onClick={() => { setEditingShift({ ...st }); setAddingShift(false); setSelectedGapRange(null) }}
                               className={`flex flex-col justify-center items-start px-4 rounded-[16px] cursor-pointer transition-all duration-300 overflow-hidden text-left min-w-0 hover:shadow-lg ${isActive ? 'ring-2 ring-[#3b82f6] ring-offset-2 shadow-lg' : ''}`}
@@ -1510,50 +1697,42 @@ export default function SchedulerPage() {
 
                 {/* Shift form fields (only when editing/adding a shift) */}
                 {isShiftEditing && (() => {
-                  const isEdit = !!editingShift
-                  const s = isEdit ? editingShift! : newShiftDraft
                   const update = (patch: Partial<ShiftTemplate>) => {
                     if (isEdit) setEditingShift(p => p ? { ...p, ...patch } : p)
                     else setNewShiftDraft(p => ({ ...p, ...patch }))
                   }
-                  const save = () => {
-                    const startH = parseInt(s.startTime.split(':')[0]) * 60 + parseInt(s.startTime.split(':')[1])
-                    const endH = parseInt(s.endTime.split(':')[0]) * 60 + parseInt(s.endTime.split(':')[1])
-                    const overnight = endH <= startH
-                    if (isEdit && editingShift) {
-                      setShiftTemplates(p => p.map(t => t.id === editingShift.id ? { ...editingShift, spansMidnight: overnight } : t))
-                      setEditingShift(null)
-                      setSettingsDirty(true)
-                    } else {
-                      const ns: ShiftTemplate = { ...newShiftDraft, id: `shift_${Date.now()}`, spansMidnight: overnight, templateId: editingTemplateId || '' }
-                      setShiftTemplates(p => [...p, ns])
-                      setLastAddedShiftId(ns.id)
-                      setTimeout(() => setLastAddedShiftId(null), 600)
-                      setShiftAssignments(p => p.map(a => a.shiftTemplateId === '__new_shift_draft__' ? { ...a, shiftTemplateId: ns.id } : a))
-                      setNewShiftDraft({ id: '', name: '', color: '#3b82f6', startTime: '08:00', endTime: '17:00', spansMidnight: false, activeDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], breakMinutes: 0, notes: '', active: true, templateId: '' })
-                      setAddingShift(false)
-                      setSelectedGapRange(null)
-                      setSettingsDirty(true)
-                    }
-                  }
                   const hasDays = s.activeDays.length > 0
                   const usedDays = currentTemplateShifts.filter(t => !isEdit || t.id !== s.id).reduce<Set<string>>((acc, t) => { t.activeDays.forEach(d => { if (acc.has(d)) return; acc.add(d) }); return acc }, new Set())
                   return (
-                    <div ref={shiftFormRef} className="space-y-4 border border-[#e5e7eb] rounded-xl p-4">
+                    <div ref={shiftFormRef} className="space-y-4">
                       {true && (
-                        <div className="space-y-3 animate-[shiftCardIn_0.3s_ease-out_forwards]">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="text-[12px] font-medium text-[#374151] mb-1 block">Shift Name</label>
-                              <input autoFocus maxLength={30} value={s.name} onChange={e => update({ name: e.target.value })} className={`${selectCls} text-[13px]`} placeholder="e.g. Morning Shift" />
+                        <div className="space-y-4 animate-[shiftCardIn_0.3s_ease-out_forwards]">
+                          <div className="pb-4">
+                            <label className="text-[12px] font-medium text-[#374151] mb-1 block">Shift Name <span className="text-[#ef4444]">*</span></label>
+                            <input autoFocus maxLength={30} value={s.name} onChange={e => update({ name: e.target.value })} className={`${selectCls} text-[13px]`} placeholder="e.g. Morning Shift" />
+                          </div>
+                          <div>
+                            <label className="text-[12px] font-medium text-[#374151] mb-1 block">Color</label>
+                            <div className="flex items-center gap-2.5 flex-wrap pt-1 pb-4">
+                              {SHIFT_COLORS.map(c => (
+                                <button key={c} onClick={() => update({ color: c })} className={`w-5 h-5 rounded-full cursor-pointer transition-transform ${s.color === c ? 'ring-2 ring-offset-1 ring-[#3b82f6] scale-110' : 'hover:scale-110'}`} style={{ background: c }} />
+                              ))}
+                              <label className={`relative w-5 h-5 rounded-full cursor-pointer transition-transform hover:scale-110 overflow-hidden ${!SHIFT_COLORS.includes(s.color) ? 'ring-2 ring-offset-1 ring-[#3b82f6] scale-110' : ''}`}
+                                style={{ background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)' }}
+                                title="Custom color">
+                                <input type="color" value={s.color} onChange={e => update({ color: e.target.value })} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                              </label>
                             </div>
-                            <div>
-                              <label className="text-[12px] font-medium text-[#374151] mb-1 block">Color</label>
-                              <div className="flex items-center gap-2.5 flex-wrap pt-1">
-                                {SHIFT_COLORS.map(c => (
-                                  <button key={c} onClick={() => update({ color: c })} className={`w-5 h-5 rounded-full cursor-pointer transition-transform ${s.color === c ? 'ring-2 ring-offset-1 ring-[#3b82f6] scale-110' : 'hover:scale-110'}`} style={{ background: c }} />
-                                ))}
-                              </div>
+                          </div>
+                          <div className="pb-4">
+                            <label className="text-[12px] font-medium text-[#374151] mb-1 block">Days</label>
+                            <div className="flex items-center gap-3 flex-wrap">
+                              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                                <label key={day} className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                                  <input type="checkbox" checked={s.activeDays.includes(day)} onChange={() => update({ activeDays: s.activeDays.includes(day) ? s.activeDays.filter(d => d !== day) : [...s.activeDays, day] })} className="w-[16px] h-[16px] rounded accent-[#3b82f6] cursor-pointer" />
+                                  <span className="text-[13px] font-medium text-[#374151]">{day}</span>
+                                </label>
+                              ))}
                             </div>
                           </div>
                           {(() => {
@@ -1607,7 +1786,7 @@ export default function SchedulerPage() {
                               )
                             }
                             return (
-                              <div className="grid grid-cols-2 gap-3">
+                              <div className="grid grid-cols-2 gap-3 pb-4">
                                 {renderPicker('start', 'Start Time', s.startTime, v => update({ startTime: v }))}
                                 {renderPicker('end', 'End Time', s.endTime, v => update({ endTime: v }))}
                               </div>
@@ -1661,17 +1840,6 @@ export default function SchedulerPage() {
                               </>)
                             })()}
                           </div>
-                          <div className="flex items-center justify-between pt-2">
-                            {isEdit ? (
-                              <button onClick={() => { setShiftTemplates(p => p.filter(t => t.id !== s.id)); setSettingsDirty(true); setEditingShift(null); setAddingShift(false) }}
-                                className="px-4 py-1.5 rounded-lg border border-[#fecaca] text-[12px] font-medium text-[#ef4444] hover:bg-[#fef2f2] cursor-pointer transition-colors">Delete</button>
-                            ) : <div />}
-                            <div className="flex items-center gap-2">
-                              <button onClick={() => { setEditingShift(null); setAddingShift(false); setSelectedGapRange(null) }}
-                                className="px-4 py-2 rounded-lg border border-[#e5e7eb] bg-white text-[13px] font-medium text-[#374151] hover:bg-[#f9fafb] cursor-pointer transition-colors">Cancel</button>
-                              <button onClick={save} disabled={!s.name.trim()} className="px-5 py-2 rounded-lg bg-[#3b82f6] text-white text-[13px] font-semibold hover:bg-[#2563eb] disabled:opacity-40 cursor-pointer transition-colors">{isEdit ? 'Update' : 'Add Shift'}</button>
-                            </div>
-                          </div>
                         </div>
                       )}
                     </div>
@@ -1684,21 +1852,20 @@ export default function SchedulerPage() {
             </div>
             {isFormOpen ? (
               <div className="flex items-center justify-between px-6 py-4 border-t border-[#e5e7eb]">
-                <button onClick={closeForm} className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-[#e5e7eb] bg-white text-[13px] font-medium text-[#374151] hover:bg-[#f9fafb] transition-colors cursor-pointer">
-                  <ChevronLeft size={14} className="text-[#374151]" />
-                  Back
+                <div className="flex items-center gap-2">
+                  <button onClick={closeForm} className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-[#e5e7eb] bg-white text-[13px] font-medium text-[#374151] hover:bg-[#f9fafb] transition-colors cursor-pointer">
+                    <ChevronLeft size={14} className="text-[#374151]" />
+                    Back
+                  </button>
+                  {isEdit && isShiftEditing && (
+                    <button onClick={() => { setShiftTemplates(p => p.filter(t => t.id !== s.id)); setSettingsDirty(true); setEditingShift(null); setAddingShift(false) }}
+                      className="px-4 py-2 rounded-lg border border-[#fecaca] text-[13px] font-medium text-[#ef4444] hover:bg-[#fef2f2] cursor-pointer transition-colors">Delete</button>
+                  )}
+                </div>
+                <button onClick={saveShift} disabled={!canSaveShift}
+                  className={`inline-flex items-center justify-center px-5 py-2 rounded-lg text-[13px] font-semibold transition-colors ${canSaveShift ? 'bg-[#3b82f6] text-white hover:bg-[#2563eb] cursor-pointer' : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'}`}>
+                  {isEdit ? 'Update Shift' : 'Add Shift'}
                 </button>
-                <button onClick={() => {
-                  if (isNewTemplate && editingTemplateId && templateName.trim()) {
-                    setTemplatesList(p => [...p, { id: editingTemplateId, name: templateName.trim(), active: scheduleActive }])
-                  } else if (editingTemplateId) {
-                    setTemplatesList(p => p.map(t => t.id === editingTemplateId ? { ...t, name: templateName.trim() || t.name, active: scheduleActive } : t))
-                  }
-                  setHighlightedTemplateId(editingTemplateId)
-                  setTimeout(() => setHighlightedTemplateId(null), 2000)
-                  setSettingsDirty(false); closeForm()
-                }} disabled={!settingsDirty || isShiftEditing}
-                  className={`inline-flex items-center justify-center px-5 py-2 rounded-lg text-[13px] font-semibold transition-colors ${settingsDirty && !isShiftEditing ? 'bg-[#3b82f6] text-white hover:bg-[#2563eb] cursor-pointer' : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'}`}>Save Template</button>
               </div>
             ) : (
               <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e5e7eb]">
@@ -1801,57 +1968,134 @@ export default function SchedulerPage() {
 
       {/* ══════ SHIFT ASSIGNMENT POPOVER ══════ */}
       {shiftPopover && (() => {
-        const panelW = Math.min(280, window.innerWidth - 24)
+        const panelW = Math.min(340, window.innerWidth - 24)
         const pad = 12
         const offset = 8
         const maxPopoverH = Math.min(480, window.innerHeight - pad * 2)
         const left = Math.min(Math.max(pad, shiftPopover.clientX + offset), window.innerWidth - panelW - pad)
         const top = Math.min(Math.max(pad, shiftPopover.clientY + offset), window.innerHeight - maxPopoverH - pad)
+
+        const closePopover = () => { setShiftPopover(null); setPendingShiftTemplateId(null); setPendingScope(null) }
+
+        const applyShift = (shiftId: string | null, scope: 'today' | 'week' | 'month' | 'always') => {
+          const memberId = shiftPopover.memberId
+          const clickedDate = shiftPopover.date
+          const st = shiftId ? shiftTemplates.find(t => t.id === shiftId) : null
+          const getDates = (): string[] => {
+            const base = new Date(clickedDate + 'T00:00:00')
+            if (scope === 'today') return [clickedDate]
+            if (scope === 'week') {
+              const dow = base.getDay()
+              const mon = new Date(base); mon.setDate(base.getDate() - (dow === 0 ? 6 : dow - 1))
+              return Array.from({ length: 7 }, (_, i) => { const d = new Date(mon); d.setDate(mon.getDate() + i); return dk(d) })
+                .filter(dateStr => !st || st.activeDays.includes(DAY_NAMES[new Date(dateStr + 'T00:00:00').getDay()]))
+            }
+            if (scope === 'month') {
+              const y = base.getFullYear(), m = base.getMonth()
+              const days = new Date(y, m + 1, 0).getDate()
+              return Array.from({ length: days }, (_, i) => { const d = new Date(y, m, i + 1); return dk(d) })
+                .filter(dateStr => !st || st.activeDays.includes(DAY_NAMES[new Date(dateStr + 'T00:00:00').getDay()]))
+            }
+            const today = new Date(); today.setHours(0, 0, 0, 0)
+            return Array.from({ length: 365 }, (_, i) => { const d = new Date(today); d.setDate(today.getDate() + i); return dk(d) })
+              .filter(dateStr => !st || st.activeDays.includes(DAY_NAMES[new Date(dateStr + 'T00:00:00').getDay()]))
+          }
+          const dates = getDates()
+          setShiftAssignments(p => {
+            const filtered = p.filter(a => !(a.technicianId === memberId && dates.includes(a.date)))
+            if (!st) return filtered
+            return [...filtered, ...dates.map(date => ({ id: `a-${memberId}-${date}`, technicianId: memberId, shiftTemplateId: st.id, date }))]
+          })
+          closePopover()
+        }
+
+        const scopeChips = [
+          { key: 'today' as const, label: 'Today' },
+          { key: 'week' as const, label: 'This week' },
+          { key: 'month' as const, label: 'This month' },
+          { key: 'always' as const, label: 'Always' },
+        ]
+
         return (<>
-          <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={() => setShiftPopover(null)} />
-          <div className="fixed z-[var(--z-modal)] w-[min(280px,calc(100vw-24px))] max-h-[min(480px,calc(100vh-24px))] overflow-y-auto rounded-lg border border-[#e5e7eb] bg-white shadow-[var(--shadow-xl)] py-0"
+          <div className="fixed inset-0 z-[var(--z-dropdown)]" onClick={closePopover} />
+          <div className="fixed z-[var(--z-modal)] w-[min(340px,calc(100vw-24px))] rounded-lg border border-[#e5e7eb] bg-white shadow-[var(--shadow-xl)] overflow-hidden"
             style={{ top, left }}>
-            <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold text-[#6b7280] uppercase tracking-wide">Shifts</p>
-            <button type="button" onClick={() => {
-              setShiftAssignments(p => p.filter(a => !(a.technicianId === shiftPopover.memberId && a.date === shiftPopover.date)))
-              setShiftPopover(null)
-            }} className="flex items-center gap-2 w-full px-3 py-1.5 text-left text-[12px] text-[#374151] hover:bg-[#f9fafb] cursor-pointer">
-              <span className="w-3 h-3 rounded-full border-2 border-[#d1d5db] shrink-0" />
-              No shift
-            </button>
+            <style>{`@keyframes chipRowIn { from { opacity:0; transform:translateY(-4px) } to { opacity:1; transform:translateY(0) } }`}</style>
+            <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold text-[#6b7280] uppercase tracking-wide">Change Shift</p>
+
+            {/* No shift */}
+            <div>
+              <button type="button" onClick={() => { setPendingShiftTemplateId(p => p === '__none__' ? null : '__none__'); setPendingScope(null) }}
+                className={`flex items-center gap-2 w-full px-3 py-3 text-left text-[12px] cursor-pointer transition-colors ${pendingShiftTemplateId === '__none__' ? 'bg-[#f9fafb] text-[#111827] font-medium' : 'text-[#374151] hover:bg-[#f9fafb]'}`}>
+                <span className="w-3.5 shrink-0" />
+                <span className="w-3 h-3 rounded-full border-2 border-[#d1d5db] shrink-0" />
+                <span className="flex-1">No shift</span>
+              </button>
+              {pendingShiftTemplateId === '__none__' && (
+                <div className="px-3 pb-3 pt-2" style={{ animation: 'chipRowIn 0.15s ease-out' }}>
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    {scopeChips.map(({ key, label }) => (
+                      <button key={key} type="button" onClick={() => setPendingScope(k => k === key ? null : key)}
+                        className={`px-2.5 py-[3px] rounded-full text-[11px] font-medium border transition-all cursor-pointer whitespace-nowrap ${pendingScope === key ? 'bg-[#3b82f6] text-white border-[#3b82f6]' : 'bg-white text-[#374151] border-[#e5e7eb] hover:border-[#3b82f6] hover:text-[#3b82f6]'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Shift templates */}
             {shiftTemplates.length === 0 ? (
               <div className="px-3 py-2 pb-3">
                 <p className="text-[11px] text-[#6b7280] mb-2">No shift templates yet.</p>
-                <button type="button" onClick={() => { setShiftPopover(null); setSettingsTab('shifts'); setSettingsOpen(true) }}
+                <button type="button" onClick={() => { closePopover(); setSettingsTab('shifts'); setSettingsOpen(true) }}
                   className="text-[12px] text-[#3b82f6] font-medium hover:underline cursor-pointer">+ Create a shift template</button>
               </div>
             ) : (<>
-              {shiftTemplates.map(st => {
-                const isActive = shiftAssignments.some(a => a.technicianId === shiftPopover.memberId && a.date === shiftPopover.date && a.shiftTemplateId === st.id)
-                return (
-                  <button key={st.id} type="button" onClick={() => {
-                    setShiftAssignments(p => {
-                      const filtered = p.filter(a => !(a.technicianId === shiftPopover.memberId && a.date === shiftPopover.date))
-                      return [...filtered, { id: `a-${shiftPopover.memberId}-${shiftPopover.date}`, technicianId: shiftPopover.memberId, shiftTemplateId: st.id, date: shiftPopover.date }]
-                    })
-                    setShiftPopover(null)
-                  }} className={`flex items-center gap-2 w-full px-3 py-1.5 text-left text-[12px] cursor-pointer transition-colors ${isActive ? 'bg-[#eff6ff] font-medium text-[#111827]' : 'text-[#374151] hover:bg-[#f9fafb]'}`}>
-                    {isActive ? <Check size={14} className="text-[#3b82f6] shrink-0" /> : <span className="w-3.5 shrink-0" />}
-                    <span className="w-3 h-3 rounded-full shrink-0" style={{ background: st.color }} />
-                    <span className="truncate flex-1">{st.name}</span>
-                    <span className="text-[10px] text-[#6b7280] shrink-0">{shiftTimeLabel(st)}</span>
-                  </button>
-                )
-              })}
-              <div className="border-t border-[#f3f4f6] mt-1 px-3 py-2">
+              <div className="max-h-[300px] overflow-y-auto">
+                {shiftTemplates.map(st => {
+                  const isActive = shiftAssignments.some(a => a.technicianId === shiftPopover.memberId && a.date === shiftPopover.date && a.shiftTemplateId === st.id)
+                  const isPending = pendingShiftTemplateId === st.id
+                  return (
+                    <div key={st.id}>
+                      <button type="button" onClick={() => { setPendingShiftTemplateId(p => p === st.id ? null : st.id); setPendingScope(null) }}
+                        className={`flex items-center gap-2 w-full px-3 py-3 text-left text-[12px] cursor-pointer transition-colors ${isPending ? 'bg-[#eff6ff] font-medium text-[#111827]' : isActive ? 'bg-[#eff6ff] font-medium text-[#111827]' : 'text-[#374151] hover:bg-[#f9fafb]'}`}>
+                        {isActive ? <Check size={14} className="text-[#3b82f6] shrink-0" /> : <span className="w-3.5 shrink-0" />}
+                        <span className="w-3 h-3 rounded-full shrink-0" style={{ background: st.color }} />
+                        <span className="truncate flex-1">{st.name}</span>
+                        <span className="text-[12px] text-[#6b7280] shrink-0">{shiftTimeLabel(st)}</span>
+                      </button>
+                      {isPending && (
+                        <div className="px-3 pb-3 pt-2" style={{ animation: 'chipRowIn 0.15s ease-out' }}>
+                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                            {scopeChips.map(({ key, label }) => (
+                              <button key={key} type="button" onClick={() => setPendingScope(k => k === key ? null : key)}
+                                className={`px-2.5 py-[3px] rounded-full text-[11px] font-medium border transition-all cursor-pointer whitespace-nowrap ${pendingScope === key ? 'bg-[#3b82f6] text-white border-[#3b82f6]' : 'bg-white text-[#374151] border-[#e5e7eb] hover:border-[#3b82f6] hover:text-[#3b82f6]'}`}>
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="border-t border-[#f3f4f6] mt-1 px-3 py-2 flex items-center gap-2">
                 <button type="button" onClick={() => {
                   const assigned = getShiftForMemberDay(shiftPopover.memberId, shiftPopover.date)
-                  setShiftPopover(null)
+                  closePopover()
                   if (assigned) openShiftTemplateInSettings(assigned)
                   else { setSettingsTab('shifts'); setSettingsOpen(true) }
-                }}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[#e5e7eb] bg-white text-[12px] font-medium text-[#374151] hover:bg-[#f9fafb] hover:border-[#d1d5db] transition-colors cursor-pointer">
+                }} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[#e5e7eb] bg-white text-[12px] font-medium text-[#374151] hover:bg-[#f9fafb] hover:border-[#d1d5db] transition-colors cursor-pointer">
                   Manage shifts
+                </button>
+                <button type="button"
+                  disabled={pendingShiftTemplateId === null || pendingScope === null}
+                  onClick={() => pendingShiftTemplateId !== null && pendingScope !== null && applyShift(pendingShiftTemplateId === '__none__' ? null : pendingShiftTemplateId, pendingScope)}
+                  className={`flex-1 flex items-center justify-center px-3 py-2 rounded-lg text-[12px] font-semibold transition-colors ${pendingShiftTemplateId !== null && pendingScope !== null ? 'bg-[#3b82f6] text-white hover:bg-[#2563eb] cursor-pointer' : 'bg-[#f3f4f6] text-[#9ca3af] cursor-not-allowed'}`}>
+                  Change Shift
                 </button>
               </div>
             </>)}
