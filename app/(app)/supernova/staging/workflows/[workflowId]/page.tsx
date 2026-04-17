@@ -168,6 +168,15 @@ export default function WorkflowDetailPage() {
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatScrollRef = useRef<HTMLDivElement>(null)
+  const historyRef = useRef<HTMLDivElement>(null)
+  const contentScrollRef = useRef<HTMLDivElement>(null)
+
+  const scrollToHistory = useCallback(() => {
+    setHistoryOpen(true)
+    window.setTimeout(() => {
+      historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+  }, [])
 
   // Pre-seeded assistant context message
   const initialMessages: ChatMessage[] = wf ? [
@@ -274,7 +283,7 @@ export default function WorkflowDetailPage() {
         </header>
 
         {/* Scrollable body */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-[var(--space-2xl)] py-[var(--space-xl)]">
+        <div ref={contentScrollRef} className="flex-1 min-h-0 overflow-y-auto px-[var(--space-2xl)] py-[var(--space-xl)]">
           <div className="flex flex-col gap-6" style={{ maxWidth: 580 }}>
 
             {/* Metadata grid */}
@@ -300,6 +309,7 @@ export default function WorkflowDetailPage() {
                 {
                   label: 'Total runs',
                   value: <span className="tabular-nums">{wf.totalRuns}</span>,
+                  clickable: wf.runHistory.length > 0,
                 },
                 {
                   label: 'Last run',
@@ -311,11 +321,21 @@ export default function WorkflowDetailPage() {
                   ) : (
                     <span className="text-[var(--color-neutral-6)]">Never</span>
                   ),
+                  clickable: wf.runHistory.length > 0,
                 },
-              ].map(({ label, value }) => (
-                <div key={label} className="rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-4 py-3">
+              ].map(({ label, value, clickable }) => (
+                <div
+                  key={label}
+                  onClick={clickable ? scrollToHistory : undefined}
+                  className={`rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-4 py-3 ${clickable ? 'cursor-pointer hover:border-[var(--color-accent-6)] hover:bg-[var(--color-accent-1)] transition-colors group/meta-card' : ''}`}
+                >
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)] mb-1">{label}</p>
-                  <div className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)]">{value}</div>
+                  <div className={`text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] ${clickable ? 'group-hover/meta-card:text-[var(--color-accent-10)]' : ''}`}>{value}</div>
+                  {clickable && (
+                    <p className="text-[10px] text-[var(--color-accent-9)] mt-1 opacity-0 group-hover/meta-card:opacity-100 transition-opacity font-medium">
+                      View history →
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -354,7 +374,7 @@ export default function WorkflowDetailPage() {
             {/* Run history */}
             {wf.runHistory.length > 0 && (
               <Collapsible.Root open={historyOpen} onOpenChange={setHistoryOpen}>
-                <div className="rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] overflow-hidden">
+                <div ref={historyRef} className="rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] overflow-hidden">
                   <Collapsible.Trigger className="w-full flex items-center gap-2 px-5 py-3.5 border-b border-[var(--border-subtle)] hover:bg-[var(--color-neutral-2)] transition-colors cursor-pointer group">
                     <CheckCircle2 size={15} className="text-[var(--color-neutral-7)] shrink-0" aria-hidden />
                     <span className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-11)] flex-1 text-left">
