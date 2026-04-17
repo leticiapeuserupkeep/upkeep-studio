@@ -5,8 +5,9 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Play, Bot, Clock, Zap, GitBranch,
   CheckCircle2, AlertCircle, RefreshCw, ChevronDown,
-  Send, Plus, MoreVertical, Settings, UserPlus,
+  Send, MoreVertical, UserPlus,
   PauseCircle, FileEdit, Cpu, Split, ArrowRight,
+  Pencil, ListPlus, CalendarClock, Tag, GitMerge, Repeat2,
 } from 'lucide-react'
 import { Badge } from '@/app/components/ui/Badge'
 import { Button } from '@/app/components/ui/Button'
@@ -163,8 +164,10 @@ export default function WorkflowDetailPage() {
 
   const [draft, setDraft] = useState('')
   const [historyOpen, setHistoryOpen] = useState(true)
+  const [editMessageId, setEditMessageId] = useState<string | null>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatScrollRef = useRef<HTMLDivElement>(null)
 
   // Pre-seeded assistant context message
   const initialMessages: ChatMessage[] = wf ? [
@@ -184,6 +187,22 @@ export default function WorkflowDetailPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
   }, [messages])
+
+  const handleEditClick = useCallback(() => {
+    if (!wf) return
+    const id = `asst-edit-${Date.now()}`
+    setMessages((prev) => [
+      ...prev,
+      {
+        id,
+        role: 'assistant',
+        text: `Hey Leti 👋 What would you like to change in **${wf.title}**? Pick one of the options below, or just type what you need.`,
+      },
+    ])
+    setEditMessageId(id)
+    // Focus composer after animation settles
+    window.setTimeout(() => composerRef.current?.focus(), 300)
+  }, [wf])
 
   const handleSend = useCallback(() => {
     const text = draft.trim()
@@ -240,6 +259,9 @@ export default function WorkflowDetailPage() {
             <StatusBadge status={wf.status} />
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <Button variant="secondary" size="md" type="button" className="gap-1.5" onClick={handleEditClick}>
+              <Pencil size={14} aria-hidden /> Edit
+            </Button>
             {wf.status !== 'failed' && wf.status !== 'draft' && (
               <Button variant="primary" size="md" type="button" className="gap-1.5">
                 <Play size={14} strokeWidth={2.5} aria-hidden /> Run now
@@ -405,7 +427,7 @@ export default function WorkflowDetailPage() {
         </div>
 
         {/* Chat messages */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+        <div ref={chatScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-4">
           {messages.map((m) => (
             <Fragment key={m.id}>
               {m.role === 'assistant' && (
@@ -427,11 +449,57 @@ export default function WorkflowDetailPage() {
                   </div>
                 </div>
               )}
+
+              {/* Edit suggestions — shown only right after the edit prompt message */}
+              {m.id === editMessageId && (
+                <div className="flex flex-col gap-1.5 pl-9">
+                  {[
+                    { icon: ListPlus,     label: 'Change steps',              prompt: 'I want to add, remove, or reorder steps in this workflow.' },
+                    { icon: CalendarClock,label: 'Change schedule or trigger', prompt: 'I want to change when or how this workflow is triggered.' },
+                    { icon: UserPlus,     label: 'Reassign agent',            prompt: 'I want to reassign this workflow to a different agent.' },
+                    { icon: Tag,          label: 'Rename or update description', prompt: 'I want to rename this workflow or update its description.' },
+                    { icon: GitMerge,     label: 'Add condition or branch',   prompt: 'I want to add a condition or branching logic to this workflow.' },
+                    { icon: Repeat2,      label: 'Change run frequency',      prompt: 'I want to change how often this workflow runs.' },
+                  ].map((opt) => {
+                    const Icon = opt.icon
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => {
+                          setEditMessageId(null)
+                          setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', text: opt.prompt }])
+                          window.setTimeout(() => {
+                            setMessages((prev) => [
+                              ...prev,
+                              {
+                                id: `a-${Date.now()}`,
+                                role: 'assistant',
+                                text: `Got it — I'll help you "${opt.label.toLowerCase()}". Full agent execution will be connected in production.`,
+                              },
+                            ])
+                          }, 420)
+                        }}
+                        className="flex items-center justify-between gap-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3 py-2 text-left text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-accent-1)] hover:border-[var(--color-accent-4)] transition-colors cursor-pointer group/edit-opt"
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <Icon size={13} className="text-[var(--color-neutral-7)] group-hover/edit-opt:text-[var(--color-accent-9)] shrink-0 transition-colors" aria-hidden />
+                          <span className="truncate">{opt.label}</span>
+                        </span>
+                        <ArrowRight size={12} className="text-[var(--color-neutral-5)] group-hover/edit-opt:text-[var(--color-accent-9)] shrink-0 transition-colors" aria-hidden />
+                      </button>
+                    )
+                  })}
+                  <p className="text-[11px] text-[var(--color-neutral-6)] px-1 mt-0.5">
+                    or just type what you need below ↓
+                  </p>
+                </div>
+              )}
             </Fragment>
           ))}
 
-          {/* Quick actions (shown after initial message, before any user input) */}
-          {messages.length === 1 && (
+          {/* Quick actions (shown only on the initial state) */}
+          {messages.length === 1 && !editMessageId && (
             <div className="flex flex-col gap-1.5 pl-9">
               <p className="text-[11px] font-semibold text-[var(--color-neutral-7)] uppercase tracking-wide mb-1">Quick actions</p>
               {quickActions.map((a) => {
