@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useCallback, useEffect, useId, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Play, Bot, Clock, Zap, GitBranch,
@@ -8,6 +8,7 @@ import {
   Send, MoreVertical, UserPlus,
   PauseCircle, FileEdit, Cpu, Split, ArrowRight,
   Pencil, ListPlus, CalendarClock, Tag, GitMerge, Repeat2,
+  AlertTriangle,
 } from 'lucide-react'
 import { Badge } from '@/app/components/ui/Badge'
 import { Button } from '@/app/components/ui/Button'
@@ -21,7 +22,7 @@ import {
   type StepType,
 } from '../../lib/staging-workflows'
 
-// ─── Type ────────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────
 type ChatMessage = { id: string; role: 'user' | 'assistant'; text: string }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -64,6 +65,24 @@ function RunStatusDot({ status }: { status: 'completed' | 'failed' | 'running' }
   return <CheckCircle2 size={13} className="text-[var(--color-success)] shrink-0" aria-hidden />
 }
 
+// ─── Typing indicator ────────────────────────────────────────────────────────
+function TypingBubble() {
+  return (
+    <div className="flex gap-2.5 sn-fade-in">
+      <div className="mt-0.5 w-7 h-7 shrink-0 rounded-full bg-[var(--color-neutral-3)] flex items-center justify-center">
+        <SuperNovaStagingOrb size="sm" />
+      </div>
+      <div className="rounded-[var(--radius-xl)] rounded-tl-[var(--radius-sm)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3.5 py-3 shadow-[var(--shadow-xs)]">
+        <div className="flex items-center gap-1 h-4">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-neutral-6)] animate-bounce" style={{ animationDelay: '0ms', animationDuration: '900ms' }} />
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-neutral-6)] animate-bounce" style={{ animationDelay: '180ms', animationDuration: '900ms' }} />
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-neutral-6)] animate-bounce" style={{ animationDelay: '360ms', animationDuration: '900ms' }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Workflow graph ───────────────────────────────────────────────────────────
 
 const STEP_TYPE_META: Record<StepType, { label: string; color: string; bg: string; Icon: React.ElementType }> = {
@@ -88,10 +107,7 @@ function StepNode({ step, index, isLast }: {
       <div className="flex flex-col items-center shrink-0" style={{ width: 28 }}>
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-          style={{
-            background: meta.bg,
-            boxShadow: `0 0 0 1.5px ${meta.color}60`,
-          }}
+          style={{ background: meta.bg, boxShadow: `0 0 0 1.5px ${meta.color}60` }}
         >
           <Icon size={13} style={{ color: meta.color }} aria-hidden />
         </div>
@@ -102,11 +118,7 @@ function StepNode({ step, index, isLast }: {
 
       {/* Right: content */}
       <div className={`flex-1 min-w-0 pb-4 ${isLast ? 'pb-0' : ''}`}>
-        <button
-          type="button"
-          onClick={() => setExpanded((p) => !p)}
-          className="w-full text-left group/step"
-        >
+        <button type="button" onClick={() => setExpanded((p) => !p)} className="w-full text-left group/step">
           <div className="flex items-start gap-2 flex-wrap">
             <span
               className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-[var(--radius-sm)] shrink-0 mt-0.5"
@@ -137,10 +149,7 @@ function StepNode({ step, index, isLast }: {
                 {step.branches.map((b, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <ArrowRight size={11} className="text-[var(--color-neutral-6)] shrink-0" aria-hidden />
-                    <span
-                      className="text-[11px] font-medium px-2 py-0.5 rounded-[var(--radius-sm)]"
-                      style={{ color: meta.color, background: meta.bg }}
-                    >
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-[var(--radius-sm)]" style={{ color: meta.color, background: meta.bg }}>
                       {b.label}
                     </span>
                   </div>
@@ -149,6 +158,57 @@ function StepNode({ step, index, isLast }: {
             )}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Close confirmation overlay ──────────────────────────────────────────────
+function CloseConfirmOverlay({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div className="absolute inset-0 z-20 flex items-center justify-center p-5 sn-fade-in" style={{ background: 'color-mix(in srgb, var(--surface-primary) 85%, transparent)', backdropFilter: 'blur(6px)' }}>
+      <div className="w-full max-w-[272px] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] overflow-hidden">
+        {/* Icon + heading */}
+        <div className="px-5 pt-5 pb-4 flex flex-col items-start gap-3">
+          <div className="w-9 h-9 rounded-[var(--radius-lg)] bg-[var(--color-neutral-3)] flex items-center justify-center">
+            <AlertTriangle size={17} className="text-[var(--color-neutral-9)]" aria-hidden />
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] leading-snug">
+              Discard edits?
+            </p>
+            <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed">
+              Your conversation with SuperNova will be lost. No changes will be applied to this workflow.
+            </p>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-[var(--border-default)]" />
+
+        {/* Actions */}
+        <div className="px-4 py-3.5 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-[var(--radius-lg)] bg-[var(--color-neutral-12)] text-[var(--color-neutral-1)] text-[length:var(--font-size-sm)] font-semibold hover:opacity-85 transition-opacity cursor-pointer"
+          >
+            Discard &amp; close
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer"
+          >
+            Keep editing
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -165,6 +225,8 @@ export default function WorkflowDetailPage() {
   const [draft, setDraft] = useState('')
   const [historyOpen, setHistoryOpen] = useState(true)
   const [chatOpen, setChatOpen] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const [editMessageId, setEditMessageId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const composerRef = useRef<HTMLTextAreaElement>(null)
@@ -186,29 +248,61 @@ export default function WorkflowDetailPage() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
-  }, [messages])
+  }, [messages, isTyping])
 
+  // ── Open the edit panel with typing animation then greeting ──────────────
   const handleEditClick = useCallback(() => {
     if (!wf) return
-    const id = `asst-edit-${Date.now()}`
-    // Reset chat to only the edit prompt and open the panel
+    // Reset state and open panel
+    setMessages([])
+    setEditMessageId(null)
+    setShowCloseConfirm(false)
     setChatOpen(true)
-    setMessages([{
-      id,
-      role: 'assistant',
-      text: `Hey Leti 👋 What would you like to change in **${wf.title}**? Pick one of the options below, or just type what you need.`,
-    }])
-    setEditMessageId(id)
-    // Focus composer after slide-in animation settles
-    window.setTimeout(() => composerRef.current?.focus(), 360)
+    // Show typing indicator after the slide-in settles (~320ms)
+    window.setTimeout(() => {
+      setIsTyping(true)
+    }, 300)
+    // Replace typing with real message
+    window.setTimeout(() => {
+      const id = `asst-edit-${Date.now()}`
+      setIsTyping(false)
+      setMessages([{
+        id,
+        role: 'assistant',
+        text: `Hey Leti 👋 What would you like to change in **${wf.title}**? Pick one of the options below, or just type what you need.`,
+      }])
+      setEditMessageId(id)
+      window.setTimeout(() => composerRef.current?.focus(), 60)
+    }, 1400)
   }, [wf])
+
+  // ── Close button: show confirm if there's an active conversation ─────────
+  const handleCloseRequest = useCallback(() => {
+    if (messages.length > 0) {
+      setShowCloseConfirm(true)
+    } else {
+      setChatOpen(false)
+      setIsTyping(false)
+      setEditMessageId(null)
+    }
+  }, [messages])
+
+  const handleConfirmClose = useCallback(() => {
+    setChatOpen(false)
+    setIsTyping(false)
+    setShowCloseConfirm(false)
+    setMessages([])
+    setEditMessageId(null)
+  }, [])
 
   const handleSend = useCallback(() => {
     const text = draft.trim()
     if (!text) return
     setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', text }])
     setDraft('')
+    setIsTyping(true)
     window.setTimeout(() => {
+      setIsTyping(false)
       setMessages((prev) => [
         ...prev,
         {
@@ -217,7 +311,7 @@ export default function WorkflowDetailPage() {
           text: 'Got it — full agent replies will be available in production. This is staging-only behaviour.',
         },
       ])
-    }, 420)
+    }, 900)
   }, [draft])
 
   if (!wf) return (
@@ -225,13 +319,6 @@ export default function WorkflowDetailPage() {
       Loading…
     </div>
   )
-
-  const quickActions = [
-    { label: 'Run now', icon: Play, prompt: 'Run this workflow now.' },
-    { label: 'Assign agent', icon: UserPlus, prompt: 'Assign an agent to this workflow.' },
-    { label: 'Modify steps', icon: FileEdit, prompt: 'I want to modify the steps in this workflow.' },
-    { label: 'Pause', icon: PauseCircle, prompt: 'Pause this workflow.' },
-  ]
 
   return (
     <div className="sn-staging-agent-detail-enter flex h-full min-h-0 w-full min-w-0 overflow-hidden bg-[var(--surface-canvas)]">
@@ -258,9 +345,19 @@ export default function WorkflowDetailPage() {
             <StatusBadge status={wf.status} />
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button variant="secondary" size="md" type="button" className="gap-1.5" onClick={handleEditClick}>
-              <Pencil size={14} aria-hidden /> Edit
-            </Button>
+            {/* Edit button — fades out when panel is open */}
+            <div
+              className="transition-[opacity,transform] duration-300 ease-[var(--ease-default)]"
+              style={{
+                opacity: chatOpen ? 0 : 1,
+                transform: chatOpen ? 'scale(0.92)' : 'scale(1)',
+                pointerEvents: chatOpen ? 'none' : 'auto',
+              }}
+            >
+              <Button variant="secondary" size="md" type="button" className="gap-1.5" onClick={handleEditClick}>
+                <Pencil size={14} aria-hidden /> Edit
+              </Button>
+            </div>
             {wf.status !== 'failed' && wf.status !== 'draft' && (
               <Button variant="primary" size="md" type="button" className="gap-1.5">
                 <Play size={14} strokeWidth={2.5} aria-hidden /> Run now
@@ -351,12 +448,7 @@ export default function WorkflowDetailPage() {
               </div>
               <div className="px-5 py-4">
                 {wf.steps.map((step, i) => (
-                  <StepNode
-                    key={step.id}
-                    step={step}
-                    index={i}
-                    isLast={i === wf.steps.length - 1}
-                  />
+                  <StepNode key={step.id} step={step} index={i} isLast={i === wf.steps.length - 1} />
                 ))}
               </div>
             </div>
@@ -381,7 +473,6 @@ export default function WorkflowDetailPage() {
                   </Collapsible.Trigger>
                   <Collapsible.Content>
                     <div className="divide-y divide-[var(--border-subtle)]">
-                      {/* Col headers */}
                       <div className="grid px-5 py-2 bg-[var(--surface-secondary)]"
                         style={{ gridTemplateColumns: '1fr 80px 100px 100px' }}>
                         {['Started', 'Duration', 'Status', 'Triggered by'].map((h) => (
@@ -389,22 +480,14 @@ export default function WorkflowDetailPage() {
                         ))}
                       </div>
                       {wf.runHistory.map((run) => (
-                        <div
-                          key={run.id}
-                          className="grid items-center px-5 py-3"
-                          style={{ gridTemplateColumns: '1fr 80px 100px 100px' }}
-                        >
+                        <div key={run.id} className="grid items-center px-5 py-3" style={{ gridTemplateColumns: '1fr 80px 100px 100px' }}>
                           <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)]">{run.startedAt}</span>
-                          <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] tabular-nums">
-                            {run.duration ?? '—'}
-                          </span>
+                          <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] tabular-nums">{run.duration ?? '—'}</span>
                           <span className="inline-flex items-center gap-1.5 text-[length:var(--font-size-sm)]">
                             <RunStatusDot status={run.status} />
                             <span className="capitalize text-[var(--color-neutral-9)]">{run.status}</span>
                           </span>
-                          <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] capitalize">
-                            {run.triggeredBy}
-                          </span>
+                          <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] capitalize">{run.triggeredBy}</span>
                         </div>
                       ))}
                     </div>
@@ -418,14 +501,21 @@ export default function WorkflowDetailPage() {
       </div>
 
       {/* ── RIGHT: Supernova edit panel — slides in on Edit click ─────── */}
-      {/* Animated width wrapper — clips the inner panel during open/close */}
       <div
         className="shrink-0 overflow-hidden transition-[width] ease-[cubic-bezier(0.32,0.72,0,1)]"
         style={{ width: chatOpen ? 340 : 0, transitionDuration: chatOpen ? '320ms' : '280ms' }}
         aria-hidden={!chatOpen}
       >
         {/* Inner panel — always 340px so content doesn't squish during animation */}
-        <div className="flex flex-col h-full border-l border-[var(--border-default)] bg-[var(--surface-primary)]" style={{ width: 340, minWidth: 340 }}>
+        <div className="relative flex flex-col h-full border-l border-[var(--border-default)] bg-[var(--surface-primary)]" style={{ width: 340, minWidth: 340 }}>
+
+          {/* ── Close confirmation overlay ── */}
+          {showCloseConfirm && (
+            <CloseConfirmOverlay
+              onConfirm={handleConfirmClose}
+              onCancel={() => setShowCloseConfirm(false)}
+            />
+          )}
 
           {/* Panel header */}
           <div className="shrink-0 flex items-center gap-2.5 px-4 py-3.5 border-b border-[var(--border-default)]">
@@ -436,7 +526,7 @@ export default function WorkflowDetailPage() {
             </div>
             <button
               type="button"
-              onClick={() => { setChatOpen(false); setMessages([]); setEditMessageId(null) }}
+              onClick={handleCloseRequest}
               className="flex items-center justify-center w-7 h-7 rounded-[var(--radius-lg)] text-[var(--color-neutral-7)] hover:bg-[var(--color-neutral-3)] hover:text-[var(--color-neutral-11)] transition-colors cursor-pointer"
               aria-label="Close edit panel"
             >
@@ -450,8 +540,8 @@ export default function WorkflowDetailPage() {
           <div ref={chatScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-4">
             {messages.map((m) => (
               <Fragment key={m.id}>
-                {m.role === 'assistant' && (
-                  <div className="flex gap-2.5">
+                {m.role === 'assistant' && m.text !== '__CONFIRM__' && m.text !== '__CONFIRMED__' && m.text !== '__CANCELLED__' && (
+                  <div className="flex gap-2.5 sn-fade-in">
                     <div className="mt-0.5 w-7 h-7 shrink-0 rounded-full bg-[var(--color-neutral-3)] flex items-center justify-center">
                       <SuperNovaStagingOrb size="sm" />
                     </div>
@@ -462,8 +552,9 @@ export default function WorkflowDetailPage() {
                     </div>
                   </div>
                 )}
+
                 {m.role === 'user' && (
-                  <div className="flex justify-end">
+                  <div className="flex justify-end sn-fade-in">
                     <div className="max-w-[85%] rounded-[var(--radius-xl)] rounded-tr-[var(--radius-sm)] bg-[var(--color-neutral-4)] px-3.5 py-2.5 text-[length:var(--font-size-sm)] leading-relaxed text-[var(--color-neutral-12)]">
                       {m.text}
                     </div>
@@ -472,14 +563,14 @@ export default function WorkflowDetailPage() {
 
                 {/* Edit suggestions — right after the edit prompt */}
                 {m.id === editMessageId && (
-                  <div className="flex flex-col gap-1.5 pl-9">
+                  <div className="flex flex-col gap-1.5 pl-9 sn-fade-in">
                     {[
-                      { icon: ListPlus,      label: 'Change steps',               prompt: 'I want to add, remove, or reorder steps in this workflow.' },
-                      { icon: CalendarClock, label: 'Change schedule or trigger',  prompt: 'I want to change when or how this workflow is triggered.' },
-                      { icon: UserPlus,      label: 'Reassign agent',             prompt: 'I want to reassign this workflow to a different agent.' },
-                      { icon: Tag,           label: 'Rename or update description',prompt: 'I want to rename this workflow or update its description.' },
-                      { icon: GitMerge,      label: 'Add condition or branch',    prompt: 'I want to add a condition or branching logic to this workflow.' },
-                      { icon: Repeat2,       label: 'Change run frequency',       prompt: 'I want to change how often this workflow runs.' },
+                      { icon: ListPlus,      label: 'Change steps',                prompt: 'I want to add, remove, or reorder steps in this workflow.' },
+                      { icon: CalendarClock, label: 'Change schedule or trigger',   prompt: 'I want to change when or how this workflow is triggered.' },
+                      { icon: UserPlus,      label: 'Reassign agent',              prompt: 'I want to reassign this workflow to a different agent.' },
+                      { icon: Tag,           label: 'Rename or update description', prompt: 'I want to rename this workflow or update its description.' },
+                      { icon: GitMerge,      label: 'Add condition or branch',     prompt: 'I want to add a condition or branching logic to this workflow.' },
+                      { icon: Repeat2,       label: 'Change run frequency',        prompt: 'I want to change how often this workflow runs.' },
                     ].map((opt) => {
                       const Icon = opt.icon
                       return (
@@ -490,7 +581,9 @@ export default function WorkflowDetailPage() {
                             setEditMessageId(null)
                             const uid = `u-${Date.now()}`
                             setMessages((prev) => [...prev, { id: uid, role: 'user', text: opt.prompt }])
+                            setIsTyping(true)
                             window.setTimeout(() => {
+                              setIsTyping(false)
                               const aid = `a-${Date.now()}`
                               setMessages((prev) => [
                                 ...prev,
@@ -502,16 +595,16 @@ export default function WorkflowDetailPage() {
                               ])
                               // After agent replies, show confirm/cancel
                               window.setTimeout(() => {
-                                setMessages((prev) => [
-                                  ...prev,
-                                  {
-                                    id: `confirm-${Date.now()}`,
-                                    role: 'assistant',
-                                    text: '__CONFIRM__',
-                                  },
-                                ])
-                              }, 900)
-                            }, 420)
+                                setIsTyping(true)
+                                window.setTimeout(() => {
+                                  setIsTyping(false)
+                                  setMessages((prev) => [
+                                    ...prev,
+                                    { id: `confirm-${Date.now()}`, role: 'assistant', text: '__CONFIRM__' },
+                                  ])
+                                }, 800)
+                              }, 600)
+                            }, 900)
                           }}
                           className="flex items-center justify-between gap-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3 py-2 text-left text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-accent-1)] hover:border-[var(--color-accent-4)] transition-colors cursor-pointer group/edit-opt"
                         >
@@ -529,7 +622,7 @@ export default function WorkflowDetailPage() {
 
                 {/* Confirm / cancel after agent processes an edit */}
                 {m.role === 'assistant' && m.text === '__CONFIRM__' && (
-                  <div className="flex flex-col gap-2 pl-9">
+                  <div className="flex flex-col gap-2 pl-9 sn-fade-in">
                     <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)] leading-relaxed">
                       The changes look good. Do you want to apply them?
                     </p>
@@ -538,9 +631,7 @@ export default function WorkflowDetailPage() {
                         type="button"
                         onClick={() => {
                           setMessages((prev) => prev.map((msg) =>
-                            msg.text === '__CONFIRM__'
-                              ? { ...msg, text: '__CONFIRMED__' }
-                              : msg
+                            msg.text === '__CONFIRM__' ? { ...msg, text: '__CONFIRMED__' } : msg
                           ))
                           window.setTimeout(() => {
                             setMessages((prev) => [...prev, {
@@ -559,9 +650,7 @@ export default function WorkflowDetailPage() {
                         type="button"
                         onClick={() => {
                           setMessages((prev) => prev.map((msg) =>
-                            msg.text === '__CONFIRM__'
-                              ? { ...msg, text: '__CANCELLED__' }
-                              : msg
+                            msg.text === '__CONFIRM__' ? { ...msg, text: '__CANCELLED__' } : msg
                           ))
                           window.setTimeout(() => {
                             setMessages((prev) => [...prev, {
@@ -589,6 +678,9 @@ export default function WorkflowDetailPage() {
                 )}
               </Fragment>
             ))}
+
+            {/* Typing indicator */}
+            {isTyping && <TypingBubble />}
 
             <div ref={messagesEndRef} className="h-px w-full shrink-0" aria-hidden />
           </div>

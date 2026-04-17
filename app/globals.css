@@ -102,6 +102,21 @@
   animation: sn-staging-agent-detail-in 0.4s var(--ease-default) forwards;
 }
 
+@keyframes sn-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sn-fade-in {
+  animation: sn-fade-in-up 0.22s ease-out forwards;
+}
+
 @keyframes sn-staging-agent-tab-panel-in {
   from {
     opacity: 0;
