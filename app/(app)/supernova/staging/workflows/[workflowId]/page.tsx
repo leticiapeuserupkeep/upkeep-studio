@@ -164,7 +164,9 @@ export default function WorkflowDetailPage() {
 
   const [draft, setDraft] = useState('')
   const [historyOpen, setHistoryOpen] = useState(true)
+  const [chatOpen, setChatOpen] = useState(false)
   const [editMessageId, setEditMessageId] = useState<string | null>(null)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatScrollRef = useRef<HTMLDivElement>(null)
@@ -178,17 +180,6 @@ export default function WorkflowDetailPage() {
     }, 50)
   }, [])
 
-  // Pre-seeded assistant context message
-  const initialMessages: ChatMessage[] = wf ? [
-    {
-      id: 'asst-context',
-      role: 'assistant',
-      text: `This workflow **${wf.title}** ${wf.description.toLowerCase().replace(/\.$/, '')}. It has ${wf.steps.length} steps and ${wf.triggerType === 'scheduled' ? 'runs automatically on a schedule' : wf.triggerType === 'event' ? 'triggers on incoming events' : 'runs manually on demand'}. ${wf.totalRuns > 0 ? `It has run ${wf.totalRuns} time${wf.totalRuns !== 1 ? 's' : ''}${wf.lastRun ? `, most recently ${wf.lastRun}` : ''}.` : 'It has not run yet.'} ${wf.assignedAgent ? `Assigned to agent: ${wf.assignedAgent}.` : 'Currently unassigned.'}`,
-    },
-  ] : []
-
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
-
   useEffect(() => {
     if (!wf) router.replace('/supernova/staging')
   }, [wf, router])
@@ -200,17 +191,16 @@ export default function WorkflowDetailPage() {
   const handleEditClick = useCallback(() => {
     if (!wf) return
     const id = `asst-edit-${Date.now()}`
-    setMessages((prev) => [
-      ...prev,
-      {
-        id,
-        role: 'assistant',
-        text: `Hey Leti 👋 What would you like to change in **${wf.title}**? Pick one of the options below, or just type what you need.`,
-      },
-    ])
+    // Reset chat to only the edit prompt and open the panel
+    setChatOpen(true)
+    setMessages([{
+      id,
+      role: 'assistant',
+      text: `Hey Leti 👋 What would you like to change in **${wf.title}**? Pick one of the options below, or just type what you need.`,
+    }])
     setEditMessageId(id)
-    // Focus composer after animation settles
-    window.setTimeout(() => composerRef.current?.focus(), 300)
+    // Focus composer after slide-in animation settles
+    window.setTimeout(() => composerRef.current?.focus(), 360)
   }, [wf])
 
   const handleSend = useCallback(() => {
@@ -427,163 +417,208 @@ export default function WorkflowDetailPage() {
         </div>
       </div>
 
-      {/* ── RIGHT: Supernova chat panel ────────────────────────────────── */}
+      {/* ── RIGHT: Supernova edit panel — slides in on Edit click ─────── */}
+      {/* Animated width wrapper — clips the inner panel during open/close */}
       <div
-        className="shrink-0 flex flex-col overflow-hidden border-l border-[var(--border-default)] bg-[var(--surface-primary)]"
-        style={{ width: 340 }}
+        className="shrink-0 overflow-hidden transition-[width] ease-[cubic-bezier(0.32,0.72,0,1)]"
+        style={{ width: chatOpen ? 340 : 0, transitionDuration: chatOpen ? '320ms' : '280ms' }}
+        aria-hidden={!chatOpen}
       >
-        {/* Panel header */}
-        <div className="shrink-0 flex items-center gap-2.5 px-4 py-3.5 border-b border-[var(--border-default)]">
-          <SuperNovaStagingOrb size="sm" />
-          <div className="min-w-0 flex-1">
-            <p className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-12)] leading-tight">
-              SuperNova
-            </p>
-            <p className="text-[11px] text-[var(--color-neutral-7)] leading-tight">Workflow assistant</p>
-          </div>
-          <IconButton label="More options" variant="ghost" size="md" type="button">
-            <MoreVertical size={15} aria-hidden />
-          </IconButton>
-        </div>
+        {/* Inner panel — always 340px so content doesn't squish during animation */}
+        <div className="flex flex-col h-full border-l border-[var(--border-default)] bg-[var(--surface-primary)]" style={{ width: 340, minWidth: 340 }}>
 
-        {/* Chat messages */}
-        <div ref={chatScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-4">
-          {messages.map((m) => (
-            <Fragment key={m.id}>
-              {m.role === 'assistant' && (
-                <div className="flex gap-2.5">
-                  <div className="mt-0.5 w-7 h-7 shrink-0 rounded-full bg-[var(--color-neutral-3)] flex items-center justify-center">
-                    <SuperNovaStagingOrb size="sm" />
+          {/* Panel header */}
+          <div className="shrink-0 flex items-center gap-2.5 px-4 py-3.5 border-b border-[var(--border-default)]">
+            <SuperNovaStagingOrb size="sm" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-12)] leading-tight">SuperNova</p>
+              <p className="text-[11px] text-[var(--color-neutral-7)] leading-tight">Edit assistant</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setChatOpen(false); setMessages([]); setEditMessageId(null) }}
+              className="flex items-center justify-center w-7 h-7 rounded-[var(--radius-lg)] text-[var(--color-neutral-7)] hover:bg-[var(--color-neutral-3)] hover:text-[var(--color-neutral-11)] transition-colors cursor-pointer"
+              aria-label="Close edit panel"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* Chat messages */}
+          <div ref={chatScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+            {messages.map((m) => (
+              <Fragment key={m.id}>
+                {m.role === 'assistant' && (
+                  <div className="flex gap-2.5">
+                    <div className="mt-0.5 w-7 h-7 shrink-0 rounded-full bg-[var(--color-neutral-3)] flex items-center justify-center">
+                      <SuperNovaStagingOrb size="sm" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="rounded-[var(--radius-xl)] rounded-tl-[var(--radius-sm)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3.5 py-3 text-[length:var(--font-size-sm)] leading-relaxed text-[var(--color-neutral-11)] shadow-[var(--shadow-xs)]">
+                        {m.text}
+                      </div>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="rounded-[var(--radius-xl)] rounded-tl-[var(--radius-sm)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3.5 py-3 text-[length:var(--font-size-sm)] leading-relaxed text-[var(--color-neutral-11)] shadow-[var(--shadow-xs)]">
+                )}
+                {m.role === 'user' && (
+                  <div className="flex justify-end">
+                    <div className="max-w-[85%] rounded-[var(--radius-xl)] rounded-tr-[var(--radius-sm)] bg-[var(--color-neutral-4)] px-3.5 py-2.5 text-[length:var(--font-size-sm)] leading-relaxed text-[var(--color-neutral-12)]">
                       {m.text}
                     </div>
                   </div>
-                </div>
-              )}
-              {m.role === 'user' && (
-                <div className="flex justify-end">
-                  <div className="max-w-[85%] rounded-[var(--radius-xl)] rounded-tr-[var(--radius-sm)] bg-[var(--color-neutral-4)] px-3.5 py-2.5 text-[length:var(--font-size-sm)] leading-relaxed text-[var(--color-neutral-12)]">
-                    {m.text}
-                  </div>
-                </div>
-              )}
+                )}
 
-              {/* Edit suggestions — shown only right after the edit prompt message */}
-              {m.id === editMessageId && (
-                <div className="flex flex-col gap-1.5 pl-9">
-                  {[
-                    { icon: ListPlus,     label: 'Change steps',              prompt: 'I want to add, remove, or reorder steps in this workflow.' },
-                    { icon: CalendarClock,label: 'Change schedule or trigger', prompt: 'I want to change when or how this workflow is triggered.' },
-                    { icon: UserPlus,     label: 'Reassign agent',            prompt: 'I want to reassign this workflow to a different agent.' },
-                    { icon: Tag,          label: 'Rename or update description', prompt: 'I want to rename this workflow or update its description.' },
-                    { icon: GitMerge,     label: 'Add condition or branch',   prompt: 'I want to add a condition or branching logic to this workflow.' },
-                    { icon: Repeat2,      label: 'Change run frequency',      prompt: 'I want to change how often this workflow runs.' },
-                  ].map((opt) => {
-                    const Icon = opt.icon
-                    return (
+                {/* Edit suggestions — right after the edit prompt */}
+                {m.id === editMessageId && (
+                  <div className="flex flex-col gap-1.5 pl-9">
+                    {[
+                      { icon: ListPlus,      label: 'Change steps',               prompt: 'I want to add, remove, or reorder steps in this workflow.' },
+                      { icon: CalendarClock, label: 'Change schedule or trigger',  prompt: 'I want to change when or how this workflow is triggered.' },
+                      { icon: UserPlus,      label: 'Reassign agent',             prompt: 'I want to reassign this workflow to a different agent.' },
+                      { icon: Tag,           label: 'Rename or update description',prompt: 'I want to rename this workflow or update its description.' },
+                      { icon: GitMerge,      label: 'Add condition or branch',    prompt: 'I want to add a condition or branching logic to this workflow.' },
+                      { icon: Repeat2,       label: 'Change run frequency',       prompt: 'I want to change how often this workflow runs.' },
+                    ].map((opt) => {
+                      const Icon = opt.icon
+                      return (
+                        <button
+                          key={opt.label}
+                          type="button"
+                          onClick={() => {
+                            setEditMessageId(null)
+                            const uid = `u-${Date.now()}`
+                            setMessages((prev) => [...prev, { id: uid, role: 'user', text: opt.prompt }])
+                            window.setTimeout(() => {
+                              const aid = `a-${Date.now()}`
+                              setMessages((prev) => [
+                                ...prev,
+                                {
+                                  id: aid,
+                                  role: 'assistant',
+                                  text: `Got it — I'll help you "${opt.label.toLowerCase()}". What specifically needs to change?`,
+                                },
+                              ])
+                              // After agent replies, show confirm/cancel
+                              window.setTimeout(() => {
+                                setMessages((prev) => [
+                                  ...prev,
+                                  {
+                                    id: `confirm-${Date.now()}`,
+                                    role: 'assistant',
+                                    text: '__CONFIRM__',
+                                  },
+                                ])
+                              }, 900)
+                            }, 420)
+                          }}
+                          className="flex items-center justify-between gap-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3 py-2 text-left text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-accent-1)] hover:border-[var(--color-accent-4)] transition-colors cursor-pointer group/edit-opt"
+                        >
+                          <span className="flex items-center gap-2 min-w-0">
+                            <Icon size={13} className="text-[var(--color-neutral-7)] group-hover/edit-opt:text-[var(--color-accent-9)] shrink-0 transition-colors" aria-hidden />
+                            <span className="truncate">{opt.label}</span>
+                          </span>
+                          <ArrowRight size={12} className="text-[var(--color-neutral-5)] group-hover/edit-opt:text-[var(--color-accent-9)] shrink-0 transition-colors" aria-hidden />
+                        </button>
+                      )
+                    })}
+                    <p className="text-[11px] text-[var(--color-neutral-6)] px-1 mt-0.5">or just type what you need below ↓</p>
+                  </div>
+                )}
+
+                {/* Confirm / cancel after agent processes an edit */}
+                {m.role === 'assistant' && m.text === '__CONFIRM__' && (
+                  <div className="flex flex-col gap-2 pl-9">
+                    <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)] leading-relaxed">
+                      The changes look good. Do you want to apply them?
+                    </p>
+                    <div className="flex gap-2">
                       <button
-                        key={opt.label}
                         type="button"
                         onClick={() => {
-                          setEditMessageId(null)
-                          setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', text: opt.prompt }])
+                          setMessages((prev) => prev.map((msg) =>
+                            msg.text === '__CONFIRM__'
+                              ? { ...msg, text: '__CONFIRMED__' }
+                              : msg
+                          ))
                           window.setTimeout(() => {
-                            setMessages((prev) => [
-                              ...prev,
-                              {
-                                id: `a-${Date.now()}`,
-                                role: 'assistant',
-                                text: `Got it — I'll help you "${opt.label.toLowerCase()}". Full agent execution will be connected in production.`,
-                              },
-                            ])
-                          }, 420)
+                            setMessages((prev) => [...prev, {
+                              id: `a-done-${Date.now()}`,
+                              role: 'assistant',
+                              text: '✓ Changes applied! The workflow has been updated.',
+                            }])
+                            window.setTimeout(() => setChatOpen(false), 1800)
+                          }, 300)
                         }}
-                        className="flex items-center justify-between gap-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3 py-2 text-left text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-accent-1)] hover:border-[var(--color-accent-4)] transition-colors cursor-pointer group/edit-opt"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-[var(--radius-lg)] bg-[var(--color-accent-9)] text-white text-[length:var(--font-size-sm)] font-semibold hover:bg-[var(--color-accent-10)] transition-colors cursor-pointer"
                       >
-                        <span className="flex items-center gap-2 min-w-0">
-                          <Icon size={13} className="text-[var(--color-neutral-7)] group-hover/edit-opt:text-[var(--color-accent-9)] shrink-0 transition-colors" aria-hidden />
-                          <span className="truncate">{opt.label}</span>
-                        </span>
-                        <ArrowRight size={12} className="text-[var(--color-neutral-5)] group-hover/edit-opt:text-[var(--color-accent-9)] shrink-0 transition-colors" aria-hidden />
+                        <CheckCircle2 size={13} aria-hidden /> Apply changes
                       </button>
-                    )
-                  })}
-                  <p className="text-[11px] text-[var(--color-neutral-6)] px-1 mt-0.5">
-                    or just type what you need below ↓
-                  </p>
-                </div>
-              )}
-            </Fragment>
-          ))}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMessages((prev) => prev.map((msg) =>
+                            msg.text === '__CONFIRM__'
+                              ? { ...msg, text: '__CANCELLED__' }
+                              : msg
+                          ))
+                          window.setTimeout(() => {
+                            setMessages((prev) => [...prev, {
+                              id: `a-cancel-${Date.now()}`,
+                              role: 'assistant',
+                              text: 'No problem — nothing was changed. Want to try something else?',
+                            }])
+                          }, 300)
+                        }}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-          {/* Quick actions (shown only on the initial state) */}
-          {messages.length === 1 && !editMessageId && (
-            <div className="flex flex-col gap-1.5 pl-9">
-              <p className="text-[11px] font-semibold text-[var(--color-neutral-7)] uppercase tracking-wide mb-1">Quick actions</p>
-              {quickActions.map((a) => {
-                const Icon = a.icon
-                return (
-                  <button
-                    key={a.label}
-                    type="button"
-                    onClick={() => {
-                      setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', text: a.prompt }])
-                      window.setTimeout(() => {
-                        setMessages((prev) => [
-                          ...prev,
-                          {
-                            id: `a-${Date.now()}`,
-                            role: 'assistant',
-                            text: `Sure — I'll handle "${a.label}" for this workflow. Full agent execution will be connected in production.`,
-                          },
-                        ])
-                      }, 420)
-                    }}
-                    className="flex items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3 py-2.5 text-left text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer"
-                  >
-                    <span className="flex items-center gap-2 min-w-0">
-                      <Icon size={14} className="text-[var(--color-neutral-7)] shrink-0" aria-hidden />
-                      <span className="truncate">{a.label}</span>
+                {/* Already actioned states (collapsed pill) */}
+                {m.role === 'assistant' && (m.text === '__CONFIRMED__' || m.text === '__CANCELLED__') && (
+                  <div className="pl-9">
+                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full ${m.text === '__CONFIRMED__' ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)]'}`}>
+                      {m.text === '__CONFIRMED__' ? <><CheckCircle2 size={11} aria-hidden /> Applied</> : <>Cancelled</>}
                     </span>
-                    <ArrowRight size={13} className="text-[var(--color-neutral-6)] shrink-0" aria-hidden />
-                  </button>
-                )
-              })}
-            </div>
-          )}
+                  </div>
+                )}
+              </Fragment>
+            ))}
 
-          <div ref={messagesEndRef} className="h-px w-full shrink-0" aria-hidden />
-        </div>
-
-        {/* Composer */}
-        <div className="shrink-0 border-t border-[var(--border-default)] px-3 py-3">
-          <div className="flex items-center gap-2 rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3 py-2 shadow-[var(--shadow-xs)] transition-[border-color,box-shadow] duration-[var(--duration-fast)] focus-within:border-[var(--color-accent-7)] focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent-9)_14%,transparent)]">
-            <textarea
-              ref={composerRef}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
-              }}
-              rows={1}
-              placeholder="Ask about this workflow…"
-              className="flex-1 resize-none bg-transparent text-[length:var(--font-size-sm)] leading-5 text-[var(--color-neutral-12)] outline-none placeholder:text-[var(--color-neutral-6)] min-h-[32px] max-h-24 py-1.5"
-            />
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={!draft.trim()}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent-9)] text-white shadow-sm transition-opacity hover:bg-[var(--color-accent-10)] disabled:pointer-events-none disabled:opacity-40"
-              aria-label="Send"
-            >
-              <Send size={14} className="shrink-0" aria-hidden />
-            </button>
+            <div ref={messagesEndRef} className="h-px w-full shrink-0" aria-hidden />
           </div>
+
+          {/* Composer */}
+          <div className="shrink-0 border-t border-[var(--border-default)] px-3 py-3">
+            <div className="flex items-center gap-2 rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3 py-2 shadow-[var(--shadow-xs)] transition-[border-color,box-shadow] duration-[var(--duration-fast)] focus-within:border-[var(--color-accent-7)] focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-accent-9)_14%,transparent)]">
+              <textarea
+                ref={composerRef}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
+                }}
+                rows={1}
+                placeholder="Describe what you need to change…"
+                className="flex-1 resize-none bg-transparent text-[length:var(--font-size-sm)] leading-5 text-[var(--color-neutral-12)] outline-none placeholder:text-[var(--color-neutral-6)] min-h-[32px] max-h-24 py-1.5"
+              />
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={!draft.trim()}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent-9)] text-white shadow-sm transition-opacity hover:bg-[var(--color-accent-10)] disabled:pointer-events-none disabled:opacity-40"
+                aria-label="Send"
+              >
+                <Send size={14} className="shrink-0" aria-hidden />
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 
