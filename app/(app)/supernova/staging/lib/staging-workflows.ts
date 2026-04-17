@@ -24,6 +24,8 @@ export interface StagingWorkflow {
   description: string
   status: WorkflowStatus
   triggerType: TriggerType
+  scheduleLabel: string   // e.g. "Daily at 6:00 AM", "Every Monday", "On sensor event"
+  iconName: string        // Lucide icon name for the rail avatar
   automation: boolean
   steps: WorkflowStep[]
   assignedAgent: string | null
@@ -43,33 +45,14 @@ export const STAGING_WORKFLOWS: StagingWorkflow[] = [
       'Summarizes open work orders and posts to the maintenance channel each morning. Checks threshold before posting to avoid alert fatigue.',
     status: 'active',
     triggerType: 'scheduled',
+    scheduleLabel: 'Daily at 6:00 AM',
+    iconName: 'BarChart3',
     automation: true,
     steps: [
-      {
-        id: 's1',
-        label: 'Fetch open work orders',
-        type: 'action',
-        description: 'Queries the work order API for all items with status = open.',
-      },
-      {
-        id: 's2',
-        label: 'Check threshold exceeded?',
-        type: 'condition',
-        description: 'Evaluates whether open WO count exceeds the configured alert threshold.',
-        branches: [{ label: 'Yes → continue' }, { label: 'No → skip posting' }],
-      },
-      {
-        id: 's3',
-        label: 'Format summary report',
-        type: 'action',
-        description: 'Generates a human-readable summary grouped by priority and site.',
-      },
-      {
-        id: 's4',
-        label: 'Post to maintenance channel',
-        type: 'agent',
-        description: 'Agent posts the formatted report to the designated channel.',
-      },
+      { id: 's1', label: 'Fetch open work orders', type: 'action', description: 'Queries the work order API for all items with status = open.' },
+      { id: 's2', label: 'Check threshold exceeded?', type: 'condition', description: 'Evaluates whether open WO count exceeds the configured alert threshold.', branches: [{ label: 'Yes → continue' }, { label: 'No → skip posting' }] },
+      { id: 's3', label: 'Format summary report', type: 'action', description: 'Generates a human-readable summary grouped by priority and site.' },
+      { id: 's4', label: 'Post to maintenance channel', type: 'agent', description: 'Agent posts the formatted report to the designated channel.' },
     ],
     assignedAgent: 'Demo',
     lastRun: '2 hours ago',
@@ -88,30 +71,16 @@ export const STAGING_WORKFLOWS: StagingWorkflow[] = [
   {
     id: '2',
     title: 'Company Research & Presentation',
-    description:
-      'Pulls public filings and drafts a short executive brief for review. Runs manually on demand.',
+    description: 'Pulls public filings and drafts a short executive brief for review. Runs manually on demand.',
     status: 'active',
     triggerType: 'manual',
+    scheduleLabel: 'On demand',
+    iconName: 'Search',
     automation: false,
     steps: [
-      {
-        id: 's1',
-        label: 'Gather public sources',
-        type: 'action',
-        description: 'Searches SEC filings, news, and public databases for relevant company data.',
-      },
-      {
-        id: 's2',
-        label: 'Summarize key findings',
-        type: 'agent',
-        description: 'Agent reads all collected documents and extracts the most relevant insights.',
-      },
-      {
-        id: 's3',
-        label: 'Format executive deck',
-        type: 'action',
-        description: 'Structures findings into a slide-ready format with title, summary, and key metrics.',
-      },
+      { id: 's1', label: 'Gather public sources', type: 'action', description: 'Searches SEC filings, news, and public databases for relevant company data.' },
+      { id: 's2', label: 'Summarize key findings', type: 'agent', description: 'Agent reads all collected documents and extracts the most relevant insights.' },
+      { id: 's3', label: 'Format executive deck', type: 'action', description: 'Structures findings into a slide-ready format with title, summary, and key metrics.' },
     ],
     assignedAgent: null,
     lastRun: null,
@@ -124,38 +93,17 @@ export const STAGING_WORKFLOWS: StagingWorkflow[] = [
   {
     id: '3',
     title: 'HVAC Diagnostics',
-    description:
-      'Reads sensor streams and flags anomalies against the facility playbook. Routes by severity level.',
+    description: 'Reads sensor streams and flags anomalies against the facility playbook. Routes by severity level.',
     status: 'active',
     triggerType: 'event',
+    scheduleLabel: 'On sensor anomaly',
+    iconName: 'Thermometer',
     automation: true,
     steps: [
-      {
-        id: 's1',
-        label: 'Ingest telemetry stream',
-        type: 'action',
-        description: 'Receives live sensor data from HVAC units across all monitored facilities.',
-      },
-      {
-        id: 's2',
-        label: 'Score anomaly rules',
-        type: 'condition',
-        description: 'Runs each reading through the anomaly ruleset and assigns a severity score.',
-        branches: [{ label: 'High severity → escalate' }, { label: 'Low severity → log only' }],
-      },
-      {
-        id: 's3',
-        label: 'Route by severity',
-        type: 'branch',
-        description: 'Directs the alert to the correct downstream handler based on severity score.',
-        branches: [{ label: 'Critical → PagerDuty' }, { label: 'Warning → Slack' }, { label: 'Info → log' }],
-      },
-      {
-        id: 's4',
-        label: 'Notify facility owner',
-        type: 'agent',
-        description: 'Agent composes and sends a contextual notification with recommended next steps.',
-      },
+      { id: 's1', label: 'Ingest telemetry stream', type: 'action', description: 'Receives live sensor data from HVAC units across all monitored facilities.' },
+      { id: 's2', label: 'Score anomaly rules', type: 'condition', description: 'Runs each reading through the anomaly ruleset and assigns a severity score.', branches: [{ label: 'High severity → escalate' }, { label: 'Low severity → log only' }] },
+      { id: 's3', label: 'Route by severity', type: 'branch', description: 'Directs the alert to the correct downstream handler based on severity score.', branches: [{ label: 'Critical → PagerDuty' }, { label: 'Warning → Slack' }, { label: 'Info → log' }] },
+      { id: 's4', label: 'Notify facility owner', type: 'agent', description: 'Agent composes and sends a contextual notification with recommended next steps.' },
     ],
     assignedAgent: 'Demo',
     lastRun: '14 min ago',
@@ -172,31 +120,16 @@ export const STAGING_WORKFLOWS: StagingWorkflow[] = [
   {
     id: '4',
     title: 'Inventory Reorder Check',
-    description:
-      'Compares stock levels to min/max thresholds and opens a draft PO when reorder point is hit.',
+    description: 'Compares stock levels to min/max thresholds and opens a draft PO when reorder point is hit.',
     status: 'paused',
     triggerType: 'scheduled',
+    scheduleLabel: 'Every 3 days at 9:00 AM',
+    iconName: 'Package',
     automation: true,
     steps: [
-      {
-        id: 's1',
-        label: 'Sync inventory snapshot',
-        type: 'action',
-        description: 'Pulls the current stock levels from the inventory system.',
-      },
-      {
-        id: 's2',
-        label: 'Compare to thresholds',
-        type: 'condition',
-        description: 'Checks each item against its configured reorder point.',
-        branches: [{ label: 'Below threshold → create PO' }, { label: 'Above threshold → skip' }],
-      },
-      {
-        id: 's3',
-        label: 'Create draft purchase order',
-        type: 'action',
-        description: 'Generates a draft PO with suggested quantities based on historical usage.',
-      },
+      { id: 's1', label: 'Sync inventory snapshot', type: 'action', description: 'Pulls the current stock levels from the inventory system.' },
+      { id: 's2', label: 'Compare to thresholds', type: 'condition', description: 'Checks each item against its configured reorder point.', branches: [{ label: 'Below threshold → create PO' }, { label: 'Above threshold → skip' }] },
+      { id: 's3', label: 'Create draft purchase order', type: 'action', description: 'Generates a draft PO with suggested quantities based on historical usage.' },
     ],
     assignedAgent: null,
     lastRun: '3 days ago',
@@ -212,31 +145,16 @@ export const STAGING_WORKFLOWS: StagingWorkflow[] = [
   {
     id: '5',
     title: 'Safety Briefing Digest',
-    description:
-      'Aggregates incidents and near-misses into a weekly digest for the EHS team.',
+    description: 'Aggregates incidents and near-misses into a weekly digest for the EHS team.',
     status: 'active',
     triggerType: 'scheduled',
+    scheduleLabel: 'Every Monday at 8:00 AM',
+    iconName: 'ShieldCheck',
     automation: true,
     steps: [
-      {
-        id: 's1',
-        label: 'Collect incident cases',
-        type: 'action',
-        description: 'Pulls all incidents and near-miss reports filed in the past 7 days.',
-      },
-      {
-        id: 's2',
-        label: 'Classify by severity',
-        type: 'condition',
-        description: 'Groups cases into high, medium, and low severity buckets.',
-        branches: [{ label: 'High → flag in digest' }, { label: 'Low → include as summary' }],
-      },
-      {
-        id: 's3',
-        label: 'Publish weekly digest',
-        type: 'agent',
-        description: 'Agent compiles and distributes the EHS digest to all registered recipients.',
-      },
+      { id: 's1', label: 'Collect incident cases', type: 'action', description: 'Pulls all incidents and near-miss reports filed in the past 7 days.' },
+      { id: 's2', label: 'Classify by severity', type: 'condition', description: 'Groups cases into high, medium, and low severity buckets.', branches: [{ label: 'High → flag in digest' }, { label: 'Low → include as summary' }] },
+      { id: 's3', label: 'Publish weekly digest', type: 'agent', description: 'Agent compiles and distributes the EHS digest to all registered recipients.' },
     ],
     assignedAgent: 'Demo',
     lastRun: 'Yesterday',
@@ -252,38 +170,17 @@ export const STAGING_WORKFLOWS: StagingWorkflow[] = [
   {
     id: '6',
     title: 'Asset Inspection Router',
-    description:
-      'Routes incoming inspection requests to the right technician based on skill profile and availability.',
+    description: 'Routes incoming inspection requests to the right technician based on skill profile and availability.',
     status: 'draft',
     triggerType: 'event',
+    scheduleLabel: 'On new request',
+    iconName: 'Wrench',
     automation: false,
     steps: [
-      {
-        id: 's1',
-        label: 'Receive inspection request',
-        type: 'action',
-        description: 'Listens for new inspection requests submitted via the work order portal.',
-      },
-      {
-        id: 's2',
-        label: 'Match skill profile',
-        type: 'condition',
-        description: 'Filters available technicians by the required certification and skill tags.',
-        branches: [{ label: 'Match found → check availability' }, { label: 'No match → escalate' }],
-      },
-      {
-        id: 's3',
-        label: 'Check availability',
-        type: 'condition',
-        description: 'Confirms the matched technician has available capacity in their schedule.',
-        branches: [{ label: 'Available → assign' }, { label: 'Unavailable → find next' }],
-      },
-      {
-        id: 's4',
-        label: 'Assign and notify',
-        type: 'agent',
-        description: 'Agent creates the assignment and sends a notification to the technician.',
-      },
+      { id: 's1', label: 'Receive inspection request', type: 'action', description: 'Listens for new inspection requests submitted via the work order portal.' },
+      { id: 's2', label: 'Match skill profile', type: 'condition', description: 'Filters available technicians by the required certification and skill tags.', branches: [{ label: 'Match found → check availability' }, { label: 'No match → escalate' }] },
+      { id: 's3', label: 'Check availability', type: 'condition', description: 'Confirms the matched technician has available capacity in their schedule.', branches: [{ label: 'Available → assign' }, { label: 'Unavailable → find next' }] },
+      { id: 's4', label: 'Assign and notify', type: 'agent', description: 'Agent creates the assignment and sends a notification to the technician.' },
     ],
     assignedAgent: null,
     lastRun: null,
@@ -296,31 +193,16 @@ export const STAGING_WORKFLOWS: StagingWorkflow[] = [
   {
     id: '7',
     title: 'Escalation Monitor',
-    description:
-      'Watches for overdue high-priority work orders and escalates to the on-call manager.',
+    description: 'Watches for overdue high-priority work orders and escalates to the on-call manager.',
     status: 'failed',
     triggerType: 'event',
+    scheduleLabel: 'On SLA breach',
+    iconName: 'Bell',
     automation: true,
     steps: [
-      {
-        id: 's1',
-        label: 'Monitor WO queue',
-        type: 'action',
-        description: 'Continuously polls for high-priority work orders past their SLA deadline.',
-      },
-      {
-        id: 's2',
-        label: 'Check SLA threshold',
-        type: 'condition',
-        description: 'Determines if the overdue duration warrants immediate escalation.',
-        branches: [{ label: 'Breach confirmed → escalate' }, { label: 'Within grace period → wait' }],
-      },
-      {
-        id: 's3',
-        label: 'Escalate to on-call',
-        type: 'agent',
-        description: 'Agent pages the on-call manager with context about the overdue item.',
-      },
+      { id: 's1', label: 'Monitor WO queue', type: 'action', description: 'Continuously polls for high-priority work orders past their SLA deadline.' },
+      { id: 's2', label: 'Check SLA threshold', type: 'condition', description: 'Determines if the overdue duration warrants immediate escalation.', branches: [{ label: 'Breach confirmed → escalate' }, { label: 'Within grace period → wait' }] },
+      { id: 's3', label: 'Escalate to on-call', type: 'agent', description: 'Agent pages the on-call manager with context about the overdue item.' },
     ],
     assignedAgent: 'Demo',
     lastRun: '1 hour ago',

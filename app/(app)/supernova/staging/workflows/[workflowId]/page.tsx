@@ -5,16 +5,22 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Play, Bot, Clock, Zap, GitBranch,
   CheckCircle2, AlertCircle, RefreshCw, ChevronDown,
-  Send, MoreVertical, UserPlus,
-  PauseCircle, FileEdit, Cpu, Split, ArrowRight,
-  Pencil, ListPlus, CalendarClock, Tag, GitMerge, Repeat2,
-  AlertTriangle,
+  Send, MoreVertical, UserPlus, PauseCircle, Cpu, Split,
+  ArrowRight, Pencil, ListPlus, CalendarClock, Tag, GitMerge,
+  Repeat2, AlertTriangle, Copy, History,
 } from 'lucide-react'
 import { Badge } from '@/app/components/ui/Badge'
 import { Button } from '@/app/components/ui/Button'
 import { IconButton } from '@/app/components/ui/IconButton'
+import { Modal, ModalHeader, ModalBody } from '@/app/components/ui/Modal'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/app/components/ui/DropdownMenu'
 import { SuperNovaStagingOrb } from '@/app/components/supernova-staging/SuperNovaStagingOrb'
-import * as Collapsible from '@radix-ui/react-collapsible'
 import {
   getWorkflowById,
   type WorkflowStatus,
@@ -24,6 +30,21 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type ChatMessage = { id: string; role: 'user' | 'assistant'; text: string }
+
+type EditOption = {
+  icon: React.ElementType
+  label: string
+  prompt: string
+}
+
+const EDIT_OPTIONS: EditOption[] = [
+  { icon: ListPlus,      label: 'Change steps',                prompt: 'I want to add, remove, or reorder steps in this workflow.' },
+  { icon: CalendarClock, label: 'Change schedule or trigger',   prompt: 'I want to change when or how this workflow is triggered.' },
+  { icon: UserPlus,      label: 'Reassign agent',              prompt: 'I want to reassign this workflow to a different agent.' },
+  { icon: Tag,           label: 'Rename or update description', prompt: 'I want to rename this workflow or update its description.' },
+  { icon: GitMerge,      label: 'Add condition or branch',     prompt: 'I want to add a condition or branching logic to this workflow.' },
+  { icon: Repeat2,       label: 'Change run frequency',        prompt: 'I want to change how often this workflow runs.' },
+]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -65,7 +86,7 @@ function RunStatusDot({ status }: { status: 'completed' | 'failed' | 'running' }
   return <CheckCircle2 size={13} className="text-[var(--color-success)] shrink-0" aria-hidden />
 }
 
-// ─── Typing indicator ────────────────────────────────────────────────────────
+// ─── Typing bubble ───────────────────────────────────────────────────────────
 function TypingBubble() {
   return (
     <div className="flex gap-2.5 sn-fade-in">
@@ -84,12 +105,11 @@ function TypingBubble() {
 }
 
 // ─── Workflow graph ───────────────────────────────────────────────────────────
-
 const STEP_TYPE_META: Record<StepType, { label: string; color: string; bg: string; Icon: React.ElementType }> = {
-  action: { label: 'Action', color: 'var(--color-accent-9)', bg: 'var(--color-accent-1)', Icon: Cpu },
-  condition: { label: 'Condition', color: '#7c3aed', bg: '#fdf4ff', Icon: GitBranch },
-  branch: { label: 'Branch', color: '#d97706', bg: '#fffbeb', Icon: Split },
-  agent: { label: 'Agent', color: 'var(--color-success)', bg: 'color-mix(in srgb, var(--color-success) 10%, transparent)', Icon: Bot },
+  action:    { label: 'Action',    color: 'var(--color-accent-9)',  bg: 'var(--color-accent-1)',                                                Icon: Cpu },
+  condition: { label: 'Condition', color: '#7c3aed',                bg: '#fdf4ff',                                                              Icon: GitBranch },
+  branch:    { label: 'Branch',    color: '#d97706',                bg: '#fffbeb',                                                              Icon: Split },
+  agent:     { label: 'Agent',     color: 'var(--color-success)',   bg: 'color-mix(in srgb, var(--color-success) 10%, transparent)',            Icon: Bot },
 }
 
 function StepNode({ step, index, isLast }: {
@@ -103,55 +123,42 @@ function StepNode({ step, index, isLast }: {
 
   return (
     <div className="flex gap-3">
-      {/* Left: node + connector */}
       <div className="flex flex-col items-center shrink-0" style={{ width: 28 }}>
-        <div
-          className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-          style={{ background: meta.bg, boxShadow: `0 0 0 1.5px ${meta.color}60` }}
-        >
+        <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+          style={{ background: meta.bg, boxShadow: `0 0 0 1.5px ${meta.color}60` }}>
           <Icon size={13} style={{ color: meta.color }} aria-hidden />
         </div>
-        {!isLast && (
-          <div className="w-px flex-1 mt-1" style={{ minHeight: 20, background: 'var(--border-default)' }} />
-        )}
+        {!isLast && <div className="w-px flex-1 mt-1" style={{ minHeight: 20, background: 'var(--border-default)' }} />}
       </div>
 
-      {/* Right: content */}
       <div className={`flex-1 min-w-0 pb-4 ${isLast ? 'pb-0' : ''}`}>
-        <button type="button" onClick={() => setExpanded((p) => !p)} className="w-full text-left group/step">
+        <button type="button" onClick={() => setExpanded((p) => !p)} className="w-full text-left">
           <div className="flex items-start gap-2 flex-wrap">
-            <span
-              className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-[var(--radius-sm)] shrink-0 mt-0.5"
-              style={{ color: meta.color, background: meta.bg }}
-            >
+            <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-[var(--radius-sm)] shrink-0 mt-0.5"
+              style={{ color: meta.color, background: meta.bg }}>
               {index + 1} · {meta.label}
             </span>
             <span className="text-[length:var(--font-size-base)] font-medium text-[var(--color-neutral-12)] leading-snug flex-1 min-w-0">
               {step.label}
             </span>
-            <ChevronDown
-              size={14}
+            <ChevronDown size={14}
               className={`shrink-0 mt-0.5 text-[var(--color-neutral-6)] transition-transform duration-[var(--duration-fast)] ${expanded ? 'rotate-180' : ''}`}
-              aria-hidden
-            />
+              aria-hidden />
           </div>
         </button>
 
         {expanded && (
-          <div className="mt-2 pl-0 space-y-2">
+          <div className="mt-2 space-y-2">
             {step.description && (
-              <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed">
-                {step.description}
-              </p>
+              <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed">{step.description}</p>
             )}
             {step.branches && step.branches.length > 0 && (
               <div className="flex flex-col gap-1 mt-2">
                 {step.branches.map((b, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <ArrowRight size={11} className="text-[var(--color-neutral-6)] shrink-0" aria-hidden />
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-[var(--radius-sm)]" style={{ color: meta.color, background: meta.bg }}>
-                      {b.label}
-                    </span>
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-[var(--radius-sm)]"
+                      style={{ color: meta.color, background: meta.bg }}>{b.label}</span>
                   </div>
                 ))}
               </div>
@@ -164,48 +171,30 @@ function StepNode({ step, index, isLast }: {
 }
 
 // ─── Close confirmation overlay ──────────────────────────────────────────────
-function CloseConfirmOverlay({
-  onConfirm,
-  onCancel,
-}: {
-  onConfirm: () => void
-  onCancel: () => void
-}) {
+function CloseConfirmOverlay({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center p-5 sn-fade-in" style={{ background: 'color-mix(in srgb, var(--surface-primary) 85%, transparent)', backdropFilter: 'blur(6px)' }}>
+    <div className="absolute inset-0 z-20 flex items-center justify-center p-5 sn-fade-in"
+      style={{ background: 'color-mix(in srgb, var(--surface-primary) 85%, transparent)', backdropFilter: 'blur(6px)' }}>
       <div className="w-full max-w-[272px] rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-lg)] overflow-hidden">
-        {/* Icon + heading */}
         <div className="px-5 pt-5 pb-4 flex flex-col items-start gap-3">
           <div className="w-9 h-9 rounded-[var(--radius-lg)] bg-[var(--color-neutral-3)] flex items-center justify-center">
             <AlertTriangle size={17} className="text-[var(--color-neutral-9)]" aria-hidden />
           </div>
           <div className="flex flex-col gap-1">
-            <p className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] leading-snug">
-              Discard edits?
-            </p>
+            <p className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] leading-snug">Discard edits?</p>
             <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed">
               Your conversation with SuperNova will be lost. No changes will be applied to this workflow.
             </p>
           </div>
         </div>
-
-        {/* Divider */}
         <div className="h-px bg-[var(--border-default)]" />
-
-        {/* Actions */}
         <div className="px-4 py-3.5 flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-[var(--radius-lg)] bg-[var(--color-neutral-12)] text-[var(--color-neutral-1)] text-[length:var(--font-size-sm)] font-semibold hover:opacity-85 transition-opacity cursor-pointer"
-          >
+          <button type="button" onClick={onConfirm}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-[var(--radius-lg)] bg-[var(--color-neutral-12)] text-[var(--color-neutral-1)] text-[length:var(--font-size-sm)] font-semibold hover:opacity-85 transition-opacity cursor-pointer">
             Discard &amp; close
           </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer"
-          >
+          <button type="button" onClick={onCancel}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer">
             Keep editing
           </button>
         </div>
@@ -214,8 +203,49 @@ function CloseConfirmOverlay({
   )
 }
 
-// ─── Detail page ─────────────────────────────────────────────────────────────
+// ─── Run history modal ────────────────────────────────────────────────────────
+function RunHistoryModal({ open, onClose, wf }: {
+  open: boolean
+  onClose: () => void
+  wf: NonNullable<ReturnType<typeof getWorkflowById>>
+}) {
+  return (
+    <Modal open={open} onOpenChange={(v) => { if (!v) onClose() }} maxWidth="640px">
+      <ModalHeader
+        title={`Run history — ${wf.title}`}
+        description={`${wf.runHistory.length} run${wf.runHistory.length !== 1 ? 's' : ''} · ${wf.totalRuns} total`}
+      />
+      <ModalBody className="!py-0 !px-0">
+        <div className="divide-y divide-[var(--border-subtle)]">
+          {/* Column headers */}
+          <div className="grid px-6 py-2.5 bg-[var(--surface-secondary)]"
+            style={{ gridTemplateColumns: '1fr 90px 110px 120px' }}>
+            {['Started', 'Duration', 'Status', 'Triggered by'].map((h) => (
+              <span key={h} className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)]">{h}</span>
+            ))}
+          </div>
+          {wf.runHistory.length === 0 && (
+            <div className="px-6 py-8 text-center text-[length:var(--font-size-sm)] text-[var(--color-neutral-6)]">No runs yet</div>
+          )}
+          {wf.runHistory.map((run) => (
+            <div key={run.id} className="grid items-center px-6 py-3.5 hover:bg-[var(--color-neutral-2)] transition-colors"
+              style={{ gridTemplateColumns: '1fr 90px 110px 120px' }}>
+              <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)]">{run.startedAt}</span>
+              <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] tabular-nums">{run.duration ?? '—'}</span>
+              <span className="inline-flex items-center gap-1.5 text-[length:var(--font-size-sm)]">
+                <RunStatusDot status={run.status} />
+                <span className="capitalize text-[var(--color-neutral-9)]">{run.status}</span>
+              </span>
+              <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] capitalize">{run.triggeredBy}</span>
+            </div>
+          ))}
+        </div>
+      </ModalBody>
+    </Modal>
+  )
+}
 
+// ─── Detail page ─────────────────────────────────────────────────────────────
 export default function WorkflowDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -223,24 +253,16 @@ export default function WorkflowDetailPage() {
   const wf = getWorkflowById(workflowId)
 
   const [draft, setDraft] = useState('')
-  const [historyOpen, setHistoryOpen] = useState(true)
   const [chatOpen, setChatOpen] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const [editMessageId, setEditMessageId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [historyModalOpen, setHistoryModalOpen] = useState(false)
+
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatScrollRef = useRef<HTMLDivElement>(null)
-  const historyRef = useRef<HTMLDivElement>(null)
-  const contentScrollRef = useRef<HTMLDivElement>(null)
-
-  const scrollToHistory = useCallback(() => {
-    setHistoryOpen(true)
-    window.setTimeout(() => {
-      historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 50)
-  }, [])
 
   useEffect(() => {
     if (!wf) router.replace('/supernova/staging')
@@ -250,33 +272,46 @@ export default function WorkflowDetailPage() {
     messagesEndRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
   }, [messages, isTyping])
 
-  // ── Open the edit panel with typing animation then greeting ──────────────
+  // ── Open edit panel with typing animation ────────────────────────────────
   const handleEditClick = useCallback(() => {
     if (!wf) return
-    // Reset state and open panel
     setMessages([])
     setEditMessageId(null)
     setShowCloseConfirm(false)
     setChatOpen(true)
-    // Show typing indicator after the slide-in settles (~320ms)
-    window.setTimeout(() => {
-      setIsTyping(true)
-    }, 300)
-    // Replace typing with real message
+    window.setTimeout(() => setIsTyping(true), 300)
     window.setTimeout(() => {
       const id = `asst-edit-${Date.now()}`
       setIsTyping(false)
-      setMessages([{
-        id,
-        role: 'assistant',
-        text: `Hey Leti 👋 What would you like to change in **${wf.title}**? Pick one of the options below, or just type what you need.`,
-      }])
+      setMessages([{ id, role: 'assistant', text: `Hey Leti 👋 What would you like to change in **${wf.title}**? Pick one of the options below, or just type what you need.` }])
       setEditMessageId(id)
       window.setTimeout(() => composerRef.current?.focus(), 60)
     }, 1400)
   }, [wf])
 
-  // ── Close button: show confirm if there's an active conversation ─────────
+  // ── Open edit panel pre-firing a specific option ─────────────────────────
+  const handleEditWithOption = useCallback((opt: EditOption) => {
+    if (!wf) return
+    setMessages([])
+    setEditMessageId(null)
+    setShowCloseConfirm(false)
+    setChatOpen(true)
+    window.setTimeout(() => setIsTyping(true), 300)
+    window.setTimeout(() => {
+      setIsTyping(false)
+      const uid = `u-${Date.now()}`
+      setMessages([{ id: uid, role: 'user', text: opt.prompt }])
+      setIsTyping(true)
+      window.setTimeout(() => {
+        setIsTyping(false)
+        setMessages((prev) => [
+          ...prev,
+          { id: `a-${Date.now()}`, role: 'assistant', text: `Got it — I'll help you "${opt.label.toLowerCase()}". What specifically needs to change?` },
+        ])
+      }, 900)
+    }, 900)
+  }, [wf])
+
   const handleCloseRequest = useCallback(() => {
     if (messages.length > 0) {
       setShowCloseConfirm(true)
@@ -305,23 +340,22 @@ export default function WorkflowDetailPage() {
       setIsTyping(false)
       setMessages((prev) => [
         ...prev,
-        {
-          id: `a-${Date.now()}`,
-          role: 'assistant',
-          text: 'Got it — full agent replies will be available in production. This is staging-only behaviour.',
-        },
+        { id: `a-${Date.now()}`, role: 'assistant', text: 'Got it — full agent replies will be available in production. This is staging-only behaviour.' },
       ])
     }, 900)
   }, [draft])
 
   if (!wf) return (
-    <div className="flex h-full items-center justify-center text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">
-      Loading…
-    </div>
+    <div className="flex h-full items-center justify-center text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">Loading…</div>
   )
+
+  const assignOption = EDIT_OPTIONS.find(o => o.label === 'Reassign agent')!
 
   return (
     <div className="sn-staging-agent-detail-enter flex h-full min-h-0 w-full min-w-0 overflow-hidden bg-[var(--surface-canvas)]">
+
+      {/* ── Run history modal ── */}
+      <RunHistoryModal open={historyModalOpen} onClose={() => setHistoryModalOpen(false)} wf={wf} />
 
       {/* ── LEFT: main content ─────────────────────────────────────────── */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -339,46 +373,60 @@ export default function WorkflowDetailPage() {
           <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
             <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] shrink-0">Workflows</span>
             <span className="text-[var(--color-neutral-5)] shrink-0">/</span>
-            <h1 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)] truncate">
-              {wf.title}
-            </h1>
+            <h1 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)] truncate">{wf.title}</h1>
             <StatusBadge status={wf.status} />
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {/* Edit button — fades out when panel is open */}
-            <div
-              className="transition-[opacity,transform] duration-300 ease-[var(--ease-default)]"
-              style={{
-                opacity: chatOpen ? 0 : 1,
-                transform: chatOpen ? 'scale(0.92)' : 'scale(1)',
-                pointerEvents: chatOpen ? 'none' : 'auto',
-              }}
-            >
-              <Button variant="secondary" size="md" type="button" className="gap-1.5" onClick={handleEditClick}>
-                <Pencil size={14} aria-hidden /> Edit
-              </Button>
-            </div>
             {wf.status !== 'failed' && wf.status !== 'draft' && (
               <Button variant="primary" size="md" type="button" className="gap-1.5">
                 <Play size={14} strokeWidth={2.5} aria-hidden /> Run now
               </Button>
             )}
-            <IconButton label="More options" variant="secondary" size="md" type="button">
-              <MoreVertical size={16} aria-hidden />
-            </IconButton>
+
+            {/* More options dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <IconButton label="More options" variant="secondary" size="md" type="button">
+                  <MoreVertical size={16} aria-hidden />
+                </IconButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" minWidth="200px">
+                <DropdownMenuItem onSelect={handleEditClick}>
+                  <Pencil size={14} className="text-[var(--color-neutral-7)] shrink-0" aria-hidden />
+                  Edit workflow
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setHistoryModalOpen(true)}>
+                  <History size={14} className="text-[var(--color-neutral-7)] shrink-0" aria-hidden />
+                  View run history
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => handleEditWithOption(assignOption)}>
+                  <UserPlus size={14} className="text-[var(--color-neutral-7)] shrink-0" aria-hidden />
+                  Assign agent
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => {}}>
+                  <Copy size={14} className="text-[var(--color-neutral-7)] shrink-0" aria-hidden />
+                  Duplicate
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
         {/* Scrollable body */}
-        <div ref={contentScrollRef} className="flex-1 min-h-0 overflow-y-auto px-[var(--space-2xl)] py-[var(--space-xl)]">
-          <div className="flex flex-col gap-6" style={{ maxWidth: 580 }}>
+        <div className="flex-1 min-h-0 overflow-y-auto px-[var(--space-2xl)] py-[var(--space-xl)]">
+          <div className="flex flex-col gap-6 w-full" style={{ maxWidth: 1200 }}>
 
             {/* Metadata grid */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                {
-                  label: 'Assigned agent',
-                  value: wf.assignedAgent ? (
+              {/* Assigned agent */}
+              <div
+                onClick={() => handleEditWithOption(assignOption)}
+                className="rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-4 py-3 cursor-pointer hover:border-[var(--color-accent-6)] hover:bg-[var(--color-accent-1)] transition-colors group/meta-card"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)] mb-1">Assigned agent</p>
+                <div className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] group-hover/meta-card:text-[var(--color-accent-10)]">
+                  {wf.assignedAgent ? (
                     <span className="inline-flex items-center gap-1.5">
                       <span className="w-5 h-5 rounded-full bg-[var(--color-accent-3)] flex items-center justify-center shrink-0">
                         <Bot size={11} className="text-[var(--color-accent-10)]" aria-hidden />
@@ -387,61 +435,69 @@ export default function WorkflowDetailPage() {
                     </span>
                   ) : (
                     <span className="text-[var(--color-neutral-6)]">Unassigned</span>
-                  ),
-                },
-                {
-                  label: 'Trigger',
-                  value: <TriggerChip type={wf.triggerType} />,
-                },
-                {
-                  label: 'Total runs',
-                  value: <span className="tabular-nums">{wf.totalRuns}</span>,
-                  clickable: wf.runHistory.length > 0,
-                },
-                {
-                  label: 'Last run',
-                  value: wf.lastRun ? (
+                  )}
+                </div>
+                <p className="text-[10px] text-[var(--color-accent-9)] mt-1 opacity-0 group-hover/meta-card:opacity-100 transition-opacity font-medium">
+                  {wf.assignedAgent ? 'Reassign →' : 'Assign agent →'}
+                </p>
+              </div>
+
+              {/* Trigger */}
+              <div className="rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-4 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)] mb-1">Trigger</p>
+                <div className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)]">
+                  <TriggerChip type={wf.triggerType} />
+                </div>
+                <p className="text-[11px] text-[var(--color-neutral-7)] mt-1 font-medium">{wf.scheduleLabel}</p>
+              </div>
+
+              {/* Total runs */}
+              <div
+                onClick={wf.runHistory.length > 0 ? () => setHistoryModalOpen(true) : undefined}
+                className={`rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-4 py-3 ${wf.runHistory.length > 0 ? 'cursor-pointer hover:border-[var(--color-accent-6)] hover:bg-[var(--color-accent-1)] transition-colors group/meta-card' : ''}`}
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)] mb-1">Total runs</p>
+                <div className={`text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] ${wf.runHistory.length > 0 ? 'group-hover/meta-card:text-[var(--color-accent-10)]' : ''}`}>
+                  <span className="tabular-nums">{wf.totalRuns}</span>
+                </div>
+                {wf.runHistory.length > 0 && (
+                  <p className="text-[10px] text-[var(--color-accent-9)] mt-1 opacity-0 group-hover/meta-card:opacity-100 transition-opacity font-medium">View history →</p>
+                )}
+              </div>
+
+              {/* Last run */}
+              <div
+                onClick={wf.runHistory.length > 0 ? () => setHistoryModalOpen(true) : undefined}
+                className={`rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-4 py-3 ${wf.runHistory.length > 0 ? 'cursor-pointer hover:border-[var(--color-accent-6)] hover:bg-[var(--color-accent-1)] transition-colors group/meta-card' : ''}`}
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)] mb-1">Last run</p>
+                <div className={`text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] ${wf.runHistory.length > 0 ? 'group-hover/meta-card:text-[var(--color-accent-10)]' : ''}`}>
+                  {wf.lastRun ? (
                     <span className="inline-flex items-center gap-1.5">
                       <RunStatusDot status={wf.lastRunStatus!} />
                       {wf.lastRun}
                     </span>
                   ) : (
                     <span className="text-[var(--color-neutral-6)]">Never</span>
-                  ),
-                  clickable: wf.runHistory.length > 0,
-                },
-              ].map(({ label, value, clickable }) => (
-                <div
-                  key={label}
-                  onClick={clickable ? scrollToHistory : undefined}
-                  className={`rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-4 py-3 ${clickable ? 'cursor-pointer hover:border-[var(--color-accent-6)] hover:bg-[var(--color-accent-1)] transition-colors group/meta-card' : ''}`}
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)] mb-1">{label}</p>
-                  <div className={`text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] ${clickable ? 'group-hover/meta-card:text-[var(--color-accent-10)]' : ''}`}>{value}</div>
-                  {clickable && (
-                    <p className="text-[10px] text-[var(--color-accent-9)] mt-1 opacity-0 group-hover/meta-card:opacity-100 transition-opacity font-medium">
-                      View history →
-                    </p>
                   )}
                 </div>
-              ))}
+                {wf.runHistory.length > 0 && (
+                  <p className="text-[10px] text-[var(--color-accent-9)] mt-1 opacity-0 group-hover/meta-card:opacity-100 transition-opacity font-medium">View history →</p>
+                )}
+              </div>
             </div>
 
             {/* Description */}
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)] mb-1.5">Description</p>
-              <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-10)] leading-relaxed">
-                {wf.description}
-              </p>
+              <p className="text-[length:var(--font-size-base)] text-[var(--color-neutral-10)] leading-relaxed">{wf.description}</p>
             </div>
 
             {/* Workflow graph */}
             <div className="rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-3.5 border-b border-[var(--border-subtle)]">
                 <GitBranch size={15} className="text-[var(--color-neutral-7)] shrink-0" aria-hidden />
-                <span className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-11)]">
-                  Workflow steps
-                </span>
+                <span className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-11)]">Workflow steps</span>
                 <span className="ml-auto text-[11px] font-medium text-[var(--color-neutral-7)]">
                   {wf.steps.length} step{wf.steps.length !== 1 ? 's' : ''}
                 </span>
@@ -453,68 +509,20 @@ export default function WorkflowDetailPage() {
               </div>
             </div>
 
-            {/* Run history */}
-            {wf.runHistory.length > 0 && (
-              <Collapsible.Root open={historyOpen} onOpenChange={setHistoryOpen}>
-                <div ref={historyRef} className="rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] overflow-hidden">
-                  <Collapsible.Trigger className="w-full flex items-center gap-2 px-5 py-3.5 border-b border-[var(--border-subtle)] hover:bg-[var(--color-neutral-2)] transition-colors cursor-pointer group">
-                    <CheckCircle2 size={15} className="text-[var(--color-neutral-7)] shrink-0" aria-hidden />
-                    <span className="text-[length:var(--font-size-sm)] font-semibold text-[var(--color-neutral-11)] flex-1 text-left">
-                      Run history
-                    </span>
-                    <span className="text-[11px] font-medium text-[var(--color-neutral-7)] mr-1">
-                      {wf.runHistory.length} run{wf.runHistory.length !== 1 ? 's' : ''}
-                    </span>
-                    <ChevronDown
-                      size={14}
-                      className={`text-[var(--color-neutral-6)] transition-transform duration-[var(--duration-fast)] ${historyOpen ? 'rotate-180' : ''}`}
-                      aria-hidden
-                    />
-                  </Collapsible.Trigger>
-                  <Collapsible.Content>
-                    <div className="divide-y divide-[var(--border-subtle)]">
-                      <div className="grid px-5 py-2 bg-[var(--surface-secondary)]"
-                        style={{ gridTemplateColumns: '1fr 80px 100px 100px' }}>
-                        {['Started', 'Duration', 'Status', 'Triggered by'].map((h) => (
-                          <span key={h} className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)]">{h}</span>
-                        ))}
-                      </div>
-                      {wf.runHistory.map((run) => (
-                        <div key={run.id} className="grid items-center px-5 py-3" style={{ gridTemplateColumns: '1fr 80px 100px 100px' }}>
-                          <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)]">{run.startedAt}</span>
-                          <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] tabular-nums">{run.duration ?? '—'}</span>
-                          <span className="inline-flex items-center gap-1.5 text-[length:var(--font-size-sm)]">
-                            <RunStatusDot status={run.status} />
-                            <span className="capitalize text-[var(--color-neutral-9)]">{run.status}</span>
-                          </span>
-                          <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] capitalize">{run.triggeredBy}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </Collapsible.Content>
-                </div>
-              </Collapsible.Root>
-            )}
-
           </div>
         </div>
       </div>
 
-      {/* ── RIGHT: Supernova edit panel — slides in on Edit click ─────── */}
+      {/* ── RIGHT: Supernova edit panel ──────────────────────────────── */}
       <div
         className="shrink-0 overflow-hidden transition-[width] ease-[cubic-bezier(0.32,0.72,0,1)]"
         style={{ width: chatOpen ? 340 : 0, transitionDuration: chatOpen ? '320ms' : '280ms' }}
         aria-hidden={!chatOpen}
       >
-        {/* Inner panel — always 340px so content doesn't squish during animation */}
         <div className="relative flex flex-col h-full border-l border-[var(--border-default)] bg-[var(--surface-primary)]" style={{ width: 340, minWidth: 340 }}>
 
-          {/* ── Close confirmation overlay ── */}
           {showCloseConfirm && (
-            <CloseConfirmOverlay
-              onConfirm={handleConfirmClose}
-              onCancel={() => setShowCloseConfirm(false)}
-            />
+            <CloseConfirmOverlay onConfirm={handleConfirmClose} onCancel={() => setShowCloseConfirm(false)} />
           )}
 
           {/* Panel header */}
@@ -540,7 +548,7 @@ export default function WorkflowDetailPage() {
           <div ref={chatScrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-4">
             {messages.map((m) => (
               <Fragment key={m.id}>
-                {m.role === 'assistant' && m.text !== '__CONFIRM__' && m.text !== '__CONFIRMED__' && m.text !== '__CANCELLED__' && (
+                {m.role === 'assistant' && !['__CONFIRM__', '__CONFIRMED__', '__CANCELLED__'].includes(m.text) && (
                   <div className="flex gap-2.5 sn-fade-in">
                     <div className="mt-0.5 w-7 h-7 shrink-0 rounded-full bg-[var(--color-neutral-3)] flex items-center justify-center">
                       <SuperNovaStagingOrb size="sm" />
@@ -561,17 +569,10 @@ export default function WorkflowDetailPage() {
                   </div>
                 )}
 
-                {/* Edit suggestions — right after the edit prompt */}
+                {/* Edit suggestion chips */}
                 {m.id === editMessageId && (
                   <div className="flex flex-col gap-1.5 pl-9 sn-fade-in">
-                    {[
-                      { icon: ListPlus,      label: 'Change steps',                prompt: 'I want to add, remove, or reorder steps in this workflow.' },
-                      { icon: CalendarClock, label: 'Change schedule or trigger',   prompt: 'I want to change when or how this workflow is triggered.' },
-                      { icon: UserPlus,      label: 'Reassign agent',              prompt: 'I want to reassign this workflow to a different agent.' },
-                      { icon: Tag,           label: 'Rename or update description', prompt: 'I want to rename this workflow or update its description.' },
-                      { icon: GitMerge,      label: 'Add condition or branch',     prompt: 'I want to add a condition or branching logic to this workflow.' },
-                      { icon: Repeat2,       label: 'Change run frequency',        prompt: 'I want to change how often this workflow runs.' },
-                    ].map((opt) => {
+                    {EDIT_OPTIONS.map((opt) => {
                       const Icon = opt.icon
                       return (
                         <button
@@ -584,24 +585,15 @@ export default function WorkflowDetailPage() {
                             setIsTyping(true)
                             window.setTimeout(() => {
                               setIsTyping(false)
-                              const aid = `a-${Date.now()}`
                               setMessages((prev) => [
                                 ...prev,
-                                {
-                                  id: aid,
-                                  role: 'assistant',
-                                  text: `Got it — I'll help you "${opt.label.toLowerCase()}". What specifically needs to change?`,
-                                },
+                                { id: `a-${Date.now()}`, role: 'assistant', text: `Got it — I'll help you "${opt.label.toLowerCase()}". What specifically needs to change?` },
                               ])
-                              // After agent replies, show confirm/cancel
                               window.setTimeout(() => {
                                 setIsTyping(true)
                                 window.setTimeout(() => {
                                   setIsTyping(false)
-                                  setMessages((prev) => [
-                                    ...prev,
-                                    { id: `confirm-${Date.now()}`, role: 'assistant', text: '__CONFIRM__' },
-                                  ])
+                                  setMessages((prev) => [...prev, { id: `confirm-${Date.now()}`, role: 'assistant', text: '__CONFIRM__' }])
                                 }, 800)
                               }, 600)
                             }, 900)
@@ -620,55 +612,37 @@ export default function WorkflowDetailPage() {
                   </div>
                 )}
 
-                {/* Confirm / cancel after agent processes an edit */}
+                {/* Confirm/cancel */}
                 {m.role === 'assistant' && m.text === '__CONFIRM__' && (
                   <div className="flex flex-col gap-2 pl-9 sn-fade-in">
-                    <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)] leading-relaxed">
-                      The changes look good. Do you want to apply them?
-                    </p>
+                    <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)] leading-relaxed">The changes look good. Do you want to apply them?</p>
                     <div className="flex gap-2">
-                      <button
-                        type="button"
+                      <button type="button"
                         onClick={() => {
-                          setMessages((prev) => prev.map((msg) =>
-                            msg.text === '__CONFIRM__' ? { ...msg, text: '__CONFIRMED__' } : msg
-                          ))
+                          setMessages((prev) => prev.map((msg) => msg.text === '__CONFIRM__' ? { ...msg, text: '__CONFIRMED__' } : msg))
                           window.setTimeout(() => {
-                            setMessages((prev) => [...prev, {
-                              id: `a-done-${Date.now()}`,
-                              role: 'assistant',
-                              text: '✓ Changes applied! The workflow has been updated.',
-                            }])
+                            setMessages((prev) => [...prev, { id: `a-done-${Date.now()}`, role: 'assistant', text: '✓ Changes applied! The workflow has been updated.' }])
                             window.setTimeout(() => setChatOpen(false), 1800)
                           }, 300)
                         }}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-[var(--radius-lg)] bg-[var(--color-accent-9)] text-white text-[length:var(--font-size-sm)] font-semibold hover:bg-[var(--color-accent-10)] transition-colors cursor-pointer"
-                      >
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-[var(--radius-lg)] bg-[var(--color-accent-9)] text-white text-[length:var(--font-size-sm)] font-semibold hover:bg-[var(--color-accent-10)] transition-colors cursor-pointer">
                         <CheckCircle2 size={13} aria-hidden /> Apply changes
                       </button>
-                      <button
-                        type="button"
+                      <button type="button"
                         onClick={() => {
-                          setMessages((prev) => prev.map((msg) =>
-                            msg.text === '__CONFIRM__' ? { ...msg, text: '__CANCELLED__' } : msg
-                          ))
+                          setMessages((prev) => prev.map((msg) => msg.text === '__CONFIRM__' ? { ...msg, text: '__CANCELLED__' } : msg))
                           window.setTimeout(() => {
-                            setMessages((prev) => [...prev, {
-                              id: `a-cancel-${Date.now()}`,
-                              role: 'assistant',
-                              text: 'No problem — nothing was changed. Want to try something else?',
-                            }])
+                            setMessages((prev) => [...prev, { id: `a-cancel-${Date.now()}`, role: 'assistant', text: 'No problem — nothing was changed. Want to try something else?' }])
                           }, 300)
                         }}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer"
-                      >
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer">
                         Cancel
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* Already actioned states (collapsed pill) */}
+                {/* Status pills */}
                 {m.role === 'assistant' && (m.text === '__CONFIRMED__' || m.text === '__CANCELLED__') && (
                   <div className="pl-9">
                     <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full ${m.text === '__CONFIRMED__' ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-neutral-3)] text-[var(--color-neutral-8)]'}`}>
@@ -679,9 +653,7 @@ export default function WorkflowDetailPage() {
               </Fragment>
             ))}
 
-            {/* Typing indicator */}
             {isTyping && <TypingBubble />}
-
             <div ref={messagesEndRef} className="h-px w-full shrink-0" aria-hidden />
           </div>
 
@@ -692,12 +664,10 @@ export default function WorkflowDetailPage() {
                 ref={composerRef}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
-                }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                 rows={1}
                 placeholder="Describe what you need to change…"
-                className="flex-1 resize-none bg-transparent text-[length:var(--font-size-sm)] leading-5 text-[var(--color-neutral-12)] outline-none placeholder:text-[var(--color-neutral-6)] min-h-[32px] max-h-24 py-1.5"
+                className="flex-1 resize-none bg-transparent text-[length:var(--font-size-sm)] leading-5 text-[var(--color-neutral-12)] outline-none focus:outline-none focus-visible:outline-none placeholder:text-[var(--color-neutral-6)] min-h-[32px] max-h-24 py-1.5"
               />
               <button
                 type="button"
