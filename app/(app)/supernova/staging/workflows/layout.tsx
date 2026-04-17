@@ -3,14 +3,21 @@
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  ChevronLeft, ChevronRight, Plus,
+  ChevronLeft, ChevronRight, Plus, ChevronDown,
   BarChart3, Search, Thermometer, Package, ShieldCheck,
-  Wrench, Bell, Check, Pause, X,
+  Wrench, Bell, Check, Pause, X, Archive, RefreshCw,
   type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import { Tooltip } from '@/app/components/ui'
 import { STAGING_WORKFLOWS, type WorkflowStatus } from '../lib/staging-workflows'
+
+// ─── Archived workflows (mock) ────────────────────────────────────────────────
+const ARCHIVED_WORKFLOWS = [
+  { id: 'a1', title: 'Vendor Onboarding Flow',   scheduleLabel: 'Manual',        iconName: 'Package', steps: 5 },
+  { id: 'a2', title: 'Monthly Compliance Report', scheduleLabel: 'Every month',   iconName: 'ShieldCheck', steps: 4 },
+  { id: 'a3', title: 'Legacy WO Sync',            scheduleLabel: 'Daily at midnight', iconName: 'Bell', steps: 3 },
+]
 
 // ─── Icon registry ────────────────────────────────────────────────────────────
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -18,7 +25,20 @@ const ICON_MAP: Record<string, LucideIcon> = {
 }
 
 // ─── Status dot config ────────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: WorkflowStatus }) {
+function StatusBadge({ status, isRunning }: { status: WorkflowStatus; isRunning?: boolean }) {
+  // Running takes priority — blue badge with spinner
+  if (isRunning) {
+    return (
+      <span
+        className="absolute -bottom-0.5 -right-0.5 z-[2] flex h-4 w-4 items-center justify-center rounded-[5px] ring-[2.5px] ring-[var(--surface-primary)]"
+        style={{ background: 'var(--color-accent-9)' }}
+        aria-label="Running"
+      >
+        <RefreshCw size={8} color="white" strokeWidth={3} className="animate-spin" aria-hidden />
+      </span>
+    )
+  }
+
   if (status === 'draft') return null
 
   const cfg = {
@@ -32,11 +52,11 @@ function StatusBadge({ status }: { status: WorkflowStatus }) {
 
   return (
     <span
-      className="absolute bottom-0 right-0 flex h-[18px] w-[18px] items-center justify-center rounded-full ring-2 ring-[var(--surface-primary)]"
+      className="absolute -bottom-0.5 -right-0.5 z-[2] flex h-4 w-4 items-center justify-center rounded-[5px] ring-[2.5px] ring-[var(--surface-primary)]"
       style={{ background: bg }}
       aria-label={label}
     >
-      <Icon size={10} color="white" strokeWidth={2.5} aria-hidden />
+      <Icon size={8} color="white" strokeWidth={3} aria-hidden />
     </span>
   )
 }
@@ -68,24 +88,13 @@ function WorkflowRailItem({
           : 'border border-transparent hover:bg-[var(--color-neutral-3)]'
       }`}
     >
-      {/* Avatar with running spinner + status badge */}
+      {/* Avatar with status badge */}
       <span className="relative flex shrink-0">
-        {/* Spinning border when running */}
-        {isRunning && (
-          <span
-            className="absolute -inset-[3px] rounded-full animate-spin"
-            style={{
-              background: 'conic-gradient(var(--color-accent-9) 0deg, transparent 240deg)',
-              borderRadius: '50%',
-            }}
-            aria-hidden
-          />
-        )}
-        {/* Avatar circle */}
-        <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-neutral-4)] z-[1]">
-          <Icon size={16} className="text-[var(--color-neutral-9)]" aria-hidden />
+        {/* Avatar square */}
+        <span className="relative flex h-10 w-10 items-center justify-center rounded-[16px] bg-[var(--color-accent-1)] border border-[var(--color-accent-4)] z-[1]">
+          <Icon size={16} className="text-[var(--color-accent-9)]" aria-hidden />
         </span>
-        <StatusBadge status={wf.status} />
+        <StatusBadge status={wf.status} isRunning={isRunning} />
       </span>
 
       {!collapsed && (
@@ -94,7 +103,7 @@ function WorkflowRailItem({
             <div className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] truncate">
               {wf.title}
             </div>
-            <div className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] truncate mt-0.5">
+            <div className="text-[12px] text-[var(--color-neutral-6)] truncate mt-0.5 leading-snug">
               {wf.steps.length} steps · {wf.scheduleLabel}
             </div>
           </div>
@@ -120,6 +129,7 @@ export default function WorkflowsLayout({ children }: { children: React.ReactNod
   const pathname = usePathname()
   const router = useRouter()
   const [railCollapsed, setRailCollapsed] = useState(false)
+  const [archivedOpen, setArchivedOpen] = useState(false)
 
   const urlSegments = pathname.split('/')
   const lastSegment = urlSegments[urlSegments.length - 1]
@@ -183,7 +193,7 @@ export default function WorkflowsLayout({ children }: { children: React.ReactNod
               } border border-[var(--color-accent-7)] bg-[var(--color-accent-1)] shadow-[var(--shadow-xs)]`}
             >
               <span className="relative flex shrink-0">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent-3)]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[var(--color-accent-2)] border border-[var(--color-accent-5)]">
                   <Plus size={16} className="text-[var(--color-accent-10)]" aria-hidden />
                 </span>
               </span>
@@ -208,6 +218,50 @@ export default function WorkflowsLayout({ children }: { children: React.ReactNod
               onNavigate={(id) => router.push(`/supernova/staging/workflows/${id}`)}
             />
           ))}
+
+          {/* ── Archived section ── */}
+          {!railCollapsed && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setArchivedOpen((o) => !o)}
+                className="flex w-full items-center gap-1.5 px-2 py-1.5 rounded-[var(--radius-md)] text-left hover:bg-[var(--color-neutral-3)] transition-colors cursor-pointer group"
+              >
+                <Archive size={12} className="text-[var(--color-neutral-6)] shrink-0" aria-hidden />
+                <span className="flex-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-neutral-6)]">
+                  Archived
+                </span>
+                <span className="text-[10px] font-medium text-[var(--color-neutral-6)] mr-1">{ARCHIVED_WORKFLOWS.length}</span>
+                <ChevronDown
+                  size={12}
+                  className={`text-[var(--color-neutral-5)] transition-transform duration-[var(--duration-fast)] shrink-0 ${archivedOpen ? 'rotate-180' : ''}`}
+                  aria-hidden
+                />
+              </button>
+
+              {archivedOpen && (
+                <div className="mt-1 flex flex-col gap-0">
+                  {ARCHIVED_WORKFLOWS.map((aw) => {
+                    const Icon = ICON_MAP[aw.iconName] ?? Archive
+                    return (
+                      <div
+                        key={aw.id}
+                        className="flex items-center gap-3 px-3 py-2 rounded-[var(--radius-lg)] border border-transparent opacity-60 hover:opacity-80 hover:bg-[var(--color-neutral-2)] transition-all cursor-pointer"
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[12px] bg-[var(--color-neutral-3)] border border-[var(--color-neutral-5)]">
+                          <Icon size={13} className="text-[var(--color-neutral-7)]" aria-hidden />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] truncate">{aw.title}</div>
+                          <div className="text-[12px] text-[var(--color-neutral-6)] truncate leading-snug">{aw.steps} steps · {aw.scheduleLabel}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         {/* Edge collapse toggle */}

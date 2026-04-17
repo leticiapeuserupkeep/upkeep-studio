@@ -5,9 +5,9 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Play, Bot, Clock, Zap, GitBranch,
   CheckCircle2, AlertCircle, RefreshCw, ChevronDown,
-  Send, MoreVertical, UserPlus, PauseCircle, Cpu, Split,
+  Send, MoreVertical, UserPlus, Cpu, Split,
   ArrowRight, Pencil, ListPlus, CalendarClock, Tag, GitMerge,
-  Repeat2, AlertTriangle, Copy, History,
+  Repeat2, AlertTriangle, Copy, History, Archive, Trash2, Check,
 } from 'lucide-react'
 import { Badge } from '@/app/components/ui/Badge'
 import { Button } from '@/app/components/ui/Button'
@@ -19,6 +19,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/app/components/ui/DropdownMenu'
 import { SuperNovaStagingOrb } from '@/app/components/supernova-staging/SuperNovaStagingOrb'
 import {
@@ -252,10 +253,12 @@ export default function WorkflowDetailPage() {
   const workflowId = typeof params.workflowId === 'string' ? params.workflowId : ''
   const wf = getWorkflowById(workflowId)
 
+  const [currentStatus, setCurrentStatus] = useState<WorkflowStatus>(wf?.status ?? 'active')
   const [draft, setDraft] = useState('')
   const [chatOpen, setChatOpen] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [editMessageId, setEditMessageId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [historyModalOpen, setHistoryModalOpen] = useState(false)
@@ -357,6 +360,50 @@ export default function WorkflowDetailPage() {
       {/* ── Run history modal ── */}
       <RunHistoryModal open={historyModalOpen} onClose={() => setHistoryModalOpen(false)} wf={wf} />
 
+      {/* ── Delete confirm modal ── */}
+      <Modal open={showDeleteConfirm} onOpenChange={(v) => { if (!v) setShowDeleteConfirm(false) }} maxWidth="400px">
+        <ModalBody className="!pt-6 !pb-5">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-[color-mix(in_srgb,var(--color-error)_12%,transparent)]">
+                <Trash2 size={18} className="text-[var(--color-error)]" aria-hidden />
+              </div>
+              <div className="flex flex-col gap-1 min-w-0 pt-0.5">
+                <p className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] leading-snug">
+                  Delete "{wf.title}"?
+                </p>
+                <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed">
+                  This workflow and its run history will be permanently removed. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2.5 justify-end pt-1">
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                type="button"
+                className="!bg-[var(--color-error)] hover:!bg-[color-mix(in_srgb,var(--color-error)_85%,black)] !shadow-none"
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  router.push('/supernova/staging/workflows')
+                }}
+              >
+                <Trash2 size={13} aria-hidden />
+                Delete workflow
+              </Button>
+            </div>
+          </div>
+        </ModalBody>
+      </Modal>
+
       {/* ── LEFT: main content ─────────────────────────────────────────── */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
 
@@ -374,7 +421,35 @@ export default function WorkflowDetailPage() {
             <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] shrink-0">Workflows</span>
             <span className="text-[var(--color-neutral-5)] shrink-0">/</span>
             <h1 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)] truncate">{wf.title}</h1>
-            <StatusBadge status={wf.status} />
+
+            {/* Status toggle */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 cursor-pointer rounded-[var(--radius-md)] hover:opacity-75 transition-opacity focus-visible:outline-none"
+                  aria-label={`Workflow status: ${currentStatus}. Click to change.`}
+                >
+                  <StatusBadge status={currentStatus} />
+                  <ChevronDown size={11} className="text-[var(--color-neutral-6)] -ml-0.5" aria-hidden />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" minWidth="160px">
+                <DropdownMenuLabel>Change status</DropdownMenuLabel>
+                {([
+                  { s: 'active' as WorkflowStatus,  dot: 'var(--color-success)', label: 'Active' },
+                  { s: 'paused' as WorkflowStatus,  dot: '#d97706',              label: 'Paused' },
+                  { s: 'draft'  as WorkflowStatus,  dot: 'var(--color-neutral-5)', label: 'Draft' },
+                  { s: 'failed' as WorkflowStatus,  dot: 'var(--color-error)',   label: 'Failed' },
+                ]).map(({ s, dot, label }) => (
+                  <DropdownMenuItem key={s} onSelect={() => setCurrentStatus(s)}>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: dot }} aria-hidden />
+                    <span className="flex-1">{label}</span>
+                    {s === currentStatus && <Check size={13} className="ml-auto text-[var(--color-accent-9)] shrink-0" aria-hidden />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {wf.status !== 'failed' && wf.status !== 'draft' && (
@@ -407,6 +482,18 @@ export default function WorkflowDetailPage() {
                 <DropdownMenuItem onSelect={() => {}}>
                   <Copy size={14} className="text-[var(--color-neutral-7)] shrink-0" aria-hidden />
                   Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => {}}>
+                  <Archive size={14} className="text-[var(--color-neutral-7)] shrink-0" aria-hidden />
+                  Archive
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => setShowDeleteConfirm(true)}
+                  className="text-[var(--color-error)] focus:text-[var(--color-error)]"
+                >
+                  <Trash2 size={14} className="shrink-0" aria-hidden />
+                  Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -472,7 +559,12 @@ export default function WorkflowDetailPage() {
               >
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)] mb-1">Last run</p>
                 <div className={`text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] ${wf.runHistory.length > 0 ? 'group-hover/meta-card:text-[var(--color-accent-10)]' : ''}`}>
-                  {wf.lastRun ? (
+                  {wf.lastRunStatus === 'running' ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <RefreshCw size={13} className="text-[var(--color-accent-9)] animate-spin shrink-0" aria-hidden />
+                      <span className="text-[var(--color-accent-9)]">Running now</span>
+                    </span>
+                  ) : wf.lastRun ? (
                     <span className="inline-flex items-center gap-1.5">
                       <RunStatusDot status={wf.lastRunStatus!} />
                       {wf.lastRun}

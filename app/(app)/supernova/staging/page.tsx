@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation'
 import {
   Search, Plus, MoreVertical, Zap, Clock, Play,
   GitBranch, CheckCircle2, AlertCircle, PauseCircle,
-  FileEdit, ChevronRight, Bot, RefreshCw, Trash2,
-  Copy, Settings,
+  FileEdit, ChevronRight, RefreshCw, Trash2,
+  Copy, Settings, BarChart3, Thermometer, Package,
+  ShieldCheck, Wrench, Bell,
+  type LucideIcon,
 } from 'lucide-react'
 import { StagingPageHeader } from '@/app/components/supernova-staging/StagingPageHeader'
 import { Badge } from '@/app/components/ui/Badge'
@@ -20,6 +22,11 @@ import {
   DropdownMenuTrigger,
 } from '@/app/components/ui/DropdownMenu'
 import { STAGING_WORKFLOWS, type WorkflowStatus, type TriggerType } from './lib/staging-workflows'
+
+// ─── Icon registry ────────────────────────────────────────────────────────────
+const ICON_MAP: Record<string, LucideIcon> = {
+  BarChart3, Search, Thermometer, Package, ShieldCheck, Wrench, Bell,
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -249,20 +256,26 @@ export default function SuperNovaStagingWorkflowsPage() {
                     role="row"
                   >
                     {/* Name + description */}
-                    <div className="min-w-0 pr-4">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-accent-9)] group-hover:text-[var(--color-accent-10)] group-hover:underline truncate">
-                          {wf.title}
-                        </span>
-                        {wf.automation && (
-                          <span className="inline-flex items-center gap-0.5 px-1.5 h-4 rounded-[var(--radius-sm)] bg-[var(--color-neutral-3)] text-[10px] font-semibold text-[var(--color-neutral-8)] shrink-0">
-                            AUTO
+                    <div className="flex items-center gap-3 min-w-0 pr-4">
+                      {/* Workflow icon thumbnail */}
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[var(--color-accent-1)] border border-[var(--color-accent-4)]">
+                        {(() => { const Icon = ICON_MAP[wf.iconName] ?? BarChart3; return <Icon size={15} className="text-[var(--color-accent-9)]" aria-hidden /> })()}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-12)] group-hover:text-[var(--color-neutral-12)] truncate">
+                            {wf.title}
                           </span>
-                        )}
+                          {wf.automation && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 h-4 rounded-[var(--radius-sm)] bg-[var(--color-neutral-3)] text-[10px] font-semibold text-[var(--color-neutral-8)] shrink-0">
+                              AUTO
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] truncate">
+                          {wf.description}
+                        </p>
                       </div>
-                      <p className="mt-0.5 text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] truncate">
-                        {wf.description}
-                      </p>
                     </div>
 
                     {/* Status */}
@@ -275,8 +288,8 @@ export default function SuperNovaStagingWorkflowsPage() {
                     <div className="min-w-0">
                       {wf.assignedAgent ? (
                         <span className="inline-flex items-center gap-1.5 text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] truncate">
-                          <span className="w-5 h-5 rounded-full bg-[var(--color-accent-3)] flex items-center justify-center shrink-0">
-                            <Bot size={11} className="text-[var(--color-accent-10)]" aria-hidden />
+                          <span className="w-5 h-5 rounded-full bg-[var(--color-accent-9)] flex items-center justify-center shrink-0 text-white font-bold" style={{ fontSize: 9 }}>
+                            {wf.assignedAgent.charAt(0).toUpperCase()}
                           </span>
                           <span className="truncate">{wf.assignedAgent}</span>
                         </span>
@@ -318,7 +331,7 @@ export default function SuperNovaStagingWorkflowsPage() {
                             variant="ghost"
                             size="md"
                             type="button"
-                            className="text-[var(--color-neutral-6)] hover:text-[var(--color-neutral-11)] opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="text-[var(--color-neutral-6)] hover:text-[var(--color-neutral-11)]"
                           >
                             <MoreVertical size={16} aria-hidden />
                           </IconButton>

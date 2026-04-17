@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
-import { MoreVertical, PanelLeft, Plus, Settings, Shield, Star, Trash2 } from 'lucide-react'
+import { MoreVertical, PanelLeft, Plus, Settings, Shield, Star, Trash2, Zap } from 'lucide-react'
 import { Button } from '@/app/components/ui/Button'
 import { Badge } from '@/app/components/ui/Badge'
 import {
@@ -16,6 +16,7 @@ import { Avatar } from '@/app/components/ui/Avatar'
 import { IconButton } from '@/app/components/ui/IconButton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/Table'
 import { STAGING_AGENTS } from '@/app/(app)/supernova/staging/lib/staging-agents'
+import { STAGING_WORKFLOWS } from '@/app/(app)/supernova/staging/lib/staging-workflows'
 import { useSuperNovaStagingNav } from '@/app/components/supernova-staging/supernova-staging-nav-context'
 
 const stagingShellHeaderIconButtonClass =
@@ -35,6 +36,18 @@ export function SuperNovaStagingAgentsIndex() {
     const active = STAGING_AGENTS.filter((a) => a.status === 'active').length
     const paused = STAGING_AGENTS.filter((a) => a.status === 'paused').length
     return { activeCount: active, pausedCount: paused }
+  }, [])
+
+  // Map agent name → assigned workflows
+  const agentWorkflowsMap = useMemo(() => {
+    const map: Record<string, typeof STAGING_WORKFLOWS> = {}
+    for (const wf of STAGING_WORKFLOWS) {
+      if (wf.assignedAgent) {
+        if (!map[wf.assignedAgent]) map[wf.assignedAgent] = []
+        map[wf.assignedAgent].push(wf)
+      }
+    }
+    return map
   }, [])
 
   return (
@@ -82,6 +95,7 @@ export function SuperNovaStagingAgentsIndex() {
                   <TableHead className={`${tableHeadClass}`}>Status</TableHead>
                   <TableHead className={`${tableHeadClass} min-w-[200px]`}>Model</TableHead>
                   <TableHead className={`${tableHeadClass} min-w-[140px]`}>Connected systems</TableHead>
+                  <TableHead className={`${tableHeadClass} min-w-[180px]`}>Workflows</TableHead>
                   <TableHead className={`${tableHeadClass} w-[100px] text-right`}>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -107,15 +121,14 @@ export function SuperNovaStagingAgentsIndex() {
                           <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-accent-9)] group-hover:text-[var(--color-accent-10)] group-hover:underline">
                             {a.name}
                           </span>
-                          <p className="mt-0.5 text-[length:var(--font-size-sm)] leading-snug text-[var(--color-neutral-8)]">
+                          <p className="mt-0.5 text-[length:var(--font-size-sm)] leading-snug text-[var(--color-neutral-8)] truncate">
                             {a.subtitle}
                           </p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="align-middle py-3 px-3">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-neutral-3)] px-2.5 py-1 text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wide text-[var(--color-neutral-11)]">
-                        <Star size={12} className="shrink-0 text-[var(--color-neutral-8)]" aria-hidden />
+                      <span className="inline-flex items-center rounded-full bg-[var(--color-neutral-3)] px-2.5 py-1 text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wide text-[var(--color-neutral-11)]">
                         {a.stage}
                       </span>
                     </TableCell>
@@ -131,21 +144,70 @@ export function SuperNovaStagingAgentsIndex() {
                       )}
                     </TableCell>
                     <TableCell className="align-middle py-3 px-3">
-                      <span className="font-mono text-[length:var(--font-size-sm)] leading-snug text-[var(--color-neutral-9)]">
-                        {a.model}
-                      </span>
+                      {(() => {
+                        const parts = a.model.split('/')
+                        return (
+                          <div className="flex items-center gap-1">
+                            <span className="inline-flex items-center rounded-[var(--radius-md)] bg-[var(--color-neutral-3)] px-2 py-0.5 font-mono text-[length:var(--font-size-xs)] text-[var(--color-neutral-8)] max-w-[120px] truncate">
+                              {parts[0]}
+                            </span>
+                            {parts.length > 1 && (
+                              <span className="inline-flex items-center rounded-[var(--radius-md)] bg-[var(--color-neutral-3)] px-2 py-0.5 font-mono text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)] shrink-0">
+                                +{parts.length - 1}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </TableCell>
                     <TableCell className="align-middle py-3 px-3">
                       <div className="flex flex-wrap gap-1.5">
                         {a.connectedSystems.map((sys) => (
                           <span
                             key={sys}
-                            className="inline-flex items-center rounded-[var(--radius-md)] border border-[var(--color-accent-4)] bg-[var(--color-accent-1)] px-2 py-0.5 text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wide text-[var(--color-accent-11)]"
+                            className="inline-flex items-center rounded-[var(--radius-md)] border border-[var(--color-neutral-4)] bg-[var(--color-neutral-3)] px-2 py-0.5 text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wide text-[var(--color-neutral-8)]"
                           >
                             {sys.toUpperCase()}
                           </span>
                         ))}
                       </div>
+                    </TableCell>
+                    <TableCell className="align-middle py-3 px-3" onClick={(e) => e.stopPropagation()}>
+                      {(() => {
+                        const wfs = agentWorkflowsMap[a.name] ?? []
+                        if (wfs.length === 0) {
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => router.push('/supernova/staging/workflows/new')}
+                              className="inline-flex items-center gap-1 rounded-[var(--radius-md)] border border-dashed border-[var(--color-neutral-5)] px-2 py-0.5 text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-6)] hover:border-[var(--color-accent-6)] hover:bg-[var(--color-accent-1)] hover:text-[var(--color-accent-9)] transition-colors cursor-pointer"
+                            >
+                              <Plus size={10} className="shrink-0" aria-hidden />
+                              Assign workflow
+                            </button>
+                          )
+                        }
+                        return (
+                          <div className="flex flex-wrap gap-1.5">
+                            {wfs.slice(0, 1).map((wf) => (
+                              <button
+                                key={wf.id}
+                                type="button"
+                                onClick={() => router.push(`/supernova/staging/workflows/${wf.id}`)}
+                                className="inline-flex items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-neutral-4)] bg-[var(--color-neutral-2)] px-2 py-0.5 text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-10)] hover:border-[var(--color-accent-5)] hover:bg-[var(--color-accent-1)] hover:text-[var(--color-accent-10)] transition-colors cursor-pointer max-w-[120px]"
+                              >
+                                <Zap size={10} className="shrink-0" aria-hidden />
+                                <span className="truncate">{wf.title}</span>
+                              </button>
+                            ))}
+                            {wfs.length > 1 && (
+                              <span className="inline-flex items-center rounded-[var(--radius-md)] bg-[var(--color-neutral-3)] px-2 py-0.5 text-[length:var(--font-size-xs)] font-medium text-[var(--color-neutral-7)]">
+                                +{wfs.length - 1}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </TableCell>
                     <TableCell
                       className="align-middle py-3 pr-4 pl-3 text-right"
