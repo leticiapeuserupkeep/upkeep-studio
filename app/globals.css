@@ -162,6 +162,22 @@
 .sn-staging-workflow-cards > *:nth-child(11) { animation-delay: 400ms; }
 .sn-staging-workflow-cards > *:nth-child(12) { animation-delay: 440ms; }
 
+/* SuperNova staging: workflow detail page entrance */
+@keyframes sn-staging-workflow-detail-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.sn-staging-workflow-detail-enter {
+  animation: sn-staging-workflow-detail-in 0.35s var(--ease-default) forwards;
+}
+
 /* SuperNova staging: integration cards — same motion as workflows; cap stagger for large grids */
 .sn-staging-integration-card-enter {
   animation: sn-staging-workflow-card-in 0.38s var(--ease-default) both;

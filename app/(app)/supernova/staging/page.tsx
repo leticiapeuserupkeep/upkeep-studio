@@ -1,178 +1,369 @@
 'use client'
 
-import * as Collapsible from '@radix-ui/react-collapsible'
-import Link from 'next/link'
-import { ChevronDown, Trash2 } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
+import {
+  Search, Plus, MoreVertical, Zap, Clock, Play,
+  GitBranch, CheckCircle2, AlertCircle, PauseCircle,
+  FileEdit, ChevronRight, Bot, RefreshCw, Trash2,
+  Copy, Settings,
+} from 'lucide-react'
 import { StagingPageHeader } from '@/app/components/supernova-staging/StagingPageHeader'
 import { Badge } from '@/app/components/ui/Badge'
 import { Button } from '@/app/components/ui/Button'
-import { Card } from '@/app/components/ui/Card'
 import { IconButton } from '@/app/components/ui/IconButton'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/DropdownMenu'
+import { STAGING_WORKFLOWS, type WorkflowStatus, type TriggerType } from './lib/staging-workflows'
 
-type StagingWorkflow = {
-  id: string
-  title: string
-  description: string
-  steps: string[]
-  meta: string
-  extraBadges?: { label: string; variant: 'demo' | 'unassigned' }[]
-  runHistory?: { label: string; duration: string }[]
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function StatusBadge({ status }: { status: WorkflowStatus }) {
+  if (status === 'active')
+    return <Badge severity="success" variant="subtle" size="sm" className="!font-semibold uppercase tracking-wide shrink-0">Active</Badge>
+  if (status === 'paused')
+    return <Badge severity="warning" variant="subtle" size="sm" className="!font-semibold uppercase tracking-wide shrink-0">Paused</Badge>
+  if (status === 'failed')
+    return <Badge severity="danger" variant="subtle" size="sm" className="!font-semibold uppercase tracking-wide shrink-0">Failed</Badge>
+  return <Badge severity="neutral" variant="subtle" size="sm" className="!font-semibold uppercase tracking-wide shrink-0">Draft</Badge>
 }
 
-const stagingWorkflows: StagingWorkflow[] = [
-  {
-    id: '1',
-    title: 'Daily WO Report',
-    description: 'Summarizes open work orders and posts to the maintenance channel each morning.',
-    steps: ['Fetch data', 'Check threshold'],
-    meta: '2 steps • cron',
-    extraBadges: [{ label: 'Demo', variant: 'demo' }],
-    runHistory: [{ label: 'completed', duration: '242s' }],
-  },
-  {
-    id: '2',
-    title: 'Company Research & Presentation',
-    description: 'Pulls public filings and drafts a short executive brief for review.',
-    steps: ['Gather sources', 'Summarize', 'Format deck'],
-    meta: '3 steps • manual',
-    extraBadges: [{ label: 'Unassigned', variant: 'unassigned' }],
-  },
-  {
-    id: '3',
-    title: 'HVAC Diagnostics',
-    description: 'Reads sensor streams and flags anomalies against the facility playbook.',
-    steps: ['Ingest telemetry', 'Score rules', 'Notify owner'],
-    meta: '3 steps • event',
-    extraBadges: [{ label: 'Demo', variant: 'demo' }],
-  },
-  {
-    id: '4',
-    title: 'Inventory reorder check',
-    description: 'Compares stock levels to min/max and opens a draft PO when needed.',
-    steps: ['Sync inventory', 'Compare thresholds'],
-    meta: '2 steps • cron',
-  },
-  {
-    id: '5',
-    title: 'Safety briefing digest',
-    description: 'Aggregates incidents and near-misses into a weekly digest for EHS.',
-    steps: ['Collect cases', 'Classify', 'Publish summary'],
-    meta: '3 steps • cron',
-    runHistory: [{ label: 'completed', duration: '118s' }],
-  },
-]
-
-function ExtraBadge({ variant, label }: { variant: 'demo' | 'unassigned'; label: string }) {
-  if (variant === 'demo') {
+function TriggerBadge({ type }: { type: TriggerType }) {
+  if (type === 'scheduled')
     return (
-      <span className="inline-flex items-center px-2 h-5 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--surface-secondary)] text-[11px] font-medium text-[var(--color-neutral-9)]">
-        {label}
+      <span className="inline-flex items-center gap-1 px-2 h-5 rounded-[var(--radius-md)] bg-[var(--color-accent-1)] border border-[var(--color-accent-4)] text-[11px] font-semibold text-[var(--color-accent-11)] shrink-0">
+        <Clock size={10} aria-hidden /> Scheduled
       </span>
     )
-  }
+  if (type === 'event')
+    return (
+      <span className="inline-flex items-center gap-1 px-2 h-5 rounded-[var(--radius-md)] bg-[#fdf4ff] border border-[#e9d5ff] text-[11px] font-semibold text-[#7c3aed] shrink-0">
+        <Zap size={10} aria-hidden /> Event
+      </span>
+    )
   return (
-    <span className="inline-flex items-center px-2 h-5 rounded-[var(--radius-md)] border border-[var(--border-subtle)] bg-[var(--color-neutral-3)] text-[11px] font-medium text-[var(--color-neutral-9)]">
-      {label}
+    <span className="inline-flex items-center gap-1 px-2 h-5 rounded-[var(--radius-md)] bg-[var(--color-neutral-3)] border border-[var(--border-default)] text-[11px] font-semibold text-[var(--color-neutral-9)] shrink-0">
+      <Play size={10} aria-hidden /> Manual
     </span>
   )
 }
 
-export default function SuperNovaStagingWorkflowsPage() {
+function LastRunCell({ status, lastRun, lastRunDuration }: {
+  status: 'completed' | 'failed' | 'running' | null
+  lastRun: string | null
+  lastRunDuration: string | null
+}) {
+  if (!lastRun) return <span className="text-[var(--color-neutral-6)]">—</span>
+  if (status === 'running')
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[var(--color-accent-9)]">
+        <RefreshCw size={12} className="animate-spin shrink-0" aria-hidden />
+        <span>Running</span>
+      </span>
+    )
+  if (status === 'failed')
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <AlertCircle size={12} className="text-[var(--color-error)] shrink-0" aria-hidden />
+        <span className="text-[var(--color-neutral-9)]">{lastRun}</span>
+      </span>
+    )
   return (
-    <div className="w-full flex flex-col min-h-0">
-      <StagingPageHeader title="Workflows" />
+    <span className="inline-flex items-center gap-1.5">
+      <CheckCircle2 size={12} className="text-[var(--color-success)] shrink-0" aria-hidden />
+      <span className="text-[var(--color-neutral-9)]">{lastRun}{lastRunDuration ? ` · ${lastRunDuration}` : ''}</span>
+    </span>
+  )
+}
 
-      <div className="sn-staging-workflows-page-enter w-full px-[var(--space-2xl)] py-[var(--space-xl)] flex flex-col gap-6">
-        <p className="text-[length:var(--font-size-body-1)] text-[var(--color-neutral-12)] leading-6 max-w-[var(--supernova-staging-prose-max)]">
-          Manage all workflows created by your agents in one place. Agents can create them directly from chat.
-        </p>
+// ─── Filter constants ────────────────────────────────────────────────────────
 
-        <div className="sn-staging-workflow-cards max-w-[var(--supernova-staging-content-max)] flex flex-col gap-[var(--space-md)] w-full">
-          {stagingWorkflows.map((wf) => (
-            <Card
-              key={wf.id}
-              className="sn-staging-workflow-card-enter shadow-none border-[var(--border-default)] bg-[var(--surface-primary)]"
-            >
-              <div className="p-[var(--widget-padding)] flex flex-col gap-[var(--space-md)]">
-                <div className="flex flex-wrap items-start justify-between gap-x-[var(--space-sm)] gap-y-[var(--space-xs)]">
-                  <div className="flex flex-wrap items-center gap-[var(--space-xs)] min-w-0 flex-1">
-                    <h2 className="text-[length:var(--font-size-md)] font-semibold text-[var(--color-neutral-12)]">
-                      {wf.title}
-                    </h2>
-                    <Badge severity="success" variant="subtle" size="sm">
-                      ACTIVE
-                    </Badge>
-                    {wf.extraBadges?.map((b) => (
-                      <ExtraBadge key={b.label} variant={b.variant} label={b.label} />
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-[var(--space-xs)] shrink-0">
-                    <IconButton label="Delete workflow" variant="secondary" size="md" className="shrink-0">
-                      <Trash2 size={16} />
-                    </IconButton>
-                    <Button variant="secondary" size="md" type="button">
-                      Assign
-                    </Button>
-                  </div>
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'All statuses' },
+  { value: 'active', label: 'Active' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'paused', label: 'Paused' },
+  { value: 'failed', label: 'Failed' },
+]
+
+const TRIGGER_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'All triggers' },
+  { value: 'manual', label: 'Manual' },
+  { value: 'scheduled', label: 'Scheduled' },
+  { value: 'event', label: 'Event-based' },
+]
+
+const AGENT_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'All agents' },
+  { value: 'Demo', label: 'Demo' },
+  { value: '__none__', label: 'Unassigned' },
+]
+
+const selectCls =
+  'h-8 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] px-3 pr-7 text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-11)] appearance-none cursor-pointer transition-colors hover:border-[var(--color-neutral-6)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-7)] focus:border-[var(--color-accent-7)]'
+
+// ─── Page ────────────────────────────────────────────────────────────────────
+
+export default function SuperNovaStagingWorkflowsPage() {
+  const router = useRouter()
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [triggerFilter, setTriggerFilter] = useState('')
+  const [agentFilter, setAgentFilter] = useState('')
+
+  const filtered = useMemo(() => {
+    let list = [...STAGING_WORKFLOWS]
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter(
+        (w) => w.title.toLowerCase().includes(q) || w.description.toLowerCase().includes(q),
+      )
+    }
+    if (statusFilter) list = list.filter((w) => w.status === statusFilter)
+    if (triggerFilter) list = list.filter((w) => w.triggerType === triggerFilter)
+    if (agentFilter === '__none__') list = list.filter((w) => !w.assignedAgent)
+    else if (agentFilter) list = list.filter((w) => w.assignedAgent === agentFilter)
+    return list
+  }, [search, statusFilter, triggerFilter, agentFilter])
+
+  const activeCount = STAGING_WORKFLOWS.filter((w) => w.status === 'active').length
+  const hasFilters = !!(search || statusFilter || triggerFilter || agentFilter)
+
+  return (
+    <div className="sn-staging-agents-index-enter flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-[var(--surface-canvas)]">
+
+      {/* Header */}
+      <StagingPageHeader
+        title="Workflows"
+        actions={
+          <Button variant="primary" size="md" type="button" className="shrink-0 gap-1.5">
+            <Plus size={16} strokeWidth={2.25} aria-hidden />
+            New Workflow
+          </Button>
+        }
+      />
+
+      {/* Scrollable body */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-[var(--space-2xl)] py-[var(--space-xl)]">
+        <div className="flex flex-col gap-6 w-full max-w-[var(--supernova-staging-content-max)]" style={{ maxWidth: 960 }}>
+
+          {/* Intro */}
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <p className="text-[length:var(--font-size-body-1)] text-[var(--color-neutral-9)] leading-6 max-w-[var(--supernova-staging-prose-max)]">
+              {activeCount} active workflow{activeCount !== 1 ? 's' : ''} · agents create and manage these automatically. Review, assign, or run them manually from here.
+            </p>
+          </div>
+
+          {/* Search + Filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-neutral-7)] pointer-events-none"
+                aria-hidden
+              />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search workflows…"
+                className="h-8 w-full rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-primary)] pl-8 pr-3 text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] placeholder:text-[var(--color-neutral-6)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-7)] focus:border-[var(--color-accent-7)] transition-colors"
+              />
+            </div>
+
+            {/* Status */}
+            <div className="relative">
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={selectCls}>
+                {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <ChevronRight size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 rotate-90 text-[var(--color-neutral-7)] pointer-events-none" aria-hidden />
+            </div>
+
+            {/* Trigger */}
+            <div className="relative">
+              <select value={triggerFilter} onChange={(e) => setTriggerFilter(e.target.value)} className={selectCls}>
+                {TRIGGER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <ChevronRight size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 rotate-90 text-[var(--color-neutral-7)] pointer-events-none" aria-hidden />
+            </div>
+
+            {/* Agent */}
+            <div className="relative">
+              <select value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)} className={selectCls}>
+                {AGENT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <ChevronRight size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 rotate-90 text-[var(--color-neutral-7)] pointer-events-none" aria-hidden />
+            </div>
+
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={() => { setSearch(''); setStatusFilter(''); setTriggerFilter(''); setAgentFilter('') }}
+                className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-11)] transition-colors cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Table */}
+          <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-default)] bg-[var(--surface-primary)] shadow-[var(--shadow-xs)]">
+
+            {/* Table header */}
+            <div className="grid border-b border-[var(--border-default)] bg-[var(--surface-secondary)] px-4 py-2.5"
+              style={{ gridTemplateColumns: '1fr 90px 110px 110px 80px 160px 60px 40px' }}>
+              {['Workflow', 'Status', 'Trigger', 'Agent', 'Steps', 'Last run', 'Runs', ''].map((h) => (
+                <span key={h} className="text-[length:var(--font-size-xs)] font-semibold uppercase tracking-wide text-[var(--color-neutral-7)] truncate">
+                  {h}
+                </span>
+              ))}
+            </div>
+
+            {/* Rows */}
+            {filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-neutral-3)] flex items-center justify-center">
+                  <Zap size={18} className="text-[var(--color-neutral-7)]" aria-hidden />
                 </div>
-
-                <p className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-8)] leading-relaxed">
-                  {wf.description}
-                </p>
-
-                <div className="flex flex-wrap gap-[var(--space-xs)]">
-                  {wf.steps.map((step, i) => (
-                    <span
-                      key={step}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--radius-md)] border border-[var(--color-accent-4)] bg-[var(--color-accent-1)] text-[length:var(--font-size-xs)] font-medium text-[var(--color-accent-11)]"
-                    >
-                      <span className="tabular-nums opacity-80">{i + 1}.</span>
-                      {step}
-                    </span>
-                  ))}
+                <div>
+                  <p className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-neutral-11)]">No workflows found</p>
+                  <p className="mt-1 text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)]">
+                    {hasFilters ? 'Try adjusting your filters.' : 'Agents will create workflows automatically.'}
+                  </p>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[length:var(--font-size-sm)]">
-                  <span className="text-[var(--color-neutral-8)]">{wf.meta}</span>
-                  <Link
-                    href="#"
-                    className="font-medium text-[var(--color-accent-9)] hover:text-[var(--color-accent-10)] hover:underline"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    View graph
-                  </Link>
-                </div>
-
-                {wf.runHistory && wf.runHistory.length > 0 && (
-                  <Collapsible.Root defaultOpen className="border-t border-[var(--border-subtle)] pt-3 -mx-1">
-                    <Collapsible.Trigger className="flex items-center gap-2 w-full text-left text-[11px] font-semibold uppercase tracking-wide text-[var(--color-neutral-8)] hover:text-[var(--color-neutral-11)] cursor-pointer data-[state=open]:[&_svg]:rotate-180">
-                      <ChevronDown
-                        size={14}
-                        className="shrink-0 transition-transform duration-[var(--duration-fast)]"
-                        aria-hidden
-                      />
-                      Run history ({wf.runHistory.length})
-                    </Collapsible.Trigger>
-                    <Collapsible.Content className="mt-2 data-[state=closed]:animate-out">
-                      <ul className="flex flex-col gap-2">
-                        {wf.runHistory.map((run, idx) => (
-                          <li
-                            key={idx}
-                            className="flex flex-wrap items-center gap-2 text-[length:var(--font-size-sm)]"
-                          >
-                            <span className="w-2 h-2 rounded-full bg-[var(--color-success)] shrink-0" aria-hidden />
-                            <span className="text-[var(--color-neutral-8)]">Just now</span>
-                            <span className="font-medium text-[var(--color-success)]">{run.label}</span>
-                            <span className="text-[var(--color-neutral-8)] tabular-nums">{run.duration}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </Collapsible.Content>
-                  </Collapsible.Root>
-                )}
               </div>
-            </Card>
-          ))}
+            ) : (
+              <div className="sn-staging-workflow-cards divide-y divide-[var(--border-subtle)]">
+                {filtered.map((wf) => (
+                  <div
+                    key={wf.id}
+                    className="sn-staging-workflow-card-enter group grid items-center px-4 py-3 cursor-pointer hover:bg-[var(--color-neutral-2)] transition-colors duration-[var(--duration-fast)]"
+                    style={{ gridTemplateColumns: '1fr 90px 110px 110px 80px 160px 60px 40px' }}
+                    onClick={() => router.push(`/supernova/staging/workflows/${wf.id}`)}
+                    role="row"
+                  >
+                    {/* Name + description */}
+                    <div className="min-w-0 pr-4">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[length:var(--font-size-base)] font-semibold text-[var(--color-accent-9)] group-hover:text-[var(--color-accent-10)] group-hover:underline truncate">
+                          {wf.title}
+                        </span>
+                        {wf.automation && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 h-4 rounded-[var(--radius-sm)] bg-[var(--color-neutral-3)] text-[10px] font-semibold text-[var(--color-neutral-8)] shrink-0">
+                            AUTO
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-[length:var(--font-size-sm)] text-[var(--color-neutral-7)] truncate">
+                        {wf.description}
+                      </p>
+                    </div>
+
+                    {/* Status */}
+                    <div><StatusBadge status={wf.status} /></div>
+
+                    {/* Trigger */}
+                    <div><TriggerBadge type={wf.triggerType} /></div>
+
+                    {/* Agent */}
+                    <div className="min-w-0">
+                      {wf.assignedAgent ? (
+                        <span className="inline-flex items-center gap-1.5 text-[length:var(--font-size-sm)] text-[var(--color-neutral-11)] truncate">
+                          <span className="w-5 h-5 rounded-full bg-[var(--color-accent-3)] flex items-center justify-center shrink-0">
+                            <Bot size={11} className="text-[var(--color-accent-10)]" aria-hidden />
+                          </span>
+                          <span className="truncate">{wf.assignedAgent}</span>
+                        </span>
+                      ) : (
+                        <span className="text-[length:var(--font-size-sm)] text-[var(--color-neutral-6)]">Unassigned</span>
+                      )}
+                    </div>
+
+                    {/* Steps */}
+                    <div>
+                      <span className="inline-flex items-center gap-1 text-[length:var(--font-size-sm)] text-[var(--color-neutral-9)]">
+                        <GitBranch size={12} className="text-[var(--color-neutral-6)] shrink-0" aria-hidden />
+                        {wf.steps.length}
+                      </span>
+                    </div>
+
+                    {/* Last run */}
+                    <div className="text-[length:var(--font-size-sm)]">
+                      <LastRunCell
+                        status={wf.lastRunStatus}
+                        lastRun={wf.lastRun}
+                        lastRunDuration={wf.lastRunDuration}
+                      />
+                    </div>
+
+                    {/* Total runs */}
+                    <div>
+                      <span className="text-[length:var(--font-size-sm)] font-medium text-[var(--color-neutral-9)] tabular-nums">
+                        {wf.totalRuns > 0 ? wf.totalRuns : <span className="text-[var(--color-neutral-5)]">0</span>}
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <IconButton
+                            label={`Actions for ${wf.title}`}
+                            variant="ghost"
+                            size="md"
+                            type="button"
+                            className="text-[var(--color-neutral-6)] hover:text-[var(--color-neutral-11)] opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <MoreVertical size={16} aria-hidden />
+                          </IconButton>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" sideOffset={8} minWidth="180px">
+                          <DropdownMenuItem textValue="Run now" onSelect={() => router.push(`/supernova/staging/workflows/${wf.id}`)}>
+                            <Play size={15} strokeWidth={2} className="shrink-0 text-[var(--color-neutral-8)]" aria-hidden />
+                            <span className="min-w-0 flex-1 text-left">Run now</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem textValue="View detail" onSelect={() => router.push(`/supernova/staging/workflows/${wf.id}`)}>
+                            <FileEdit size={15} strokeWidth={2} className="shrink-0 text-[var(--color-neutral-8)]" aria-hidden />
+                            <span className="min-w-0 flex-1 text-left">View detail</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem textValue="Duplicate">
+                            <Copy size={15} strokeWidth={2} className="shrink-0 text-[var(--color-neutral-8)]" aria-hidden />
+                            <span className="min-w-0 flex-1 text-left">Duplicate</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem textValue="Settings">
+                            <Settings size={15} strokeWidth={2} className="shrink-0 text-[var(--color-neutral-8)]" aria-hidden />
+                            <span className="min-w-0 flex-1 text-left">Settings</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem textValue="Delete" className="text-red-600">
+                            <Trash2 size={15} strokeWidth={2} className="shrink-0" aria-hidden />
+                            <span className="min-w-0 flex-1 text-left">Delete</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Footer count */}
+            {filtered.length > 0 && (
+              <div className="border-t border-[var(--border-subtle)] px-4 py-2.5">
+                <span className="text-[length:var(--font-size-xs)] text-[var(--color-neutral-7)]">
+                  {filtered.length} workflow{filtered.length !== 1 ? 's' : ''}
+                  {hasFilters && STAGING_WORKFLOWS.length !== filtered.length && ` of ${STAGING_WORKFLOWS.length}`}
+                </span>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>

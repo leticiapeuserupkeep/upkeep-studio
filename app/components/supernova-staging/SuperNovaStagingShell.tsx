@@ -31,7 +31,11 @@ const stagingNav: { label: string; href: string; icon: LucideIcon }[] = [
 
 function navIsActive(pathname: string, href: string) {
   if (href === '/supernova/staging') {
-    return pathname === '/supernova/staging' || pathname === '/supernova/staging/'
+    return (
+      pathname === '/supernova/staging' ||
+      pathname === '/supernova/staging/' ||
+      pathname.startsWith('/supernova/staging/workflows')
+    )
   }
   return pathname === href || pathname.startsWith(`${href}/`)
 }
